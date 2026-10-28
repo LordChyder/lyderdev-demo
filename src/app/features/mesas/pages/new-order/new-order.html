@@ -1,0 +1,331 @@
+<div class="new-order-page">
+  <header class="new-order-page__header">
+    <div>
+      <button mat-button type="button" class="new-order-page__back" (click)="backToTables()">
+        <mat-icon>arrow_back</mat-icon>
+        Volver a mesas
+      </button>
+      @if (order(); as order) {
+        <h1>
+          <strong>{{ order.tableName }}</strong>
+        </h1>
+      }
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="new-order-page__state"><mat-spinner diameter="36" /></div>
+  } @else if (error()) {
+    <div class="new-order-page__state new-order-page__state--error">
+      <mat-icon>error_outline</mat-icon><span>{{ error() }}</span>
+    </div>
+  } @else if (activeCashiers().length === 0) {
+    <div class="new-order-page__state new-order-page__state--error">
+      <mat-icon>point_of_sale</mat-icon
+      ><span>No hay ninguna caja abierta. Abre una caja para continuar con el pedido.</span>
+    </div>
+  } @else {
+    @if (actionError()) {
+      <p class="new-order-page__error" role="alert">{{ actionError() }}</p>
+    }
+
+    @if (activeCashiers().length > 1 && !selectedPriceListId()) {
+      <section class="new-order-page__cashier-choice" aria-labelledby="cashier-title">
+        <h2 id="cashier-title">Elige la caja de trabajo</h2>
+        <mat-radio-group
+          [value]="selectedCashierOpeningId()"
+          (change)="selectedCashierOpeningId.set($event.value)"
+        >
+          @for (cashier of activeCashiers(); track cashier.cashierOpeningId) {
+            <mat-radio-button [value]="cashier.cashierOpeningId">{{
+              cashier.name
+            }}</mat-radio-button>
+          }
+        </mat-radio-group>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="!selectedCashierOpeningId()"
+          (click)="loadCatalog()"
+        >
+          Ver categorías
+        </button>
+      </section>
+    } @else if (loadingCatalog()) {
+      <div class="new-order-page__state"><mat-spinner diameter="32" /></div>
+    } @else if (catalogError()) {
+      <p class="new-order-page__error" role="alert">{{ catalogError() }}</p>
+    } @else {
+      <div class="new-order-page__layout">
+        <div class="new-order-page__categories" role="tablist" aria-label="Categorías de productos">
+          @for (list of priceLists(); track list.priceListId) {
+            <button
+              type="button"
+              role="tab"
+              class="new-order-page__category"
+              [class.new-order-page__category--active]="selectedPriceListId() === list.priceListId"
+              [attr.aria-selected]="selectedPriceListId() === list.priceListId"
+              (click)="chooseCategory(list.priceListId)"
+            >
+              {{ list.priceListName }}
+            </button>
+          }
+        </div>
+        <section class="new-order-page__catalog" aria-label="Productos">
+          <div class="new-order-page__products">
+            @for (
+              product of selectedPriceList?.products ?? [];
+              track product.productEstablishmentId
+            ) {
+              @let availableStock = availableStockFor(product);
+              <article
+                class="new-order-page__product"
+                [class.new-order-page__product--stock-unavailable]="product.hasInventory && !canAddProduct(product)"
+                [class.new-order-page__product--out-of-stock]="product.hasInventory && availableStock === 0"
+              >
+                <div>
+                  <h3>{{ product.productName }}</h3>
+                  <p>S/ {{ product.price | number: '1.2-2' }}</p>
+                  @if (product.hasInventory) {
+                    <span
+                      class="new-order-page__stock"
+                      [class.new-order-page__stock--empty]="availableStock === 0"
+                      [class.new-order-page__stock--loading]="availableStock === null"
+                    >
+                      @if (availableStock === null) {
+                        Verificando stock…
+                      } @else if (availableStock === 0) {
+                        No hay stock
+                      } @else {
+                        Stock: {{ availableStock }} {{ product.measureUnitAcronym || 'und.' }}
+                      }
+                    </span>
+                  }
+                </div>
+                <div class="new-order-page__product-actions">
+                  <span class="new-order-page__product-actions-label">Normal</span>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Quitar una unidad"
+                    [disabled]="closingOrder() || quantityFor(product.productEstablishmentId) === 0"
+                    (click)="removeOneProduct(product)"
+                  >
+                    <mat-icon>remove</mat-icon>
+                  </button>
+                  <strong class="new-order-page__product-quantity">{{ quantityFor(product.productEstablishmentId) }}</strong>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="new-order-page__add-product"
+                    aria-label="Agregar una unidad"
+                    [disabled]="closingOrder() || !canAddProduct(product)"
+                    (click)="addOneProduct(product)"
+                  ><mat-icon>add_circle</mat-icon></button>
+                </div>
+                <div class="new-order-page__takeaway-controls">
+                  <label
+                    class="new-order-page__delivery-toggle"
+                    [class.new-order-page__delivery-toggle--disabled]="!isDeliveryEnabled(product.productEstablishmentId) && !canAddProduct(product)"
+                  >
+                    <input
+                      type="checkbox"
+                      [checked]="isDeliveryEnabled(product.productEstablishmentId)"
+                      [disabled]="closingOrder() || (!isDeliveryEnabled(product.productEstablishmentId) && !canAddProduct(product))"
+                      (change)="toggleProductDelivery(product, $any($event.target).checked)"
+                    />
+                    <span>Para llevar</span>
+                  </label>
+                  @if (isDeliveryEnabled(product.productEstablishmentId)) {
+                    <div class="new-order-page__product-actions new-order-page__product-actions--takeaway">
+                      <span class="new-order-page__product-actions-label">Delivery</span>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        aria-label="Quitar una unidad de delivery"
+                        [disabled]="closingOrder() || quantityFor(product.productEstablishmentId, true) === 0"
+                        (click)="removeOneProduct(product, true)"
+                      >
+                        <mat-icon>remove</mat-icon>
+                      </button>
+                      <strong class="new-order-page__product-quantity">{{ quantityFor(product.productEstablishmentId, true) }}</strong>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="new-order-page__add-product"
+                        aria-label="Agregar una unidad de delivery"
+                        [disabled]="closingOrder() || !canAddProduct(product)"
+                        (click)="addOneProduct(product, true)"
+                      ><mat-icon>add_circle</mat-icon></button>
+                    </div>
+                  }
+                </div>
+              </article>
+            } @empty {
+              <p class="new-order-page__empty">Esta categoría no tiene productos.</p>
+            }
+          </div>
+        </section>
+      </div>
+      <div class="new-order-page__catalog-actions">
+        <button mat-flat-button color="primary" type="button" [disabled]="visibleItems.length === 0" (click)="openOrderReview()">
+          Ver pedidos
+        </button>
+      </div>
+    }
+  }
+
+  @if (selectedProduct(); as product) {
+    <section class="new-order-page__product-editor" aria-labelledby="product-editor-title">
+      <header class="new-order-page__editor-header">
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Volver a productos"
+          (click)="closeProductEditor()"
+        >
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <span>Agregar producto</span>
+      </header>
+
+      <div class="new-order-page__editor-content">
+        <p class="new-order-page__editor-label">Producto</p>
+        <h2 id="product-editor-title">{{ product.productName }}</h2>
+        <p class="new-order-page__editor-price">S/. {{ product.price | number: '1.2-2' }}</p>
+
+        <label class="new-order-page__delivery-option">
+          <input
+            type="checkbox"
+            [checked]="productIsDelivery()"
+            (change)="productIsDelivery.set($any($event.target).checked)"
+          />
+          <span>Es para delivery</span>
+        </label>
+      </div>
+
+      <footer class="new-order-page__editor-actions">
+        <div class="new-order-page__quantity-stepper" aria-label="Cantidad del producto">
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Disminuir cantidad"
+            [disabled]="selectedProductQuantity() === 1"
+            (click)="decreaseSelectedProductQuantity()"
+          >
+            <mat-icon>remove</mat-icon>
+          </button>
+          <span>{{ selectedProductQuantity() }}</span>
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Aumentar cantidad"
+            (click)="increaseSelectedProductQuantity()"
+          >
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="closingOrder()"
+          (click)="confirmProduct()"
+        >
+          Listo
+        </button>
+      </footer>
+    </section>
+  }
+
+  @if (showingOrderReview()) {
+    <section class="new-order-page__order-review" aria-labelledby="order-review-title">
+      <header class="new-order-page__editor-header">
+        <button
+          mat-icon-button
+          type="button"
+          aria-label="Volver a productos"
+          (click)="closeOrderReview()"
+        >
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <span>Ver pedidos</span>
+      </header>
+
+      <div class="new-order-page__review-content">
+        @if (order(); as order) {
+          <div class="new-order-page__review-heading">
+            <h2>{{ order.tableName }}</h2>
+          </div>
+          @if (visibleItems.length === 0) {
+            <p class="new-order-page__empty">Todavía no agregaste productos.</p>
+          } @else {
+            <div class="new-order-page__review-items">
+              @for (item of visibleItems; track item.key) {
+                <div class="new-order-page__review-item">
+                  <div>
+                    <strong>{{ item.productName }}</strong
+                    ><span>Cantidad: {{ item.quantity }}</span>
+                    @if (item.takeaway) { <span>Para llevar</span> }
+                  </div>
+                  <div class="new-order-page__review-item-actions">
+                    <strong>{{ item.quantity * item.unitPrice - item.discount | number: '1.2-2' }}</strong>
+                    <button
+                      mat-icon-button
+                    type="button"
+                    aria-label="Editar producto"
+                    [disabled]="closingOrder()"
+                      (click)="editOrderItem(item)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="new-order-page__delete-item"
+                      aria-label="Eliminar producto"
+                      [disabled]="closingOrder()"
+                      (click)="deleteOrderItem(item)"
+                    >
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          <label class="new-order-page__order-note">
+            <span>Nota de pedido</span>
+            <textarea
+              rows="4"
+              placeholder="Escribe una nota para este pedido"
+              [value]="orderNote()"
+              (input)="orderNote.set($any($event.target).value)"
+            ></textarea>
+          </label>
+          <div class="new-order-page__review-total">
+            <span>Total</span><strong>{{ orderTotal | number: '1.2-2' }}</strong>
+          </div>
+        }
+      </div>
+
+      <footer class="new-order-page__editor-actions">
+        <button mat-button type="button" (click)="closeOrderReview()">Seguir agregando</button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="closingOrder()"
+          (click)="finish()"
+        >
+          @if (closingOrder()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            Enviar a cocina
+          }
+        </button>
+      </footer>
+    </section>
+  }
+</div>

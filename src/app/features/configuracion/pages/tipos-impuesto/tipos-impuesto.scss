@@ -1,0 +1,50 @@
+.tipos-impuesto {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  // Deja aire debajo del paginador para que el FAB no tape la última fila.
+  padding-bottom: 4.5rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.5rem 0 1rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+    padding: 0.5rem 1rem;
+  }
+
+  &__table {
+    width: 100%;
+  }
+
+  &__fab {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+}

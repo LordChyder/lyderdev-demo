@@ -1,0 +1,85 @@
+<h2 mat-dialog-title>Establecimientos de {{ data.username }}</h2>
+
+<mat-dialog-content class="user-establishments">
+  <div class="user-establishments__table-wrapper">
+    @if (loading()) {
+      <div class="user-establishments__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="user-establishments__state user-establishments__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (establishments().length === 0) {
+      <div class="user-establishments__state">
+        <span>Este usuario no pertenece a ningún establecimiento.</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="establishments()" class="user-establishments__table">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Código</th>
+          <td mat-cell *matCellDef="let item">{{ item.code }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="acronym">
+          <th mat-header-cell *matHeaderCellDef>Siglas</th>
+          <td mat-cell *matCellDef="let item">{{ item.acronym }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let item">{{ item.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Asignación activa</th>
+          <td mat-cell *matCellDef="let item">
+            <mat-icon>{{ item.active ? 'check' : 'remove' }}</mat-icon>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="expiresAt">
+          <th mat-header-cell *matHeaderCellDef>Vence</th>
+          <td mat-cell *matCellDef="let item">
+            {{ item.expiresAt ? (item.expiresAt | date: 'dd/MM/yyyy') : 'Sin vencimiento' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let item">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar asignación"
+              matTooltip="Editar"
+              (click)="openEdit(item)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="openAssign()">
+    <mat-icon>add</mat-icon>
+    Asignar establecimiento
+  </button>
+  <button mat-flat-button color="primary" type="button" (click)="close()">Cerrar</button>
+</mat-dialog-actions>

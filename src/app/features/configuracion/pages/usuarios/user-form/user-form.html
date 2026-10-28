@@ -1,0 +1,74 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar usuario' : 'Crear usuario' }}</h2>
+
+<mat-dialog-content class="user-form">
+  @if (loading()) {
+    <div class="user-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="user-form__fields" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Usuario</mat-label>
+        <input matInput formControlName="username" autocomplete="off" />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <mat-error>Ingresa el usuario.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="name" autocomplete="off" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>Ingresa el nombre.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="off" />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <mat-error>Ingresa un email válido.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (!isEdit) {
+        <mat-form-field appearance="outline">
+          <mat-label>Contraseña</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <mat-error>Mínimo 4 caracteres.</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      <div class="user-form__toggles">
+        <mat-slide-toggle formControlName="isAdministrator">Administrador</mat-slide-toggle>
+        <mat-slide-toggle formControlName="allowedGeneralSetting">
+          Permite configuración general
+        </mat-slide-toggle>
+      </div>
+
+      @if (error()) {
+        <p class="user-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loading() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

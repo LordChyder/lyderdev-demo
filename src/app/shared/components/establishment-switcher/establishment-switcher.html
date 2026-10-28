@@ -1,0 +1,41 @@
+<button
+  mat-button
+  type="button"
+  class="establishment-switcher"
+  [class.establishment-switcher--unselected]="isUnselected()"
+  [matMenuTriggerFor]="establishmentMenu"
+  [matTooltip]="breakpoint.isMobile() ? label() : ''"
+  aria-label="Establecimiento activo"
+>
+  <mat-icon>storefront</mat-icon>
+  @if (!breakpoint.isMobile()) {
+    <span class="establishment-switcher__label">{{ label() }}</span>
+  }
+  <mat-icon class="establishment-switcher__caret" iconPositionEnd>arrow_drop_down</mat-icon>
+</button>
+
+<mat-menu #establishmentMenu="matMenu">
+  @if (loading()) {
+    <button mat-menu-item type="button" disabled>Cargando establecimientos…</button>
+  } @else if (establishments().length === 0) {
+    <button mat-menu-item type="button" disabled class="establishment-switcher__empty-item">
+      No tienes establecimientos disponibles. Si tu licencia está suspendida por falta de pago,
+      comunícate con Lyder Technology para regularizarla.
+    </button>
+    <button mat-menu-item type="button" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Cerrar sesión</span>
+    </button>
+  } @else {
+    @for (item of establishments(); track item.id) {
+      <button mat-menu-item type="button" (click)="select(item)">
+        @if (isActive(item)) {
+          <mat-icon>check</mat-icon>
+        } @else {
+          <mat-icon></mat-icon>
+        }
+        <span>{{ item.name }}</span>
+      </button>
+    }
+  }
+</mat-menu>

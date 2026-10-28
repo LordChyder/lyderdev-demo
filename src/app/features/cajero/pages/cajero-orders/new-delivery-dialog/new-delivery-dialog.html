@@ -1,0 +1,212 @@
+<h2 mat-dialog-title class="new-delivery-dialog__header">
+  <mat-icon>delivery_dining</mat-icon>
+  Nuevo delivery
+  <span class="new-delivery-dialog__step-indicator">Paso {{ step() }} de 2</span>
+  <button
+    mat-icon-button
+    type="button"
+    class="new-delivery-dialog__close"
+    aria-label="Cerrar nuevo delivery"
+    (click)="cancel()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<mat-dialog-content class="new-delivery-dialog">
+  @if (createError()) {
+    <p class="new-delivery-dialog__error">{{ createError() }}</p>
+  }
+
+  @if (step() === 1) {
+    <!-- Paso 1: elegir productos -->
+    <div class="new-delivery-dialog__intro">
+      <span class="new-delivery-dialog__eyebrow">Paso 1</span>
+      <p class="new-delivery-dialog__hint">Selecciona los productos del pedido.</p>
+    </div>
+
+    @if (loadingCatalog()) {
+      <div class="new-delivery-dialog__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (catalogError()) {
+      <p class="new-delivery-dialog__error">{{ catalogError() }}</p>
+    } @else {
+      <section class="new-delivery-dialog__bento-card new-delivery-dialog__bento-card--catalog">
+        <header class="new-delivery-dialog__card-header">
+          <div><mat-icon>restaurant_menu</mat-icon><h3>Productos</h3></div>
+          <span>Agrega al pedido</span>
+        </header>
+
+        @if (priceLists().length > 1) {
+          <div class="new-delivery-dialog__price-lists" role="group" aria-label="Elegir lista de precios">
+            @for (list of priceLists(); track list.priceListId) {
+              <button
+                type="button"
+                class="new-delivery-dialog__price-list-button"
+                [class.new-delivery-dialog__price-list-button--selected]="list.priceListId === selectedPriceListId()"
+                [attr.aria-pressed]="list.priceListId === selectedPriceListId()"
+                (click)="selectedPriceListId.set(list.priceListId)"
+              >
+                {{ list.priceListName || 'Lista sin nombre' }}
+              </button>
+            }
+          </div>
+        }
+
+        <div class="new-delivery-dialog__products">
+          @for (product of selectedPriceList?.products ?? []; track product.productEstablishmentId) {
+            @let availableStock = availableStockFor(product);
+            <div
+              class="new-delivery-dialog__product"
+              [class.new-delivery-dialog__product--out-of-stock]="product.hasInventory && availableStock === 0"
+            >
+              <div class="new-delivery-dialog__product-info">
+                <span class="new-delivery-dialog__product-name">{{ product.productName }}</span>
+                <span class="new-delivery-dialog__product-price">S/ {{ product.price | number: '1.2-2' }}</span>
+                @if (product.hasInventory) {
+                  <span
+                    class="new-delivery-dialog__stock"
+                    [class.new-delivery-dialog__stock--empty]="availableStock === 0"
+                    [class.new-delivery-dialog__stock--loading]="availableStock === null"
+                  >
+                    @if (availableStock === null) {
+                      Verificando stock…
+                    } @else if (availableStock === 0) {
+                      No hay stock
+                    } @else {
+                      Stock: {{ availableStock }} {{ product.measureUnitAcronym || 'und.' }}
+                    }
+                  </span>
+                }
+              </div>
+              <button
+                mat-icon-button
+                type="button"
+                class="new-delivery-dialog__quantity-button"
+                aria-label="Agregar producto"
+                [disabled]="!canAddProduct(product)"
+                (click)="addProduct(product)"
+              >
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          } @empty {
+            <p class="new-delivery-dialog__hint">Esta lista de precios no tiene productos.</p>
+          }
+        </div>
+      </section>
+    }
+
+    <section class="new-delivery-dialog__bento-card new-delivery-dialog__cart">
+      <div class="new-delivery-dialog__cart-heading">
+        <h3 class="new-delivery-dialog__section-title">Carrito</h3>
+        @if (cart().length) { <span>{{ cart().length }} producto(s)</span> }
+      </div>
+      @if (cart().length === 0) {
+        <p class="new-delivery-dialog__hint">Todavía no agregaste productos.</p>
+      } @else {
+        <div class="new-delivery-dialog__cart-list">
+          @for (item of cart(); track item.key) {
+            <div class="new-delivery-dialog__cart-item">
+              <span class="new-delivery-dialog__cart-name">{{ item.productName }}</span>
+
+              <div class="new-delivery-dialog__cart-qty">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="new-delivery-dialog__quantity-button new-delivery-dialog__quantity-button--subtle"
+                  aria-label="Restar cantidad"
+                  (click)="decreaseItem(item)"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span>{{ item.quantity }}</span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="new-delivery-dialog__quantity-button"
+                  aria-label="Sumar cantidad"
+                  (click)="increaseItem(item)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+
+              <span class="new-delivery-dialog__cart-amount">
+                {{ item.unitPrice * item.quantity | number: '1.2-2' }}
+              </span>
+            </div>
+          }
+        </div>
+        <p class="new-delivery-dialog__total">Total: {{ cartTotal | number: '1.2-2' }}</p>
+      }
+    </section>
+  } @else {
+    <!-- Paso 2: datos de entrega del cliente -->
+    <div class="new-delivery-dialog__intro">
+      <span class="new-delivery-dialog__eyebrow">Paso 2</span>
+      <p class="new-delivery-dialog__hint">Completa los datos de entrega si los tienes.</p>
+    </div>
+
+    <section class="new-delivery-dialog__bento-card new-delivery-dialog__delivery-details">
+      <header class="new-delivery-dialog__card-header">
+        <div><mat-icon>local_shipping</mat-icon><h3>Datos de entrega</h3></div>
+        <span>Opcional</span>
+      </header>
+      <div class="new-delivery-dialog__fields">
+        <mat-form-field appearance="outline" class="new-delivery-dialog__field">
+          <mat-label>Teléfono</mat-label>
+          <input matInput [value]="phone()" (input)="phone.set($any($event.target).value)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="new-delivery-dialog__field">
+          <mat-label>Dirección</mat-label>
+          <input matInput [value]="address()" (input)="address.set($any($event.target).value)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="new-delivery-dialog__field">
+          <mat-label>Referencia</mat-label>
+          <input matInput [value]="reference()" (input)="reference.set($any($event.target).value)" />
+        </mat-form-field>
+
+        <mat-checkbox
+          [checked]="isHomeDelivery()"
+          (change)="isHomeDelivery.set($event.checked)"
+        >
+          Es delivery a domicilio
+        </mat-checkbox>
+      </div>
+    </section>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="new-delivery-dialog__actions">
+  @if (step() === 1) {
+    <button mat-button type="button" (click)="cancel()">Cancelar</button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="cart().length === 0"
+      (click)="goToDeliveryStep()"
+    >
+      Siguiente
+    </button>
+  } @else {
+    <button mat-button type="button" (click)="backToProductsStep()">Atrás</button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="creating()"
+      (click)="confirm()"
+    >
+      @if (creating()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        Crear pedido
+      }
+    </button>
+  }
+</mat-dialog-actions>

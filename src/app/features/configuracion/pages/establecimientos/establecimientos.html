@@ -1,0 +1,119 @@
+<div class="establecimientos">
+  <header class="establecimientos__header">
+    <h1>Establecimientos</h1>
+    @if (isDialog) {
+      <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <div class="establecimientos__table-wrapper">
+    @if (loading()) {
+      <div class="establecimientos__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="establecimientos__state establecimientos__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (establishments().length === 0) {
+      <div class="establecimientos__state">
+        <span>No hay establecimientos para mostrar.</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="establishments()" class="establecimientos__table">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Código</th>
+          <td mat-cell *matCellDef="let establishment">{{ establishment.code }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="acronym">
+          <th mat-header-cell *matHeaderCellDef>Siglas</th>
+          <td mat-cell *matCellDef="let establishment">{{ establishment.acronym }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let establishment">{{ establishment.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let establishment">
+            <span class="establecimientos__type" [class]="establishmentTypeClass(establishment)">
+              <mat-icon>{{ establishmentTypeIcon(establishment) }}</mat-icon>
+              {{ establishmentTypeLabel(establishment) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let establishment">
+            <mat-icon>{{ establishment.active ? 'check' : 'remove' }}</mat-icon>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let establishment">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar establecimiento"
+              matTooltip="Editar"
+              (click)="openEdit(establishment)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Logo del establecimiento"
+              matTooltip="Logo"
+              (click)="openLogo(establishment)"
+            >
+              <mat-icon>image</mat-icon>
+            </button>
+            @if (isAdmin()) {
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Licencia del establecimiento"
+                matTooltip="Licencia"
+                (click)="openContracts(establishment)"
+              >
+                <mat-icon>workspace_premium</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+
+  <button
+    mat-fab
+    color="primary"
+    type="button"
+    class="establecimientos__fab"
+    aria-label="Crear establecimiento"
+    matTooltip="Crear establecimiento"
+    (click)="openCreate()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

@@ -1,0 +1,55 @@
+@use 'status';
+
+.establishment-contracts-dialog {
+  display: flex;
+  flex-direction: column;
+  min-width: 640px;
+
+  &__table-wrapper {
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__status {
+    @include status.chip-base;
+
+    &--active {
+      background: var(--app-status-good-bg);
+      color: var(--app-status-good-fg);
+    }
+
+    &--historic {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+
+  &__payments {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  &__overdue {
+    color: var(--app-status-critical-fg);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+}

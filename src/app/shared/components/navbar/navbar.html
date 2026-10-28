@@ -1,0 +1,53 @@
+<mat-toolbar class="navbar">
+  @if (breakpoint.isMobile()) {
+    <span class="navbar__mobile-brand">Lyder<span>Restaurant</span></span>
+  }
+
+  <div class="navbar__establishment">
+    @if (breakpoint.isSidebarToggleEnabled()) {
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Mostrar u ocultar menú de navegación"
+        matTooltip="Menú de navegación"
+        (click)="menuToggle.emit()"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+    }
+    <app-establishment-switcher />
+  </div>
+
+
+  <span class="navbar__spacer"></span>
+
+  @if (!breakpoint.isMobile()) {
+    <span class="navbar__clock">
+      <mat-icon>schedule</mat-icon>
+      {{ now() | date: 'EEE, d MMM y - HH:mm' }}
+    </span>
+  }
+
+  @if (canAccessGeneralSettings()) {
+  <button mat-icon-button type="button" [matMenuTriggerFor]="settingsMenu" aria-label="Configuración general" matTooltip="Configuración">
+    <mat-icon>settings</mat-icon>
+  </button>
+
+  <mat-menu #settingsMenu="matMenu">
+    @for (item of settingsItems; track item.label) {
+      <button mat-menu-item type="button" (click)="openSettingsItem(item)">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </button>
+    }
+  </mat-menu>
+  }
+
+  <button mat-icon-button type="button" (click)="theme.toggle()" [matTooltip]="theme.mode() === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+    <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+
+  <button mat-icon-button type="button" (click)="logout()" aria-label="Cerrar sesión" matTooltip="Cerrar sesión">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>

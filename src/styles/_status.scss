@@ -1,0 +1,14 @@
+// Chip/badge de estado (disponible, pendiente, cerrado, etc.). Bebe de los
+// tokens --app-status-* definidos en styles.scss para que todos los módulos
+// (mesas, cajas, y los que vengan) compartan el mismo look & feel y
+// respondan igual al tema oscuro. Cada módulo solo mapea sus propios
+// modificadores (p. ej. `&--available`) a los 4 tonos semánticos
+// disponibles: good, warning, critical, neutral.
+@mixin chip-base {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}

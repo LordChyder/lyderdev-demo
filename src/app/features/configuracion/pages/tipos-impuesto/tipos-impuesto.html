@@ -1,0 +1,82 @@
+<div class="tipos-impuesto">
+  <header class="tipos-impuesto__header">
+    <h1>Tipos de impuesto</h1>
+    @if (isDialog) {
+      <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <div class="tipos-impuesto__table-wrapper">
+    @if (loading()) {
+      <div class="tipos-impuesto__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="tipos-impuesto__state tipos-impuesto__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (saleTaxes().length === 0) {
+      <div class="tipos-impuesto__state">
+        <span>No hay tipos de impuesto para mostrar.</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="saleTaxes()" class="tipos-impuesto__table">
+        <ng-container matColumnDef="acronym">
+          <th mat-header-cell *matHeaderCellDef>Siglas</th>
+          <td mat-cell *matCellDef="let saleTax">{{ saleTax.acronym }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let saleTax">{{ saleTax.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="acronymForCalculation">
+          <th mat-header-cell *matHeaderCellDef>Siglas para cálculo</th>
+          <td mat-cell *matCellDef="let saleTax">{{ saleTax.acronymForCalculation }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let saleTax">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar tipo de impuesto"
+              matTooltip="Editar"
+              (click)="openEdit(saleTax)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+
+  <button
+    mat-fab
+    color="primary"
+    type="button"
+    class="tipos-impuesto__fab"
+    aria-label="Crear tipo de impuesto"
+    matTooltip="Crear tipo de impuesto"
+    (click)="openCreate()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

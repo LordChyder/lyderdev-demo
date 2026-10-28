@@ -1,0 +1,230 @@
+﻿@use 'dialog';
+
+.opening-cashier-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: #eaf2ff;
+  border: 1px solid #d7e6fb;
+  overflow-y: auto;
+
+  // Fila superior: "← Caja principal" y el título "Abrir caja" juntos
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex: 0 0 auto;
+  }
+
+  &__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    color: #0f1765;
+    font: 500 0.9375rem/1 Roboto, sans-serif;
+    cursor: pointer;
+
+    mat-icon {
+      flex: 0 0 auto;
+      width: 1.125rem;
+      height: 1.125rem;
+      font-size: 1.125rem;
+    }
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__title {
+    flex: 0 0 auto;
+    margin: 0;
+    color: #0f1765;
+    font: 700 1.25rem/1.25 Roboto, sans-serif;
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.25rem;
+  }
+
+  &__row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  &__row-field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  &__amount-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  &__amount-field {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-top: -0.25rem;
+  }
+
+  &__key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3rem;
+    background: #fff;
+    border: 1px solid #d7e6fb;
+    border-radius: 10px;
+    color: #172d59;
+    font: 600 1.125rem/1 Roboto, sans-serif;
+    cursor: pointer;
+    transition: background-color 0.1s ease, border-color 0.1s ease;
+
+    mat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    &:hover {
+      background: #f2f8ff;
+    }
+
+    &:active {
+      background: #e3efff;
+    }
+
+    &--clear {
+      flex: 0 0 auto;
+      align-self: center;
+      height: 2.5rem;
+      padding: 0 0.875rem;
+      background: transparent;
+      border: 1px solid #bcd8ff;
+      color: #0072f5;
+      font: 500 0.875rem/1 Roboto, sans-serif;
+      white-space: nowrap;
+
+      &:hover {
+        background: #f2f8ff;
+      }
+    }
+  }
+
+  &__error {
+    margin: 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+
+  &__submit {
+    flex: 0 0 auto;
+    height: 2.75rem;
+    margin-top: auto;
+  }
+}
+
+:host ::ng-deep {
+  .opening-cashier-form__fields mat-form-field {
+    @include dialog.field-tokens;
+  }
+}
+
+// ── Modo Oscuro (Alto Contraste) ─────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .opening-cashier-form {
+    background: #0c1c32;
+    border-color: #1f3c5c;
+    color: #d8e8ff;
+
+    &__back {
+      color: #71baff;
+
+      &:hover {
+        color: #9ecdfa;
+      }
+    }
+
+    &__title {
+      color: #f0f6ff;
+    }
+
+    &__key {
+      background: #102744;
+      border-color: #23456b;
+      color: #f0f6ff;
+
+      mat-icon {
+        color: #71baff;
+      }
+
+      &:hover {
+        background: #173a63;
+        border-color: #356294;
+      }
+
+      &:active {
+        background: #1e4a7d;
+      }
+
+      &--clear {
+        background: #102744;
+        border-color: #2d5d8f;
+        color: #71baff;
+
+        &:hover {
+          background: #173a63;
+          border-color: #4984c4;
+        }
+      }
+    }
+  }
+
+  :host ::ng-deep {
+    .opening-cashier-form__fields mat-form-field {
+      @include dialog.field-tokens-dark;
+    }
+
+    .mat-datepicker-toggle button {
+      color: #71baff !important;
+    }
+
+    .mat-mdc-select-panel {
+      background: #0c1c32 !important;
+    }
+
+    .mat-mdc-option {
+      color: #d8e8ff !important;
+
+      &:hover,
+      &.mdc-list-item--selected {
+        background: #173a63 !important;
+      }
+    }
+  }
+}

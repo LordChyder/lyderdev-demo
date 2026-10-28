@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar almacén' : 'Nuevo almacén' }}</h2>
+
+<mat-dialog-content class="stock-form">
+  <form [formGroup]="form" class="stock-form__fields" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>El nombre es obligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Dirección</mat-label>
+      <input matInput formControlName="address" />
+      <mat-hint>Opcional</mat-hint>
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="stock-form__error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="submit()">
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,127 @@
+<div class="gastos">
+  <header class="gastos__header">
+    <h1>Gastos</h1>
+    <button
+      mat-fab
+      extended
+      color="primary"
+      type="button"
+      class="gastos__fab"
+      (click)="openCreate()"
+    >
+      <mat-icon>add</mat-icon>
+      Nuevo gasto
+    </button>
+  </header>
+
+  <div class="gastos__summary">
+    <mat-icon>today</mat-icon>
+    <span>
+      Hoy: {{ todayTotal() | number: '1.2-2' }} en {{ todayCount() }}
+      {{ todayCount() === 1 ? 'gasto' : 'gastos' }}
+    </span>
+  </div>
+
+  <mat-form-field appearance="outline" class="gastos__search">
+    <mat-label>Buscar</mat-label>
+    <input matInput [formControl]="searchForm.controls.term" placeholder="Descripción del gasto" />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  @if (loading()) {
+    <div class="gastos__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="gastos__state gastos__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (expenses().length === 0) {
+    <div class="gastos__state">
+      <span>No hay gastos registrados.</span>
+    </div>
+  } @else {
+    <div class="gastos__table-wrapper">
+      <table mat-table [dataSource]="expenses()" class="gastos__table">
+        <ng-container matColumnDef="expenseDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let expense">{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Categoría</th>
+          <td mat-cell *matCellDef="let expense">{{ categoryName(expense.category) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>Descripción</th>
+          <td mat-cell *matCellDef="let expense">{{ expense.description }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Monto</th>
+          <td mat-cell *matCellDef="let expense">{{ expense.amount | number: '1.2-2' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let expense">
+            <button
+              mat-icon-button
+              type="button"
+              class="gastos__action gastos__action--edit"
+              (click)="openEdit(expense)"
+              aria-label="Editar gasto"
+              matTooltip="Editar"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              class="gastos__action gastos__action--delete"
+              (click)="deleteExpense(expense)"
+              aria-label="Eliminar gasto"
+              matTooltip="Eliminar"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <section class="gastos__mobile-list" aria-label="Gastos registrados">
+      @for (expense of expenses(); track expense.expenseId) {
+        <article class="gastos__mobile-card">
+          <header>
+            <div>
+              <span>{{ categoryName(expense.category) }}</span>
+              <h2>{{ expense.description || 'Sin descripción' }}</h2>
+            </div>
+            <strong>S/ {{ expense.amount | number: '1.2-2' }}</strong>
+          </header>
+          <footer>
+            <span><mat-icon>calendar_today</mat-icon>{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</span>
+            <div>
+              <button mat-icon-button type="button" class="gastos__action gastos__action--edit" (click)="openEdit(expense)" aria-label="Editar gasto"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button type="button" class="gastos__action gastos__action--delete" (click)="deleteExpense(expense)" aria-label="Eliminar gasto"><mat-icon>delete</mat-icon></button>
+            </div>
+          </footer>
+        </article>
+      }
+    </section>
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

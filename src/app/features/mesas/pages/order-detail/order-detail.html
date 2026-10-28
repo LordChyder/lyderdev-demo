@@ -1,0 +1,73 @@
+<div class="restaurant-order-detail">
+  <header class="restaurant-order-detail__header">
+    <button mat-button type="button" (click)="backToTables()">
+      <mat-icon>arrow_back</mat-icon> Volver a mesas
+    </button>
+    <h1>Detalle del pedido</h1>
+  </header>
+
+  @if (loading()) {
+    <div class="restaurant-order-detail__state"><mat-spinner diameter="36" /></div>
+  } @else if (error()) {
+    <p class="restaurant-order-detail__error" role="alert">{{ error() }}</p>
+  } @else if (detail(); as detail) {
+    <main class="restaurant-order-detail__content">
+      <section class="restaurant-order-detail__information" aria-label="Información del pedido">
+        <dl>
+          <dt>Mesa</dt>
+          <dd>{{ detail.tableName || (detail.isDelivery ? 'Delivery' : 'Sin mesa') }}</dd>
+          <dt>Mesero</dt>
+          <dd>{{ detail.waiterName }}</dd>
+        </dl>
+      </section>
+
+      <section class="restaurant-order-detail__items" aria-labelledby="items-title">
+        <h2 id="items-title">Productos</h2>
+        <div class="restaurant-order-detail__item-list">
+        @for (item of detail.items ?? []; track item.id) {
+          <div class="restaurant-order-detail__item">
+            <div>
+              <strong>{{ item.productName }}</strong
+              ><span>{{ item.quantity }} × S/. {{ item.unitPrice | number: '1.2-2' }}</span>
+              @if (item.isTakeAway) {
+                <span class="restaurant-order-detail__takeaway">Para llevar</span>
+              }
+            </div>
+            <strong>S/. {{ item.amountToPay | number: '1.2-2' }}</strong>
+          </div>
+        } @empty {
+          <p>No hay productos en este pedido.</p>
+        }
+        </div>
+        <footer>
+          <span>Total</span><strong>S/. {{ detail.total | number: '1.2-2' }}</strong>
+        </footer>
+      </section>
+    </main>
+
+    @if (cancelError()) {
+      <p class="restaurant-order-detail__error" role="alert">{{ cancelError() }}</p>
+    }
+    @if (reopenError()) {
+      <p class="restaurant-order-detail__error" role="alert">{{ reopenError() }}</p>
+    }
+    <footer class="restaurant-order-detail__actions">
+      @if (canManage) {
+        <button
+          mat-button
+          color="warn"
+          type="button"
+          class="restaurant-order-detail__cancel-action"
+          [disabled]="canceling()"
+          (click)="cancelOrder()"
+        >
+          Cancelar y liberar mesa
+        </button>
+        <button mat-flat-button color="primary" type="button" [disabled]="reopening()" (click)="editOrder()">
+          @if (reopening()) { <mat-spinner diameter="18" /> }
+          <span>{{ reopening() ? 'Reabriendo…' : 'Editar pedido' }}</span>
+        </button>
+      }
+    </footer>
+  }
+</div>

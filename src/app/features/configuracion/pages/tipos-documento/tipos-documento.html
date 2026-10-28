@@ -1,0 +1,53 @@
+<div class="tipos-documento">
+  <header class="tipos-documento__header">
+    <div>
+      <span class="tipos-documento__eyebrow"><mat-icon>badge</mat-icon> Configuración general</span>
+      <h1>Tipos de documento</h1>
+      <p>Define los documentos oficiales disponibles para registrar personas.</p>
+    </div>
+    <div class="tipos-documento__header-actions">
+      @if (isDialog) {
+        <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()"><mat-icon>close</mat-icon></button>
+      }
+    </div>
+  </header>
+
+  @if (showForm()) {
+    <section class="tipos-documento__form-panel" aria-label="Formulario de tipo de documento">
+      <div class="tipos-documento__form-heading"><mat-icon>{{ editing() ? 'edit_note' : 'note_add' }}</mat-icon><div><h2>{{ editing() ? 'Editar documento' : 'Nuevo documento' }}</h2><p>{{ editing() ? 'El código no se puede modificar.' : 'Usa un código corto, por ejemplo DNI o RUC.' }}</p></div></div>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <mat-form-field appearance="outline"><mat-label>Código</mat-label><input matInput formControlName="code" autocomplete="off" /><mat-hint>Máximo 12 caracteres</mat-hint>@if (form.controls.code.touched && form.controls.code.invalid) { <mat-error>Ingresa un código válido.</mat-error> }</mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Nombre del documento</mat-label><input matInput formControlName="name" autocomplete="off" />@if (form.controls.name.touched && form.controls.name.invalid) { <mat-error>Ingresa el nombre del documento.</mat-error> }</mat-form-field>
+        <div class="tipos-documento__toggles"><mat-slide-toggle formControlName="allowsNaturalPerson">Persona natural</mat-slide-toggle><mat-slide-toggle formControlName="allowsLegalEntity">Persona jurídica</mat-slide-toggle></div>
+        @if (form.controls.allowsNaturalPerson.touched && form.controls.allowsLegalEntity.touched && !form.controls.allowsNaturalPerson.value && !form.controls.allowsLegalEntity.value) { <p class="tipos-documento__form-error">Selecciona al menos un tipo de persona.</p> }
+        <div class="tipos-documento__form-actions"><button mat-button type="button" (click)="cancelForm()">Cancelar</button><button mat-flat-button color="primary" type="submit" [disabled]="saving()">{{ saving() ? 'Guardando...' : (editing() ? 'Guardar cambios' : 'Crear documento') }}</button></div>
+      </form>
+    </section>
+  }
+
+  <section class="tipos-documento__toolbar" aria-label="Buscar tipos de documento">
+    <mat-form-field appearance="outline"><mat-icon matPrefix>search</mat-icon><mat-label>Buscar por nombre o código</mat-label><input matInput [value]="search()" (input)="onSearch($any($event.target).value)" autocomplete="off" /></mat-form-field>
+    <button class="tipos-documento__create" mat-flat-button color="primary" type="button" (click)="openCreate()"><mat-icon>add</mat-icon> Crear documento</button>
+  </section>
+
+  @if (loading()) {
+    <div class="tipos-documento__state"><mat-spinner diameter="32" /><span>Cargando documentos...</span></div>
+  } @else if (error()) {
+    <div class="tipos-documento__state tipos-documento__state--error" role="alert"><mat-icon>error_outline</mat-icon><span>{{ error() }}</span></div>
+  } @else if (documentTypes().length === 0) {
+    <div class="tipos-documento__state"><mat-icon>folder_off</mat-icon><div><strong>No hay documentos para mostrar.</strong><span>Prueba con otra búsqueda o crea un nuevo tipo de documento.</span></div></div>
+  } @else {
+    <section class="tipos-documento__grid" aria-label="Tipos de documento registrados">
+      @for (documentType of documentTypes(); track documentType.id) {
+        <article class="document-card" [class.document-card--inactive]="!documentType.isActive">
+          <div class="document-card__code">{{ documentType.code }}</div>
+          <div class="document-card__main"><h2>{{ documentType.name }}</h2><span class="document-card__status" [class.document-card__status--inactive]="!documentType.isActive"><mat-icon>{{ documentType.isActive ? 'check_circle' : 'pause_circle' }}</mat-icon>{{ documentType.isActive ? 'Activo' : 'Inactivo' }}</span></div>
+          <div class="document-card__audiences"><span [class.document-card__audience--disabled]="!documentType.allowsNaturalPerson"><mat-icon>person</mat-icon> Natural</span><span [class.document-card__audience--disabled]="!documentType.allowsLegalEntity"><mat-icon>business</mat-icon> Jurídica</span></div>
+          <button mat-icon-button type="button" class="document-card__edit" aria-label="Editar tipo de documento" matTooltip="Editar" (click)="openEdit(documentType)"><mat-icon>edit</mat-icon></button>
+        </article>
+      }
+    </section>
+  }
+
+  <mat-paginator [length]="totalRows()" [pageIndex]="pageIndex()" [pageSize]="pageSize()" [pageSizeOptions]="pageSizeOptions" (page)="onPage($event)" />
+</div>

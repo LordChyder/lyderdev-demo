@@ -1,0 +1,27 @@
+@if (node.children.length) {
+  <mat-expansion-panel class="permission-node__panel">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <mat-checkbox
+          [checked]="node.selected"
+          (click)="$event.stopPropagation()"
+          (change)="onToggle($event.checked)"
+        >
+          {{ node.label }}
+        </mat-checkbox>
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+
+    <div class="permission-node__children">
+      @for (child of node.children; track child.permissionId) {
+        <app-permission-node [node]="child" (toggle)="toggle.emit($event)" />
+      }
+    </div>
+  </mat-expansion-panel>
+} @else {
+  <div class="permission-node__leaf">
+    <mat-checkbox [checked]="node.selected" (change)="onToggle($event.checked)">
+      {{ node.label }}
+    </mat-checkbox>
+  </div>
+}

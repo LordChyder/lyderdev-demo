@@ -1,0 +1,122 @@
+﻿<div class="chyder">
+  <header class="chyder__header">
+    <h1>Formas de pago del establecimiento</h1>
+    <form class="chyder__search" [formGroup]="searchForm" role="search" (submit)="$event.preventDefault()">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        placeholder="Nombre de la forma de pago"
+        aria-label="Buscar formas de pago"
+        formControlName="term"
+      />
+    </form>
+  </header>
+
+  @if (loading()) {
+    <div class="chyder__state"><mat-spinner diameter="32" /></div>
+  } @else if (error()) {
+    <div class="chyder__state chyder__state--error">
+      <mat-icon>error_outline</mat-icon><span>{{ error() }}</span>
+    </div>
+  } @else if (paymentTypes().length === 0) {
+    <div class="chyder__state"><span>No hay formas de pago registradas.</span></div>
+  } @else {
+    <div class="chyder__table-wrapper">
+      <table mat-table [dataSource]="paymentTypes()" class="chyder__table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let paymentType">{{ paymentType.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="fiscalCode">
+          <th mat-header-cell *matHeaderCellDef>Código fiscal</th>
+          <td mat-cell *matCellDef="let paymentType">{{ paymentType.fiscalCode }}</td>
+        </ng-container>
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let paymentType">
+            @if (!paymentType.isLinked) {
+              <span class="chyder__status chyder__status--unlinked">
+                <mat-icon>link_off</mat-icon>
+              </span>
+            } @else {
+              <span class="chyder__status" [class.chyder__status--inactive]="!isEnabledInCurrentEstablishment(paymentType)">
+                <mat-icon>{{ isEnabledInCurrentEstablishment(paymentType) ? 'check' : 'remove' }}</mat-icon>
+              </span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let paymentType">
+            @if (!paymentType.isLinked) {
+              <button
+                mat-icon-button
+                type="button"
+                class="chyder__action"
+                (click)="activate(paymentType)"
+                aria-label="Activar forma de pago en el establecimiento"
+                matTooltip="Activar en este establecimiento"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            } @else if (isEnabledInCurrentEstablishment(paymentType)) {
+              <button
+                mat-icon-button
+                type="button"
+                class="chyder__action"
+                (click)="inactivate(paymentType)"
+                aria-label="Inactivar forma de pago"
+                matTooltip="Inactivar"
+              >
+                <mat-icon>block</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                class="chyder__action"
+                (click)="activate(paymentType)"
+                aria-label="Activar forma de pago"
+                matTooltip="Activar"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+    <section class="chyder__mobile-list" aria-label="Formas de pago">
+      @for (paymentType of paymentTypes(); track paymentType.paymentTypeId) {
+        <article class="chyder__mobile-card">
+          <div>
+            <span>Código fiscal</span>
+            <h2>{{ paymentType.name }}</h2>
+            <strong>{{ paymentType.fiscalCode || 'Sin código' }}</strong>
+          </div>
+          <footer>
+            @if (!paymentType.isLinked) {
+              <span class="chyder__mobile-status chyder__mobile-status--unlinked"><mat-icon>link_off</mat-icon> Sin vincular</span>
+              <button mat-icon-button type="button" class="chyder__action" aria-label="Activar forma de pago" (click)="activate(paymentType)"><mat-icon>check_circle</mat-icon></button>
+            } @else if (isEnabledInCurrentEstablishment(paymentType)) {
+              <span class="chyder__mobile-status"><mat-icon>check_circle</mat-icon> Activo</span>
+              <button mat-icon-button type="button" class="chyder__action" aria-label="Inactivar forma de pago" (click)="inactivate(paymentType)"><mat-icon>block</mat-icon></button>
+            } @else {
+              <span class="chyder__mobile-status chyder__mobile-status--inactive"><mat-icon>remove_circle</mat-icon> Inactivo</span>
+              <button mat-icon-button type="button" class="chyder__action" aria-label="Activar forma de pago" (click)="activate(paymentType)"><mat-icon>check_circle</mat-icon></button>
+            }
+          </footer>
+        </article>
+      }
+    </section>
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

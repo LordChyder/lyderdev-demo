@@ -1,0 +1,57 @@
+@use 'breakpoints' as bp;
+
+.page-placeholder {
+  position: relative;
+
+  &__close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 2rem 1.25rem;
+
+    @include bp.from(md) {
+      padding: 3rem 2rem;
+    }
+  }
+
+  &__icon {
+    color: var(--mat-sys-primary);
+    margin-bottom: 0.5rem;
+
+    // El ligature-icon de mat-icon respeta font-size; lo agrandamos para el placeholder.
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  &__title {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+    color: var(--mat-sys-on-surface);
+  }
+
+  &__description {
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+
+    &:empty {
+      display: none;
+    }
+  }
+}

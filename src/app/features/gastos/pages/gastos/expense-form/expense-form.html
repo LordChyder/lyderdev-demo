@@ -1,0 +1,66 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar gasto' : 'Nuevo gasto' }}</h2>
+
+<mat-dialog-content class="expense-form">
+  @if (loading()) {
+    <div class="expense-form__loading">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+  <form [formGroup]="form" class="expense-form__fields" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Categoría</mat-label>
+      <mat-select formControlName="category">
+        @for (option of categories; track option.enumId) {
+          <mat-option [value]="option.enumId">{{ option.description }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.category.touched && form.controls.category.invalid) {
+        <mat-error>Selecciona una categoría.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha</mat-label>
+      <input matInput [matDatepicker]="expenseDatePicker" formControlName="expenseDate" [max]="today" />
+      <mat-datepicker-toggle matIconSuffix [for]="expenseDatePicker" />
+      <mat-datepicker #expenseDatePicker />
+      @if (form.controls.expenseDate.touched && form.controls.expenseDate.invalid) {
+        <mat-error>Selecciona una fecha.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descripción</mat-label>
+      <input matInput formControlName="description" maxlength="200" />
+      @if (form.controls.description.touched && form.controls.description.invalid) {
+        <mat-error>La descripción es obligatoria.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Monto</mat-label>
+      <input matInput type="number" min="0.01" step="0.01" formControlName="amount" />
+      @if (form.controls.amount.touched && form.controls.amount.invalid) {
+        <mat-error>Ingresa un monto mayor a cero.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="expense-form__error">{{ error() }}</p>
+    }
+  </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="saving() || loading()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

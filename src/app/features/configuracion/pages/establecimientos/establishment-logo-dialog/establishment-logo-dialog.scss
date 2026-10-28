@@ -1,0 +1,90 @@
+.establishment-logo-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 280px;
+  padding-top: 0.5rem;
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 260px;
+    height: 260px;
+  }
+
+  &__preview,
+  &__viewport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--mat-sys-outline-variant);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  &__placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--mat-sys-outline);
+    font-size: 0.875rem;
+  }
+
+  &__viewport {
+    position: relative;
+    touch-action: none;
+    cursor: grab;
+    background: repeating-conic-gradient(#00000012 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    img {
+      position: absolute;
+      max-width: none;
+      max-height: none;
+      pointer-events: none;
+      user-select: none;
+    }
+  }
+
+  &__zoom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+
+    input[type='range'] {
+      flex: 1;
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    color: var(--mat-sys-outline);
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  &__error {
+    margin: 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+
+  &__delete {
+    color: var(--mat-sys-error);
+    margin-right: auto;
+  }
+}

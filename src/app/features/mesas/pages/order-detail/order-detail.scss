@@ -1,0 +1,142 @@
+.restaurant-order-detail {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 5rem);
+  min-height: calc(100vh - 5rem);
+  overflow: hidden;
+  padding: 1.25rem;
+
+  h1,
+  h2,
+  p {
+    margin: 0;
+  }
+  h1 {
+    color: #0f1765;
+    font:
+      700 2.25rem/1.15 Roboto,
+      sans-serif;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font: var(--mat-sys-title-large);
+    font-weight: 700;
+  }
+  &__header {
+    margin-bottom: 1.5rem;
+  }
+  &__header button {
+    margin: -0.5rem 0 0.5rem -0.5rem;
+  }
+  &__state {
+    display: flex;
+    justify-content: center;
+    padding: 3rem;
+  }
+  &__error {
+    color: var(--mat-sys-error);
+  }
+  &__content {
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(16rem, 0.75fr) minmax(0, 1.25fr);
+    gap: 1.25rem;
+    min-height: 0;
+  }
+  &__information,
+  &__items {
+    padding: 1.25rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 12px;
+    background: var(--mat-sys-surface-container-low);
+  }
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem 1rem;
+    margin: 0;
+  }
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font-weight: 600;
+  }
+  dd {
+    margin: 0;
+  }
+  &__items {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  &__item-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  &__item,
+  &__items footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  &__item {
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+  &__item div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  &__item span {
+    color: var(--mat-sys-on-surface-variant);
+  }
+  &__takeaway {
+    align-self: flex-start;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: #fff1e6;
+    color: #a64200 !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  &__items footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    font: var(--mat-sys-title-medium);
+  }
+  &__actions {
+    display: flex;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+  &__actions button mat-spinner { display: inline-block; margin-right: 0.4rem; vertical-align: middle; }
+
+  @media (max-width: 760px) {
+    padding: 1rem;
+    &__content {
+      grid-template-columns: 1fr;
+      grid-template-rows: max-content minmax(0, 1fr);
+    }
+    &__information {
+      align-self: start;
+      flex: 0 0 auto;
+    }
+    &__actions {
+      align-items: stretch;
+      flex-direction: column-reverse;
+    }
+    &__actions button {
+      width: 100%;
+    }
+    &__cancel-action {
+      display: none;
+    }
+  }
+}

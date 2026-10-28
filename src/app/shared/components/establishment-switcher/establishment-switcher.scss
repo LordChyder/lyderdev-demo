@@ -1,0 +1,32 @@
+.establishment-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: none;
+}
+
+.establishment-switcher--unselected {
+  color: var(--mat-sys-error);
+}
+
+.establishment-switcher__label {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.establishment-switcher__caret {
+  margin-inline-start: -0.25rem;
+}
+
+.establishment-switcher__empty-item {
+  height: auto;
+  max-width: 22rem;
+  padding-block: 0.75rem;
+  line-height: 1.4;
+  white-space: normal;
+  text-align: left;
+  opacity: 1;
+  color: var(--mat-sys-on-surface-variant);
+}

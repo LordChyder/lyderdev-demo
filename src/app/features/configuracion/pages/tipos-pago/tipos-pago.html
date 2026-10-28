@@ -1,0 +1,103 @@
+<div class="tipos-pago">
+  <header class="tipos-pago__header">
+    <h1>Tipos de pago</h1>
+    @if (isDialog) {
+      <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <div class="tipos-pago__table-wrapper">
+    @if (loading()) {
+      <div class="tipos-pago__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="tipos-pago__state tipos-pago__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (paymentTypes().length === 0) {
+      <div class="tipos-pago__state">
+        <span>No hay tipos de pago para mostrar.</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="paymentTypes()" class="tipos-pago__table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let paymentType">{{ paymentType.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fiscalCode">
+          <th mat-header-cell *matHeaderCellDef>Código fiscal</th>
+          <td mat-cell *matCellDef="let paymentType">{{ paymentType.fiscalCode }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let paymentType">
+            <mat-icon>{{ paymentType.isActive ? 'check' : 'remove' }}</mat-icon>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let paymentType">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar tipo de pago"
+              matTooltip="Editar"
+              (click)="openEdit(paymentType)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <section class="tipos-pago__mobile-list" aria-label="Tipos de pago">
+        @for (paymentType of paymentTypes(); track paymentType.paymentTypeId) {
+          <article class="tipos-pago__mobile-card">
+            <div>
+              <span>Código fiscal</span>
+              <h2>{{ paymentType.name }}</h2>
+              <strong>{{ paymentType.fiscalCode || 'Sin código' }}</strong>
+            </div>
+            <footer>
+              <span [class.tipos-pago__mobile-status--inactive]="!paymentType.isActive" class="tipos-pago__mobile-status">
+                <mat-icon>{{ paymentType.isActive ? 'check_circle' : 'remove_circle' }}</mat-icon>
+                {{ paymentType.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+              <button mat-icon-button type="button" class="tipos-pago__mobile-edit" aria-label="Editar tipo de pago" (click)="openEdit(paymentType)"><mat-icon>edit</mat-icon></button>
+            </footer>
+          </article>
+        }
+      </section>
+    }
+  </div>
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+
+  <button
+    mat-fab
+    color="primary"
+    type="button"
+    class="tipos-pago__fab"
+    aria-label="Crear tipo de pago"
+    matTooltip="Crear tipo de pago"
+    (click)="openCreate()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

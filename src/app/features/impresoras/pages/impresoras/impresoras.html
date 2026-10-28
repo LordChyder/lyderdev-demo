@@ -1,0 +1,92 @@
+﻿<div class="impresoras">
+  <header class="impresoras__header">
+    <h1>Impresoras</h1>
+    <app-add-button label="Agregar impresora" tooltip="Crear impresora" (pressed)="openCreate()" />
+  </header>
+
+  @if (loading()) {
+    <div class="impresoras__state">
+      <mat-spinner diameter="36" />
+      <span>Cargando impresoras…</span>
+    </div>
+  } @else if (error()) {
+    <div class="impresoras__state impresoras__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (printers().length === 0) {
+    <div class="impresoras__state">
+      <mat-icon>print_disabled</mat-icon>
+      <span>No hay impresoras registradas.</span>
+    </div>
+  } @else {
+    <div class="impresoras__grid">
+      @for (printer of printers(); track printer.id) {
+        <article class="impresoras__card" [class.impresoras__card--inactive]="!printer.active">
+          <!-- Indicador de estado -->
+          <span class="impresoras__badge" [class.impresoras__badge--inactive]="!printer.active">
+            <mat-icon>{{ printer.active ? 'check_circle' : 'cancel' }}</mat-icon>
+            {{ printer.active ? 'Activo' : 'Inactivo' }}
+          </span>
+
+          <!-- Icono principal -->
+          <div class="impresoras__icon-wrap">
+            <mat-icon>print</mat-icon>
+          </div>
+
+          <!-- Nombre -->
+          <h2 class="impresoras__name">{{ printer.name }}</h2>
+
+          <!-- Detalles -->
+          <dl class="impresoras__details">
+            <div class="impresoras__detail">
+              <dt><mat-icon>lan</mat-icon></dt>
+              <dd>{{ printer.ipAddress }}</dd>
+            </div>
+            <div class="impresoras__detail">
+              <dt><mat-icon>settings_ethernet</mat-icon></dt>
+              <dd>Puerto {{ printer.port }}</dd>
+            </div>
+          </dl>
+
+          <!-- Acciones -->
+          <div class="impresoras__actions">
+            <button
+              mat-icon-button
+              type="button"
+              (click)="openEdit(printer)"
+              aria-label="Editar impresora"
+              matTooltip="Editar"
+              class="impresoras__action impresoras__action--edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            @if (printer.active) {
+              <button
+                mat-icon-button
+                type="button"
+                (click)="inactivate(printer)"
+                aria-label="Inactivar impresora"
+                matTooltip="Inactivar"
+                class="impresoras__action impresoras__action--block"
+              >
+                <mat-icon>block</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                (click)="activate(printer)"
+                aria-label="Activar impresora"
+                matTooltip="Activar"
+                class="impresoras__action impresoras__action--activate"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

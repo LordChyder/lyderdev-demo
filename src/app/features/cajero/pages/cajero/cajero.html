@@ -1,0 +1,53 @@
+<div class="cajero">
+  <header class="cajero__header">
+    <h1>Cajero</h1>
+  </header>
+
+  @if (loading()) {
+    <div class="cajero__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="cajero__state cajero__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (openCashiers().length === 0) {
+    <div class="cajero__state">
+      <mat-icon>point_of_sale</mat-icon>
+      <span>No hay ninguna caja abierta en este establecimiento.</span>
+    </div>
+  } @else {
+    <div class="cajero__grid">
+      @for (cashier of openCashiers(); track cashier.openingCashierId) {
+        <button type="button" class="cajero__card" (click)="openOrders(cashier)">
+          <div class="cajero__card-header">
+            <mat-icon>point_of_sale</mat-icon>
+            <span class="cajero__card-name">{{ cashier.cashierName }}</span>
+          </div>
+
+          <dl class="cajero__card-dates">
+            <dt>Abierta</dt>
+            <dd>{{ cashier.openingDate | date: 'short' }}</dd>
+            <dt>Vence</dt>
+            <dd>{{ cashier.limitDate | date: 'short' }}</dd>
+          </dl>
+
+          @if (cashier.priceLists?.length) {
+            <div class="cajero__card-section">
+              <span class="cajero__card-label">Listas de precio</span>
+              <span>{{ priceListNames(cashier) }}</span>
+            </div>
+          }
+
+          @if (cashier.stocks?.length) {
+            <div class="cajero__card-section">
+              <span class="cajero__card-label">Almacenes</span>
+              <span>{{ stockNames(cashier) }}</span>
+            </div>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

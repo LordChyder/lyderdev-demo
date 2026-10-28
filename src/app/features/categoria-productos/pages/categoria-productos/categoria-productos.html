@@ -1,0 +1,83 @@
+<div class="categoria-productos">
+  <header class="categoria-productos__header">
+    <h1>Categoría de productos</h1>
+    <button
+      mat-fab
+      extended
+      color="primary"
+      type="button"
+      class="categoria-productos__fab"
+      (click)="openCreate()"
+    >
+      <mat-icon>add</mat-icon>
+      Nueva categoría
+    </button>
+  </header>
+
+  <mat-form-field appearance="outline" class="categoria-productos__search">
+    <mat-label>Buscar</mat-label>
+    <input matInput [formControl]="searchForm.controls.term" placeholder="Nombre de la categoría" />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  @if (loading()) {
+    <div class="categoria-productos__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="categoria-productos__state categoria-productos__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (categories().length === 0) {
+    <div class="categoria-productos__state">
+      <span>No hay categorías registradas.</span>
+    </div>
+  } @else {
+    <div class="categoria-productos__table-wrapper">
+      <table mat-table [dataSource]="categories()" class="categoria-productos__table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let category">{{ category.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let category">
+            <button
+              mat-icon-button
+              type="button"
+              class="categoria-productos__action categoria-productos__action--edit"
+              (click)="openEdit(category)"
+              aria-label="Editar categoría"
+              matTooltip="Editar"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              class="categoria-productos__action categoria-productos__action--delete"
+              (click)="deleteCategory(category)"
+              aria-label="Eliminar categoría"
+              matTooltip="Eliminar"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

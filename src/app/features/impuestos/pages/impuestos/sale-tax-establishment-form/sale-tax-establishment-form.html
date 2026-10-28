@@ -1,0 +1,46 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar configuración' : 'Nueva configuración' }}</h2>
+
+<mat-dialog-content class="sale-tax-establishment-form">
+  <form [formGroup]="form" class="sale-tax-establishment-form__fields" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Impuesto</mat-label>
+      <mat-select formControlName="saleTaxId" [disabled]="isEdit || loadingTaxes()">
+        @for (tax of taxes(); track tax.id) {
+          <mat-option [value]="tax.id">{{ tax.label }}</mat-option>
+        }
+      </mat-select>
+      @if (form.controls.saleTaxId.touched && form.controls.saleTaxId.invalid) {
+        <mat-error>Selecciona un impuesto.</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="sale-tax-establishment-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>Alícuota (%)</mat-label>
+        <input matInput type="number" min="0" max="100" step="0.01" formControlName="aliquot" />
+        @if (form.controls.aliquot.touched && form.controls.aliquot.invalid) {
+          <mat-error>Ingresa un valor entre 0 y 100.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Agrupar por</mat-label>
+        <input matInput formControlName="groupBy" maxlength="400" />
+      </mat-form-field>
+    </div>
+
+    <mat-checkbox formControlName="isExempt">Exonerado</mat-checkbox>
+    <mat-checkbox formControlName="hasConfigureInProduct">Se configura en el producto</mat-checkbox>
+
+    @if (error()) {
+      <p class="sale-tax-establishment-form__error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="submit()">
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

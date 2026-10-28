@@ -1,0 +1,200 @@
+<div class="usuarios">
+  <header class="usuarios__header">
+    <div class="usuarios__title-group">
+      <h1>Usuarios</h1>
+    </div>
+
+    <label class="usuarios__search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        placeholder="Buscar por usuario, nombre o email"
+        aria-label="Buscar usuarios"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+      @if (search()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="usuarios__search-clear"
+          aria-label="Limpiar búsqueda"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </label>
+
+    @if (isDialog) {
+      <button mat-icon-button type="button" class="usuarios__close" aria-label="Cerrar" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <mat-dialog-content class="usuarios__content">
+    @if (loading()) {
+      <div class="usuarios__state">
+        <mat-spinner diameter="32" />
+        <span>Cargando usuarios...</span>
+      </div>
+    } @else if (error()) {
+      <div class="usuarios__state usuarios__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (users().length === 0) {
+      <div class="usuarios__state">
+        <mat-icon>group_off</mat-icon>
+        @if (search().trim()) {
+          <span>No se encontraron usuarios para "{{ search() }}".</span>
+        } @else {
+          <span>No hay usuarios registrados.</span>
+        }
+      </div>
+    } @else {
+      <!-- Vista de escritorio / tablet: Tabla -->
+      <div class="usuarios__table-wrapper">
+        <table mat-table [dataSource]="users()" class="usuarios__table">
+          <ng-container matColumnDef="username">
+            <th mat-header-cell *matHeaderCellDef>Usuario</th>
+            <td mat-cell *matCellDef="let user">{{ user.username }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let user">{{ user.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="isAdministrator">
+            <th mat-header-cell *matHeaderCellDef>Administrador</th>
+            <td mat-cell *matCellDef="let user">
+              <mat-icon [class.usuarios__icon--active]="user.isAdministrator">
+                {{ user.isAdministrator ? 'check' : 'remove' }}
+              </mat-icon>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="allowedGeneralSetting">
+            <th mat-header-cell *matHeaderCellDef>Config. general</th>
+            <td mat-cell *matCellDef="let user">
+              <mat-icon [class.usuarios__icon--active]="user.allowedGeneralSetting">
+                {{ user.allowedGeneralSetting ? 'check' : 'remove' }}
+              </mat-icon>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let user">
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Ver establecimientos del usuario"
+                matTooltip="Establecimientos"
+                class="usuarios__action usuarios__action--establishments"
+                (click)="openEstablishments(user)"
+              >
+                <mat-icon>home</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Editar usuario"
+                matTooltip="Editar"
+                class="usuarios__action usuarios__action--edit"
+                (click)="openEdit(user)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <!-- Vista móvil: Cards -->
+      <div class="usuarios__cards">
+        @for (user of users(); track user.userId) {
+          <div class="usuarios__card">
+            <div class="usuarios__card-header">
+              <div class="usuarios__card-avatar">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="usuarios__card-info">
+                <span class="usuarios__card-username">{{ user.username }}</span>
+                <span class="usuarios__card-name">{{ user.name || 'Sin nombre' }}</span>
+              </div>
+              <div class="usuarios__card-badges">
+                @if (user.isAdministrator) {
+                  <span class="usuarios__badge usuarios__badge--admin">Admin</span>
+                }
+                @if (user.allowedGeneralSetting) {
+                  <span class="usuarios__badge usuarios__badge--config" matTooltip="Configuración general">Config</span>
+                }
+              </div>
+            </div>
+
+            <div class="usuarios__card-body">
+              <div class="usuarios__card-row">
+                <mat-icon class="usuarios__card-icon">mail_outline</mat-icon>
+                <span class="usuarios__card-text">{{ user.email || 'Sin correo' }}</span>
+              </div>
+            </div>
+
+            <div class="usuarios__card-actions">
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Ver establecimientos del usuario"
+                matTooltip="Establecimientos"
+                class="usuarios__action usuarios__action--establishments"
+                (click)="openEstablishments(user)"
+              >
+                <mat-icon>home</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Editar usuario"
+                matTooltip="Editar"
+                class="usuarios__action usuarios__action--edit"
+                (click)="openEdit(user)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-dialog-content>
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+
+  <button
+    mat-fab
+    color="primary"
+    type="button"
+    class="usuarios__fab"
+    aria-label="Crear usuario"
+    matTooltip="Crear usuario"
+    (click)="openCreate()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar producto' : 'Agregar producto' }}</h2>
+
+<mat-dialog-content class="material-input-product-form">
+  @if (loadingProducts() || loadingDetail()) {
+    <div class="material-input-product-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="material-input-product-form__form" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Producto</mat-label>
+        <mat-select formControlName="productEstablishmentId">
+          @for (product of products(); track product.productEstablishmentId) {
+            <mat-option [value]="product.productEstablishmentId">
+              {{ product.productName }}
+              @if (product.complementaryName) {
+                ({{ product.complementaryName }})
+              }
+              @if (product.measureUnitAcronym) {
+                - {{ product.measureUnitAcronym }}
+              }
+            </mat-option>
+          }
+        </mat-select>
+        @if (
+          form.controls.productEstablishmentId.touched &&
+          form.controls.productEstablishmentId.invalid
+        ) {
+          <mat-error>Selecciona un producto.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Almacén vinculado</mat-label>
+        <mat-select formControlName="stockProductId" [disabled]="loadingStocks()">
+          @for (stock of stocks(); track stock.stockProductId) {
+            <mat-option [value]="stock.stockProductId">
+              {{ stockName(stock) }}
+            </mat-option>
+          }
+        </mat-select>
+        @if (loadingStocks()) {
+          <mat-hint>Cargando almacenes...</mat-hint>
+        } @else if (form.controls.productEstablishmentId.value && stocks().length === 0) {
+          <mat-hint>Este producto no tiene almacenes vinculados.</mat-hint>
+        }
+        @if (form.controls.stockProductId.touched && form.controls.stockProductId.invalid) {
+          <mat-error>Selecciona un almacén.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Cantidad</mat-label>
+        <input matInput type="number" step="0.01" formControlName="quantity" />
+        @if (form.controls.quantity.touched && form.controls.quantity.invalid) {
+          <mat-error>Ingresa una cantidad válida.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Costo unitario</mat-label>
+        <input matInput type="number" step="0.01" formControlName="unitCost" />
+        @if (form.controls.unitCost.touched && form.controls.unitCost.invalid) {
+          <mat-error>Ingresa un costo válido.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (error()) {
+        <p class="material-input-product-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loadingProducts() || loadingStocks() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : isEdit ? 'Actualizar producto' : 'Guardar producto' }}
+  </button>
+</mat-dialog-actions>

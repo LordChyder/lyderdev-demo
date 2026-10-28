@@ -1,0 +1,94 @@
+<div class="unidades-medida">
+  <header class="unidades-medida__header">
+    <h1>Unidades de medida</h1>
+    @if (isDialog) {
+      <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <div class="unidades-medida__table-wrapper">
+    @if (loading()) {
+      <div class="unidades-medida__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="unidades-medida__state unidades-medida__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (measureUnits().length === 0) {
+      <div class="unidades-medida__state">
+        <span>No hay unidades de medida para mostrar.</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="measureUnits()" class="unidades-medida__table">
+        <ng-container matColumnDef="acronym">
+          <th mat-header-cell *matHeaderCellDef>Siglas</th>
+          <td mat-cell *matCellDef="let unit">{{ unit.acronym }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let unit">{{ unit.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="numberDecimalPlaces">
+          <th mat-header-cell *matHeaderCellDef>Decimales</th>
+          <td mat-cell *matCellDef="let unit">{{ unit.numberDecimalPlaces }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="fiscalCode">
+          <th mat-header-cell *matHeaderCellDef>Código fiscal</th>
+          <td mat-cell *matCellDef="let unit">{{ unit.fiscalCode }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let unit">
+            <mat-icon>{{ unit.isActive ? 'check' : 'remove' }}</mat-icon>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let unit">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar unidad de medida"
+              matTooltip="Editar"
+              (click)="openEdit(unit)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+
+  <button
+    mat-fab
+    color="primary"
+    type="button"
+    class="unidades-medida__fab"
+    aria-label="Crear unidad de medida"
+    matTooltip="Crear unidad de medida"
+    (click)="openCreate()"
+  >
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

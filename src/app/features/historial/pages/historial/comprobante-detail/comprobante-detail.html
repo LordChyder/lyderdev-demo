@@ -1,0 +1,383 @@
+<div class="comprobante-detail">
+  <header class="comprobante-detail__header">
+    <div class="comprobante-detail__title-wrapper">
+      <mat-icon class="comprobante-detail__title-icon">receipt_long</mat-icon>
+      <h2>Detalle Comprobante</h2>
+      @if (hasSendingError() && fiscalInvoice()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="comprobante-detail__btn-error-log"
+          [disabled]="loadingLogs()"
+          matTooltip="Ver detalle del error de envío"
+          aria-label="Ver detalle del error de envío"
+          (click)="loadInvoiceLogs()"
+        >
+          @if (loadingLogs()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>error_outline</mat-icon>
+          }
+        </button>
+        @if (!retrySubmitted()) {
+          <button
+            mat-icon-button
+            type="button"
+            class="comprobante-detail__btn-retry"
+            [disabled]="retrying()"
+            matTooltip="Reintentar envío"
+            aria-label="Reintentar envío del comprobante"
+            (click)="retryInvoice()"
+          >
+            @if (retrying()) {
+              <mat-spinner diameter="18" />
+            } @else {
+              <mat-icon>refresh</mat-icon>
+            }
+          </button>
+        }
+      }
+      @if (canCheckSubmissionStatus()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="comprobante-detail__btn-sunat-status"
+          [disabled]="checkingStatus() !== null"
+          matTooltip="Consultar estado en SUNAT"
+          aria-label="Consultar estado de envío en SUNAT"
+          (click)="checkSubmissionStatus()"
+        >
+          @if (checkingStatus() === 'submission') {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>sync</mat-icon>
+          }
+        </button>
+      }
+      @if (canCheckAnnulStatus()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="comprobante-detail__btn-sunat-status"
+          [disabled]="checkingStatus() !== null"
+          matTooltip="Consultar anulación en SUNAT"
+          aria-label="Consultar estado de anulación en SUNAT"
+          (click)="checkAnnulStatus()"
+        >
+          @if (checkingStatus() === 'annulment') {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>published_with_changes</mat-icon>
+          }
+        </button>
+      }
+      @if (isAnnulled()) {
+        <span class="comprobante-detail__badge comprobante-detail__badge--annulled">Anulado</span>
+      }
+    </div>
+    <button
+      mat-icon-button
+      type="button"
+      class="comprobante-detail__close"
+      (click)="close()"
+      matTooltip="Cerrar"
+      aria-label="Cerrar panel de comprobante"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="comprobante-detail__body">
+    @if (loading()) {
+      <div class="comprobante-detail__state">
+        <mat-spinner diameter="36" />
+        <span>Cargando detalle...</span>
+      </div>
+    } @else if (error()) {
+      <div class="comprobante-detail__state comprobante-detail__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+        <button mat-stroked-button color="primary" type="button" (click)="loadDetail()">
+          Reintentar
+        </button>
+      </div>
+    } @else if (detail(); as detail) {
+      <dl class="comprobante-detail__list">
+        <dt>N°</dt>
+        <dd>{{ detail.orderNumber }}</dd>
+
+        @if (documentNumber) {
+          <dt>Comprobante</dt>
+          <dd class="comprobante-detail__doc-num">{{ documentNumber }}</dd>
+        } @else if (detail.orderNoteSaleNumber) {
+          <dt>Comprobante</dt>
+          <dd class="comprobante-detail__doc-num">NV-{{ detail.orderNoteSaleNumber }}</dd>
+        }
+
+        <dt>Mesa</dt>
+        <dd>{{ detail.tableName || (detail.isDelivery ? 'Delivery' : '—') }}</dd>
+
+        <dt>Mesero</dt>
+        <dd>{{ detail.waiterName || '—' }}</dd>
+
+        <dt>Apertura</dt>
+        <dd>{{ detail.registerDate | date: 'd MMM y, HH:mm:ss' }}</dd>
+
+        @if (detail.closedDate) {
+          <dt>Cierre</dt>
+          <dd>{{ detail.closedDate | date: 'd MMM y, HH:mm:ss' }} — {{ detail.closedBy || '—' }}</dd>
+        }
+
+        @if (detail.isDelivery) {
+          <dt>Dirección</dt>
+          <dd>{{ detail.deliveryAddress || '—' }}</dd>
+        }
+
+        @if (detail.customerName) {
+          <dt>Cliente</dt>
+          <dd>{{ detail.customerName }}</dd>
+        }
+      </dl>
+
+      <div class="comprobante-detail__table-wrapper">
+        <table mat-table [dataSource]="detail.items ?? []" class="comprobante-detail__table">
+          <ng-container matColumnDef="sequence">
+            <th mat-header-cell *matHeaderCellDef class="col-seq">#</th>
+            <td mat-cell *matCellDef="let item" class="col-seq">{{ item.sequence }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="product">
+            <th mat-header-cell *matHeaderCellDef class="col-prod">Producto</th>
+            <td mat-cell *matCellDef="let item" class="col-prod">{{ item.productName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="quantity">
+            <th mat-header-cell *matHeaderCellDef class="col-qty">Cant.</th>
+            <td mat-cell *matCellDef="let item" class="col-qty">{{ item.quantity }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="unitPrice">
+            <th mat-header-cell *matHeaderCellDef class="col-price">P. Unit.</th>
+            <td mat-cell *matCellDef="let item" class="col-price">{{ item.unitPrice | number: '1.2-2' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="amountToPay">
+            <th mat-header-cell *matHeaderCellDef class="col-subtotal">Subtotal</th>
+            <td mat-cell *matCellDef="let item" class="col-subtotal">{{ item.amountToPay | number: '1.2-2' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <dl class="comprobante-detail__list comprobante-detail__totals">
+        <dt>Total</dt>
+        <dd class="comprobante-detail__total-val">{{ detail.total | number: '1.2-2' }}</dd>
+
+        <dt>Pagado</dt>
+        <dd>{{ detail.paid | number: '1.2-2' }}</dd>
+
+        <dt>Saldo</dt>
+        <dd>{{ detail.balance | number: '1.2-2' }}</dd>
+      </dl>
+
+      @if (hasSendingError() && fiscalInvoice() && logsVisible()) {
+        <section class="comprobante-detail__sending-error" aria-live="polite">
+          <div class="comprobante-detail__sending-error-title">
+            <mat-icon>error_outline</mat-icon>
+            <span>Detalle del error de envío</span>
+          </div>
+          @if (loadingLogs()) {
+            <div class="comprobante-detail__sending-error-state">
+              <mat-spinner diameter="22" />
+              <span>Cargando detalle...</span>
+            </div>
+          } @else if (logsError()) {
+            <p class="comprobante-detail__error">{{ logsError() }}</p>
+            <button mat-stroked-button type="button" (click)="loadInvoiceLogs()">Reintentar</button>
+          } @else {
+            <pre class="comprobante-detail__sending-error-content">{{ logsText() }}</pre>
+          }
+        </section>
+      }
+
+      @if (annullingMode()) {
+        <div class="comprobante-detail__annul-box">
+          <div class="comprobante-detail__annul-title">
+            <mat-icon color="warn">warning</mat-icon>
+            <span>Confirmar anulación de comprobante</span>
+          </div>
+          <label for="annul-reason" class="comprobante-detail__annul-label">
+            Motivo de la anulación (opcional):
+          </label>
+          <textarea
+            id="annul-reason"
+            rows="3"
+            class="comprobante-detail__textarea"
+            placeholder="Ingrese el motivo de la anulación..."
+            [value]="annulReason()"
+            (input)="annulReason.set($any($event.target).value)"
+          ></textarea>
+          @if (annulError()) {
+            <p class="comprobante-detail__error">{{ annulError() }}</p>
+          }
+        </div>
+      }
+
+      <!-- Plantilla de ticket para impresión aislada (oculta en pantalla) -->
+      <div class="comprobante-detail__ticket" #ticketRef>
+        <p class="ticket-establishment">{{ establishmentName || '—' }}</p>
+        <p class="ticket-title">COMPROBANTE DE PAGO</p>
+
+        @if (isAnnulled()) {
+          <p class="ticket-status-annulled">*** COMPROBANTE ANULADO ***</p>
+        }
+
+        <div class="ticket-divider"></div>
+
+        <div class="ticket-info">
+          <p><strong>Comprobante:</strong> {{ documentNumber || (detail.orderNoteSaleNumber ? ('NV-' + detail.orderNoteSaleNumber) : ('Pedido #' + detail.orderNumber)) }}</p>
+          <p><strong>Fecha:</strong> {{ detail.registerDate | date: 'dd/MM/yyyy HH:mm:ss' }}</p>
+          <p><strong>Mesa:</strong> {{ detail.tableName || (detail.isDelivery ? 'Delivery' : '—') }}</p>
+          <p><strong>Mesero:</strong> {{ detail.waiterName || '—' }}</p>
+          <p><strong>Cliente:</strong> {{ detail.customerName || 'Cliente varios' }}</p>
+          @if (detail.customerDocNumber) {
+            <p><strong>Doc:</strong> {{ detail.customerDocNumber }}</p>
+          }
+        </div>
+
+        <div class="ticket-divider"></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cant.</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of detail.items ?? []; track item.id) {
+              <tr>
+                <td>{{ item.productName }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.amountToPay | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="ticket-divider"></div>
+
+        <dl class="ticket-totals">
+          <dt class="total-main">TOTAL:</dt>
+          <dd class="total-main">S/ {{ detail.total | number: '1.2-2' }}</dd>
+
+          <dt>Pagado:</dt>
+          <dd>S/ {{ detail.paid | number: '1.2-2' }}</dd>
+
+          <dt>Saldo:</dt>
+          <dd>S/ {{ detail.balance | number: '1.2-2' }}</dd>
+        </dl>
+
+        <div class="ticket-divider"></div>
+        <p class="ticket-footer">¡Gracias por su preferencia!</p>
+      </div>
+    }
+  </div>
+
+  <footer class="comprobante-detail__footer">
+    @if (annullingMode()) {
+      <button
+        mat-button
+        type="button"
+        [disabled]="annulling()"
+        (click)="cancelAnnul()"
+      >
+        Volver
+      </button>
+      <button
+        mat-flat-button
+        type="button"
+        class="comprobante-detail__btn-annul"
+        [disabled]="annulling()"
+        (click)="confirmAnnul()"
+      >
+        @if (annulling()) {
+          <mat-spinner diameter="18" />
+          <span>Anulando...</span>
+        } @else {
+          Confirmar anulación
+        }
+      </button>
+    } @else {
+      @if (detail(); as detail) {
+        <div class="comprobante-detail__document-actions">
+        <button
+          mat-stroked-button
+          type="button"
+          class="comprobante-detail__btn-print"
+          [disabled]="downloadingFile() !== null"
+          (click)="printComprobante()"
+        >
+          @if (downloadingFile() === 'pdf') {
+            <mat-spinner diameter="18" />
+            <span>Preparando PDF...</span>
+          } @else {
+            <ng-container>
+              <mat-icon>print</mat-icon>
+              <span>Imprimir comprobante</span>
+            </ng-container>
+          }
+        </button>
+
+        @if (fiscalInvoice()) {
+          <button
+            mat-icon-button
+            type="button"
+            class="comprobante-detail__btn-file"
+            [disabled]="downloadingFile() !== null"
+            matTooltip="Descargar XML"
+            aria-label="Descargar XML del comprobante"
+            (click)="downloadXml()"
+          >
+            @if (downloadingFile() === 'xml') {
+              <mat-spinner diameter="18" />
+            } @else {
+              <mat-icon>code</mat-icon>
+            }
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            class="comprobante-detail__btn-file"
+            [disabled]="downloadingFile() !== null"
+            matTooltip="Descargar CDR"
+            aria-label="Descargar CDR del comprobante"
+            (click)="downloadCdr()"
+          >
+            @if (downloadingFile() === 'cdr') {
+              <mat-spinner diameter="18" />
+            } @else {
+              <mat-icon>verified</mat-icon>
+            }
+          </button>
+        }
+        </div>
+      }
+
+      @if (canAnnul()) {
+        <button
+          mat-flat-button
+          type="button"
+          class="comprobante-detail__btn-annul"
+          (click)="startAnnul()"
+        >
+          <mat-icon>block</mat-icon>
+          Anular Comprobante
+        </button>
+      }
+    }
+  </footer>
+</div>

@@ -1,0 +1,59 @@
+<h2 mat-dialog-title>
+  {{ isEdit ? 'Editar asignación — ' + data.establishmentName : 'Asignar establecimiento' }}
+</h2>
+
+<mat-dialog-content class="user-establishment-form">
+  @if (loadingOptions()) {
+    <div class="user-establishment-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="user-establishment-form__fields" novalidate>
+      @if (!isEdit) {
+        <mat-form-field appearance="outline">
+          <mat-label>Establecimiento</mat-label>
+          <mat-select formControlName="establishmentId">
+            @for (option of establishmentOptions(); track option.id) {
+              <mat-option [value]="option.id">{{ option.acronym }} — {{ option.name }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.establishmentId.touched && form.controls.establishmentId.invalid) {
+            <mat-error>Selecciona un establecimiento.</mat-error>
+          }
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Vence el</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="expiresAt" />
+        <mat-hint>Vacío = sin vencimiento</mat-hint>
+        <mat-datepicker-toggle matIconSuffix [for]="picker" />
+        <mat-datepicker #picker />
+      </mat-form-field>
+
+      <div class="user-establishment-form__toggles">
+        <mat-slide-toggle formControlName="isCashier">Es supervisor de Cajas?</mat-slide-toggle>
+        @if (isEdit) {
+          <mat-slide-toggle formControlName="active">Asignación activa</mat-slide-toggle>
+        }
+      </div>
+
+      @if (error()) {
+        <p class="user-establishment-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loadingOptions() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

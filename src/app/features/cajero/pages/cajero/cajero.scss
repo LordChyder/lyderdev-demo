@@ -1,0 +1,93 @@
+.cajero {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1rem;
+
+  &__header {
+    margin-bottom: 1rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--mat-sys-surface-container);
+    border: none;
+    border-radius: 12px;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__card-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  &__card-dates {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.125rem 0.5rem;
+    margin: 0;
+    font-size: 0.875rem;
+
+    dt {
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+
+  &__card-section {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8125rem;
+  }
+
+  &__card-label {
+    color: var(--mat-sys-on-surface-variant);
+  }
+}

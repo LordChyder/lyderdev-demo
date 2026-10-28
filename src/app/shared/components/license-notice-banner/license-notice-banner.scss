@@ -1,0 +1,72 @@
+.license-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  overflow-wrap: anywhere;
+
+  &__icon {
+    flex: 0 0 auto;
+    margin-top: 0.125rem;
+  }
+
+  &__body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__message {
+    margin: 0;
+    font: var(--mat-sys-body-medium);
+  }
+
+  &__unpaid {
+    margin-left: 0.375rem;
+    font-weight: 600;
+  }
+
+  &__footer {
+    margin: 0.125rem 0 0;
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+
+  &__grace {
+    flex: 0 0 auto;
+    margin-top: 0.125rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  &__close {
+    flex: 0 0 auto;
+    margin: -0.5rem -0.5rem -0.5rem 0;
+  }
+
+  &--upcoming {
+    background: var(--app-status-open-bg);
+    color: var(--app-status-open-fg);
+  }
+
+  &--pending {
+    background: var(--app-status-warning-bg);
+    color: var(--app-status-warning-fg);
+  }
+
+  &--overdue {
+    background: var(--app-status-critical-bg);
+    color: var(--app-status-critical-fg);
+  }
+}
+
+@media (max-width: 37.5rem) {
+  .license-notice-banner {
+    flex-wrap: wrap;
+
+    &__grace {
+      margin-left: 2rem;
+    }
+  }
+}

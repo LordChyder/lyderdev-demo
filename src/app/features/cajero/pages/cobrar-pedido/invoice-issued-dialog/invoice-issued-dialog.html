@@ -1,0 +1,29 @@
+<div class="invoice-issued-dialog">
+  @if (!ready()) {
+    <div class="invoice-issued-dialog__loading" aria-live="polite">
+      <mat-spinner diameter="42" />
+      <h2 mat-dialog-title>Emitiendo comprobante</h2>
+      <p mat-dialog-content>
+        Estamos registrando y preparando la {{ data.documentType.toLowerCase() }}.
+      </p>
+    </div>
+  } @else {
+    <div class="invoice-issued-dialog__success">
+      <span class="invoice-issued-dialog__check" aria-hidden="true">
+        <mat-icon>check</mat-icon>
+      </span>
+      <h2 mat-dialog-title>Comprobante emitido</h2>
+      <p mat-dialog-content>
+        La {{ data.documentType.toLowerCase() }} fue emitida correctamente.
+      </p>
+    </div>
+
+    <div mat-dialog-actions class="invoice-issued-dialog__actions">
+      <button mat-stroked-button type="button" (click)="close()">Cerrar</button>
+      <button mat-flat-button color="primary" type="button" (click)="print()">
+        <mat-icon>print</mat-icon>
+        Imprimir
+      </button>
+    </div>
+  }
+</div>

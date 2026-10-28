@@ -1,0 +1,284 @@
+﻿.almacen-productos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1rem;
+  color: #233d89;
+
+  // ── Header ─────────────────────────────────────────────────────────────────
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  // ── Resumen de stock ────────────────────────────────────────────────────────
+  &__summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    color: #4d6890;
+    font: 400 0.875rem/1.4 Roboto, sans-serif;
+
+    strong { color: #172d59; font-weight: 700; }
+  }
+
+  // ── Tabla — mismo look que Usuarios ─────────────────────────────────────────
+  &__table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #d7e6fb;
+    border-radius: 12px;
+    background: var(--mat-sys-surface-container-lowest);
+  }
+
+  // En móvil, la tabla se convierte en fichas bento para evitar columnas
+  // comprimidas y mantener cada cantidad fácil de leer/tocar.
+  &__mobile-list { display: none; }
+
+  &__table {
+    width: 100%;
+    min-width: 860px;
+    background: transparent;
+
+    .mat-mdc-header-row {
+      height: 3.375rem;
+      background: #e3efff;
+    }
+
+    .mat-mdc-header-cell {
+      box-sizing: border-box;
+      height: 3.375rem;
+      padding: 0 1rem;
+      border-bottom: 0;
+      color: #101a63;
+      font: 600 0.9375rem/1.25 Roboto, sans-serif;
+    }
+
+    .mat-mdc-row {
+      height: 3.5rem;
+      transition: background-color 180ms ease-out;
+      &:hover { background: #f0f6ff; }
+    }
+
+    .mat-mdc-cell {
+      box-sizing: border-box;
+      height: 3.5rem;
+      padding: 0 1rem;
+      border-bottom-color: #dbe9fb;
+      color: #253f8d;
+      font: 400 0.9375rem/1.35 Roboto, sans-serif;
+    }
+
+    // Anchos de columnas
+    .mat-column-product          { width: 22%; }
+    .mat-column-measureUnit      { width: 7%; }
+    .mat-column-currentQuantity  { width: 8%; }
+    .mat-column-reservedQuantity { width: 9%; }
+    .mat-column-availableQuantity{ width: 9%; }
+    .mat-column-quantityMin      { width: 7%; }
+    .mat-column-quantityMax      { width: 7%; }
+    .mat-column-location         { width: 11%; }
+    .mat-column-active           { width: 8%; }
+    .mat-column-actions {
+      width: 12%;
+      padding-right: 0.75rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  // ── Indicador activo/inactivo ───────────────────────────────────────────────
+  &__status {
+    display: inline-grid;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border-radius: 50%;
+    background: #daf9e8;
+    color: #04a443;
+
+    mat-icon { width: 1.25rem; height: 1.25rem; font-size: 1.25rem; font-weight: 700; }
+
+    &--inactive { background: #f1f3f8; color: #66728a; }
+  }
+
+  // ── Botones de acción ───────────────────────────────────────────────────────
+  &__action {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid #d7e7ff;
+    border-radius: 9px;
+    --mat-icon-button-container-shape: 9px;
+    transition: background-color 180ms ease-out, border-color 180ms ease-out;
+
+    &:focus-visible { outline: 3px solid rgb(0 105 230 / 30%); outline-offset: 2px; }
+
+    &--block  { color: #b06000; &:hover { background: #fff6e9; border-color: #ffc878; } }
+    &--activate { color: #04a443; &:hover { background: #daf9e8; border-color: #92e5b3; } }
+    &--delete { color: #c5221f; &:hover { background: #fdeaea; border-color: #f4a4a4; } }
+  }
+
+  // ── Estado vacío / error ────────────────────────────────────────────────────
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+    &--error { color: var(--mat-sys-error); }
+  }
+
+  @media (max-width: 48rem) {
+    padding: 1.5rem 1rem;
+    &__header { align-items: flex-start; }
+    &__title h1 { font-size: 1.5rem; }
+    &__header > button { flex: 0 0 auto; }
+    &__summary { gap: 0.5rem 1rem; margin-bottom: 1.25rem; }
+
+    &__table-wrapper { display: none; }
+    &__mobile-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    &__mobile-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #d7e6fb;
+      border-radius: 12px;
+      background: var(--mat-sys-surface-container-lowest);
+    }
+
+    &__mobile-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.875rem;
+      border-bottom: 1px solid #e2ecfa;
+      background: #f4f8ff;
+
+      h2 { margin: 0; color: #101a63; font: 700 1rem/1.25 Roboto, sans-serif; overflow-wrap: anywhere; }
+      span:not(.almacen-productos__status) { display: block; margin-top: 0.2rem; color: #4d6890; font-size: 0.75rem; font-weight: 700; }
+    }
+
+    &__stock-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 0.75rem;
+      border: 1px solid #dce9fa;
+      border-radius: 9px;
+      overflow: hidden;
+
+      > div { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.625rem 0.5rem; border-right: 1px solid #dce9fa; }
+      > div:last-child { border-right: 0; }
+      span { color: #52698e; font-size: 0.7rem; font-weight: 600; }
+      strong { color: #172d59; font: 700 1.125rem/1 Roboto, sans-serif; }
+    }
+
+    &__stock-grid-available { background: #effbf3; }
+    &__mobile-meta { display: flex; flex-wrap: wrap; gap: 0.375rem 0.875rem; padding: 0 0.875rem 0.75rem; color: #52698e; font-size: 0.75rem; }
+    &__mobile-meta strong { color: #233d89; }
+    &__mobile-actions { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 0.75rem; border-top: 1px solid #e2ecfa; }
+    &__mobile-actions button:first-child { min-height: 2.25rem; color: #a84700; border-color: #ffc28e; font-weight: 700; }
+    &__mobile-actions .almacen-productos__action { margin-left: auto; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .almacen-productos__table .mat-mdc-row { transition: none; }
+}
+
+// ── ng-deep overrides ─────────────────────────────────────────────────────────
+:host ::ng-deep {
+  .almacen-productos__table {
+    .mat-mdc-header-row { background: #e3efff !important; }
+
+    .mat-mdc-header-cell {
+      height: 3.375rem;
+      padding: 0 1rem;
+      border-bottom: 0;
+      color: #101a63;
+      font: 600 0.9375rem/1.25 Roboto, sans-serif;
+    }
+
+    .mat-mdc-row {
+      height: 3.5rem;
+      &:hover { background: #f0f6ff !important; }
+    }
+
+    .mat-mdc-cell {
+      height: 3.5rem;
+      padding: 0 1rem;
+      border-bottom-color: #dbe9fb;
+      color: #253f8d;
+      font: 400 0.9375rem/1.35 Roboto, sans-serif;
+    }
+  }
+}
+
+// ── Dark theme ────────────────────────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .almacen-productos {
+    color: #d8e8ff;
+
+    &__title h1 { color: #f0f6ff; }
+    &__summary { color: #7a9ab8; strong { color: #c8dff5; } }
+
+    &__table-wrapper {
+      border-color: #1f3c5c;
+      background: #0c1c32;
+    }
+
+    @media (max-width: 48rem) {
+      &__mobile-card { border-color: #1f3c5c; background: #0c1c32; }
+      &__mobile-card-header { border-bottom-color: #1f3c5c; background: #102744; h2 { color: #e7f1ff; } span:not(.almacen-productos__status) { color: #9bb1cb; } }
+      &__stock-grid { border-color: #244569; > div { border-right-color: #244569; } span { color: #9bb1cb; } strong { color: #e7f1ff; } }
+      &__stock-grid-available { background: #0d4135; }
+      &__mobile-meta { color: #9bb1cb; strong { color: #d8e8ff; } }
+      &__mobile-actions { border-top-color: #1f3c5c; }
+    }
+
+    &__status {
+      background: #0d4135;
+      color: #63e6ae;
+      &--inactive { background: #1c2f47; color: #7a9ab8; }
+    }
+
+    &__action {
+      border-color: #2a4d72;
+      background: #0a1e35;
+
+      &--block    { color: #ffb35c; &:hover { background: #3d2310; border-color: #c87830; } }
+      &--activate { color: #63e6ae; &:hover { background: #0d4135; border-color: #4acb94; } }
+      &--delete   { color: #ff8a8a; &:hover { background: #3a1616; border-color: #c74444; } }
+    }
+  }
+
+  ::ng-deep {
+    .almacen-productos__table {
+      background: #0c1c32;
+
+      .mat-mdc-header-row { background: #173a63 !important; }
+      .mat-mdc-header-cell { border-bottom-color: #1f3c5c; color: #e7f1ff; }
+      .mat-mdc-row { background: #0c1c32; &:hover { background: #112b4a !important; } }
+      .mat-mdc-cell { border-bottom-color: #1f3c5c; color: #d8e8ff; }
+    }
+  }
+}

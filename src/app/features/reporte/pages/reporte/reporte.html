@@ -1,0 +1,42 @@
+<div class="reportes">
+  <header class="reportes__top">
+    <div class="reportes__title"><span class="reportes__title-icon"><mat-icon>leaderboard</mat-icon></span><div><h1>Reportes</h1><p>Visualiza el rendimiento de tu restaurante con información del período.</p></div></div>
+  </header>
+
+  <form [formGroup]="filters" class="reportes__filters" aria-label="Filtros del reporte">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Período</mat-label><mat-select formControlName="period">@for (option of periodTypes; track option.value) { <mat-option [value]="option.value">{{ option.label }}</mat-option> }</mat-select></mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Fecha de referencia</mat-label><input matInput [matDatepicker]="picker" formControlName="referenceDate" /><mat-datepicker-toggle matIconSuffix [for]="picker" /><mat-datepicker #picker /></mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic"><mat-label>Tipo de pago</mat-label><mat-select formControlName="paymentTypeId"><mat-option [value]="null">Todos</mat-option>@for (option of paymentTypeOptions(); track option.id) { <mat-option [value]="option.id">{{ option.name }}</mat-option> }</mat-select></mat-form-field>
+    <button class="reportes__export" type="button" (click)="exportReport()" [disabled]="!data()"><mat-icon>download</mat-icon>Exportar reporte<mat-icon>expand_more</mat-icon></button>
+  </form>
+
+  @if (loading()) {
+    <div class="reportes__state" aria-live="polite"><mat-spinner diameter="32" /><span>Calculando reporte...</span></div>
+  } @else if (error()) {
+    <div class="reportes__state reportes__state--error" role="alert"><mat-icon>error_outline</mat-icon><span>{{ error() }}</span></div>
+  } @else if (data(); as report) {
+    <div class="reportes__period"><mat-icon>date_range</mat-icon><span>{{ report.periodLabel }}</span></div>
+    <section class="reportes__metrics" aria-label="Métricas del período">
+      <article class="report-metric report-metric--sales"><span><mat-icon>shopping_cart</mat-icon></span><div><small>Ventas totales</small><strong>{{ report.totalSales | number: '1.2-2' }}</strong><em><mat-icon>trending_up</mat-icon> Ventas registradas</em></div></article>
+      <article class="report-metric report-metric--expenses"><span><mat-icon>account_balance_wallet</mat-icon></span><div><small>Gastos totales</small><strong>{{ report.totalExpenses | number: '1.2-2' }}</strong><em class="report-metric__muted">Gastos del período</em></div></article>
+      <article class="report-metric report-metric--profit"><span><mat-icon>monitoring</mat-icon></span><div><small>Utilidad neta</small><strong [class.report-metric__negative]="report.netProfit < 0">{{ report.netProfit | number: '1.2-2' }}</strong><em [class.report-metric__negative]="report.netProfit < 0"><mat-icon>{{ report.netProfit >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>{{ report.netProfit >= 0 ? 'Resultado positivo' : 'Revisar costos' }}</em></div></article>
+      <article class="report-metric report-metric--orders"><span><mat-icon>receipt_long</mat-icon></span><div><small>Pedidos cerrados</small><strong>{{ report.closedOrders }}</strong><em>En el período</em></div></article>
+      <article class="report-metric report-metric--ticket"><span><mat-icon>sell</mat-icon></span><div><small>Ticket promedio</small><strong>{{ report.averageTicket | number: '1.2-2' }}</strong><em>Por pedido cerrado</em></div></article>
+    </section>
+
+    <section class="reportes__bento" aria-label="Análisis detallado">
+      <article class="report-panel report-panel--chart"><header class="report-panel__header"><span class="report-panel__icon"><mat-icon>bar_chart</mat-icon></span><div><h2>Ventas vs. gastos</h2><p>Comparativa diaria del período seleccionado.</p></div></header>
+        @if (chartBars().length > 0) { <div class="reportes__chart"><div class="reportes__legend"><span><i class="reportes__legend-sales"></i>Ventas</span><span><i class="reportes__legend-expenses"></i>Gastos</span></div><div class="reportes__chart-bars">@for (bar of chartBars(); track bar.label) { <div class="reportes__chart-group" [title]="bar.label"><div class="reportes__chart-track"><div class="reportes__chart-bar reportes__chart-bar--sales" [style.height.%]="bar.salesPct" [title]="'Ventas: ' + (bar.sales | number: '1.2-2')"></div><div class="reportes__chart-bar reportes__chart-bar--expenses" [style.height.%]="bar.expensesPct" [title]="'Gastos: ' + (bar.expenses | number: '1.2-2')"></div></div><span>{{ bar.label }}</span></div> }</div></div> } @else { <p class="reportes__empty">Sin datos para graficar en este período.</p> }
+      </article>
+      <article class="report-panel"><header class="report-panel__header"><span class="report-panel__icon report-panel__icon--purple"><mat-icon>payments</mat-icon></span><div><h2>Pagos por tipo</h2><p>Distribución de los cobros registrados.</p></div></header>
+        @if (report.paymentsByType && report.paymentsByType.length > 0) { <div class="reportes__table-wrap"><table mat-table [dataSource]="report.paymentsByType" class="reportes__table"><ng-container matColumnDef="paymentTypeName"><th mat-header-cell *matHeaderCellDef>Tipo de pago</th><td mat-cell *matCellDef="let payment">{{ payment.paymentTypeName }}</td></ng-container><ng-container matColumnDef="amount"><th mat-header-cell *matHeaderCellDef>Monto</th><td mat-cell *matCellDef="let payment">{{ payment.amount | number: '1.2-2' }}</td></ng-container><tr mat-header-row *matHeaderRowDef="paymentsColumns"></tr><tr mat-row *matRowDef="let row; columns: paymentsColumns"></tr></table></div> } @else { <p class="reportes__empty">Sin pagos en este período.</p> }
+      </article>
+      <article class="report-panel"><header class="report-panel__header"><span class="report-panel__icon"><mat-icon>inventory_2</mat-icon></span><div><h2>Productos más vendidos</h2><p>Productos con mayor salida en el período.</p></div></header>
+        @if (report.topProducts && report.topProducts.length > 0) { <div class="reportes__table-wrap"><table mat-table [dataSource]="report.topProducts" class="reportes__table"><ng-container matColumnDef="productName"><th mat-header-cell *matHeaderCellDef>Producto</th><td mat-cell *matCellDef="let product">{{ product.productName }}</td></ng-container><ng-container matColumnDef="quantity"><th mat-header-cell *matHeaderCellDef>Cantidad</th><td mat-cell *matCellDef="let product">{{ product.quantity | number: '1.0-2' }}</td></ng-container><ng-container matColumnDef="totalAmount"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let product">{{ product.totalAmount | number: '1.2-2' }}</td></ng-container><tr mat-header-row *matHeaderRowDef="topProductsColumns"></tr><tr mat-row *matRowDef="let row; columns: topProductsColumns"></tr></table></div> } @else { <p class="reportes__empty">Sin productos en este período.</p> }
+      </article>
+      <article class="report-panel"><header class="report-panel__header"><span class="report-panel__icon report-panel__icon--orange"><mat-icon>request_quote</mat-icon></span><div><h2>Gastos del período</h2><p>Movimientos que impactan la utilidad.</p></div></header>
+        @if (report.expenses && report.expenses.length > 0) { <div class="reportes__table-wrap"><table mat-table [dataSource]="report.expenses" class="reportes__table"><ng-container matColumnDef="expenseDate"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let expense">{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</td></ng-container><ng-container matColumnDef="description"><th mat-header-cell *matHeaderCellDef>Descripción</th><td mat-cell *matCellDef="let expense">{{ expense.description || '—' }}</td></ng-container><ng-container matColumnDef="amount"><th mat-header-cell *matHeaderCellDef>Monto</th><td mat-cell *matCellDef="let expense">{{ expense.amount | number: '1.2-2' }}</td></ng-container><tr mat-header-row *matHeaderRowDef="expensesColumns"></tr><tr mat-row *matRowDef="let row; columns: expensesColumns"></tr></table></div> } @else { <p class="reportes__empty">Sin gastos en este período.</p> }
+      </article>
+    </section>
+  }
+</div>

@@ -1,0 +1,30 @@
+.user-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  &__state {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  &__error {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+}

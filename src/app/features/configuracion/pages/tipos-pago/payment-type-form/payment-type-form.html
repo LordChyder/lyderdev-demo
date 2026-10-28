@@ -1,0 +1,73 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar tipo de pago' : 'Crear tipo de pago' }}</h2>
+
+<mat-dialog-content class="payment-type-form">
+  @if (loading()) {
+    <div class="payment-type-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="payment-type-form__fields" novalidate>
+      <div class="payment-type-form__row">
+        <mat-form-field appearance="outline">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="name" autocomplete="off" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <mat-error>Ingresa el nombre.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Código fiscal</mat-label>
+          <input matInput formControlName="fiscalCode" autocomplete="off" />
+          @if (form.controls.fiscalCode.touched && form.controls.fiscalCode.invalid) {
+            <mat-error>Ingresa el código fiscal.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <div class="payment-type-form__toggles">
+        <mat-slide-toggle formControlName="isIssuingBankRequired">
+          Requiere banco emisor
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isCheckNumberRequired">
+          Requiere número de cheque
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isCardTransactionCodeRequired">
+          Requiere código de transacción de tarjeta
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isCardFlagRequired">
+          Requiere marca de tarjeta
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isCardNumberRequired">
+          Requiere número de tarjeta
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isCardNumberOptional">
+          Número de tarjeta opcional
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isCreditConditionOperation">
+          Operación en condición de crédito
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="isChangeAllowed">
+          Permite vuelto
+        </mat-slide-toggle>
+      </div>
+
+      @if (error()) {
+        <p class="payment-type-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loading() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

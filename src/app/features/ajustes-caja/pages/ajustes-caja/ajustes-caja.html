@@ -1,0 +1,70 @@
+<div class="ajustes-caja" [class.ajustes-caja--panel-open]="selectedCashierId()">
+  <div class="ajustes-caja__main">
+    <header class="ajustes-caja__header">
+      <h1>Ajustes de caja</h1>
+      <button mat-flat-button color="primary" type="button" (click)="openCreate()">
+        <mat-icon>add</mat-icon>
+        Nueva caja
+      </button>
+    </header>
+
+    @if (loading()) {
+      <div class="ajustes-caja__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="ajustes-caja__state ajustes-caja__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (cashiers().length === 0) {
+      <div class="ajustes-caja__state">
+        <span>No hay cajas registradas.</span>
+      </div>
+    } @else {
+      <div class="ajustes-caja__grid">
+        @for (cashier of cashiers(); track cashier.id) {
+          <button
+            type="button"
+            class="ajustes-caja__card"
+            [class.ajustes-caja__card--selected]="cashier.id === selectedCashierId()"
+            [class.ajustes-caja__card--open]="getCashierStatus(cashier) === 'open'"
+            [class.ajustes-caja__card--pending]="getCashierStatus(cashier) === 'pending'"
+            [class.ajustes-caja__card--active]="getCashierStatus(cashier) === 'closed'"
+            [class.ajustes-caja__card--inactive]="getCashierStatus(cashier) === 'inactive'"
+            (click)="selectCashier(cashier)"
+          >
+            <mat-icon class="ajustes-caja__card-icon">point_of_sale</mat-icon>
+            <span class="ajustes-caja__card-name">{{ cashier.name }}</span>
+            <span
+              class="ajustes-caja__card-status"
+              [class.ajustes-caja__card-status--open]="getCashierStatus(cashier) === 'open'"
+              [class.ajustes-caja__card-status--pending]="getCashierStatus(cashier) === 'pending'"
+              [class.ajustes-caja__card-status--inactive]="getCashierStatus(cashier) === 'inactive'"
+            >
+              {{ cashierStatusLabel(cashier) }}
+            </span>
+          </button>
+        }
+      </div>
+
+      <mat-paginator
+        [length]="totalRows()"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPage($event)"
+      />
+    }
+  </div>
+
+  @if (selectedCashier(); as cashier) {
+    <aside class="ajustes-caja__panel" [class.ajustes-caja__panel--open]="panelOpen()">
+      <app-cashier-panel
+        [cashier]="cashier"
+        (closed)="closePanel()"
+        (changed)="onCashierChanged()"
+      />
+    </aside>
+  }
+</div>

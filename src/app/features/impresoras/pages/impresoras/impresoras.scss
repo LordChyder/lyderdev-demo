@@ -1,0 +1,293 @@
+﻿// ── Variables ────────────────────────────────────────────────────────────────
+$accent:      #0875eb;
+$accent-pale: #e8f1ff;
+$green:       #04a443;
+$green-pale:  #daf9e8;
+$amber:       #b06000;
+$amber-pale:  #fff6e9;
+$red-pale:    #fde8e8;
+$border:      #d7e6fb;
+$radius-card: 18px;
+$radius-btn:  10px;
+
+// ── Root ─────────────────────────────────────────────────────────────────────
+.impresoras {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.25rem 1.5rem;
+  color: #233d89;
+
+  // ── Header ─────────────────────────────────────────────────────────────────
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  // ── Bento grid ─────────────────────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.125rem;
+  }
+
+  // ── Card ───────────────────────────────────────────────────────────────────
+  &__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.375rem 1.375rem 1.125rem;
+    border: 1.5px solid $border;
+    border-radius: $radius-card;
+    background: #fff;
+    box-shadow: 0 2px 8px rgb(14 40 120 / 6%);
+    transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+    overflow: hidden;
+
+    // Franja decorativa superior
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: linear-gradient(90deg, $accent 0%, #5baeff 100%);
+      border-radius: $radius-card $radius-card 0 0;
+    }
+
+    &:hover {
+      box-shadow: 0 6px 20px rgb(8 117 235 / 14%);
+      border-color: #b3d4ff;
+      transform: translateY(-2px);
+    }
+
+    // Tarjeta inactiva — tono apagado
+    &--inactive {
+      background: #f7f9fc;
+      border-color: #dce3ef;
+      box-shadow: none;
+
+      &::before {
+        background: linear-gradient(90deg, #b0bec8 0%, #d0dae6 100%);
+      }
+
+      &:hover {
+        box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+        border-color: #c5d0de;
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  // ── Badge de estado ────────────────────────────────────────────────────────
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    align-self: flex-start;
+    padding: 0.25rem 0.625rem 0.25rem 0.5rem;
+    border-radius: 999px;
+    background: $green-pale;
+    color: $green;
+    font: 600 0.75rem/1 Roboto, sans-serif;
+
+    mat-icon { font-size: 0.875rem; width: 0.875rem; height: 0.875rem; }
+
+    &--inactive {
+      background: #f1f3f8;
+      color: #66728a;
+    }
+  }
+
+  // ── Icono central ─────────────────────────────────────────────────────────
+  &__icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 14px;
+    background: $accent-pale;
+    color: $accent;
+
+    mat-icon { font-size: 1.75rem; width: 1.75rem; height: 1.75rem; }
+  }
+
+  // ── Nombre ─────────────────────────────────────────────────────────────────
+  &__name {
+    margin: 0;
+    color: #0f1765;
+    font: 700 1.0625rem/1.3 Roboto, sans-serif;
+    word-break: break-word;
+  }
+
+  // ── Lista de detalles ──────────────────────────────────────────────────────
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+  }
+
+  &__detail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4d6890;
+    font: 400 0.875rem/1.4 Roboto, sans-serif;
+
+    dt {
+      display: flex;
+      mat-icon { font-size: 1rem; width: 1rem; height: 1rem; color: #7a9ec8; }
+    }
+    dd { margin: 0; }
+  }
+
+  // ── Acciones de la tarjeta ─────────────────────────────────────────────────
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    margin-top: 0.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid $border;
+  }
+
+  &__action {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1.5px solid $border;
+    border-radius: $radius-btn;
+    --mat-icon-button-container-shape: #{$radius-btn};
+    transition: background-color 180ms ease-out, border-color 180ms ease-out;
+
+    &:focus-visible { outline: 3px solid rgb(8 117 235 / 30%); outline-offset: 2px; }
+
+    &--edit {
+      color: $accent;
+      &:hover { background: $accent-pale; border-color: #9bc7ff; }
+    }
+    &--activate {
+      color: $green;
+      &:hover { background: $green-pale; border-color: #92e5b3; }
+    }
+    &--block {
+      color: $amber;
+      &:hover { background: $amber-pale; border-color: #ffc878; }
+    }
+  }
+
+  // ── Estados vacíos / error ─────────────────────────────────────────────────
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 4rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+    font: 400 1rem/1.5 Roboto, sans-serif;
+
+    mat-icon { font-size: 2.5rem; width: 2.5rem; height: 2.5rem; opacity: .55; }
+
+    &--error { color: var(--mat-sys-error); }
+  }
+
+  // ── Responsive ─────────────────────────────────────────────────────────────
+  @media (max-width: 48rem) {
+    padding: 1rem;
+    &__header h1 { font-size: 1.625rem; }
+    &__grid { grid-template-columns: 1fr; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impresoras__card,
+  .impresoras__action { transition: none !important; transform: none !important; }
+}
+
+// ── Dark theme ────────────────────────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .impresoras {
+    color: #d8e8ff;
+
+    &__header h1 { color: #f0f6ff; }
+
+    &__card {
+      background: #0e1e35;
+      border-color: #1f3c5c;
+      box-shadow: 0 2px 12px rgb(0 0 0 / 35%);
+
+      &::before {
+        background: linear-gradient(90deg, #4fa8ff 0%, #1e6fd8 100%);
+      }
+
+      &:hover {
+        background: #122843;
+        border-color: #2f5a8a;
+        box-shadow: 0 6px 24px rgb(0 0 0 / 45%);
+      }
+
+      &--inactive {
+        background: #0a1626;
+        border-color: #1a2d45;
+
+        &::before {
+          background: linear-gradient(90deg, #3a5270 0%, #2a4060 100%);
+        }
+
+        &:hover {
+          background: #0d1e33;
+          border-color: #243a56;
+        }
+      }
+    }
+
+    &__badge {
+      background: #0d4135;
+      color: #63e6ae;
+
+      &--inactive {
+        background: #1c2f47;
+        color: #7a9ab8;
+      }
+    }
+
+    &__icon-wrap {
+      background: #0e2d54;
+      color: #71baff;
+    }
+
+    &__name { color: #e8f3ff; }
+
+    &__detail {
+      color: #9ab8d8;
+      dt mat-icon { color: #5988b8; }
+    }
+
+    &__actions { border-top-color: #1f3c5c; }
+
+    &__action {
+      border-color: #2a4d72;
+      background: #0a1e35;
+
+      &--edit   { color: #71baff; &:hover { background: #0e2d54; border-color: #4a7eb8; } }
+      &--activate { color: #63e6ae; &:hover { background: #0d4135; border-color: #4acb94; } }
+      &--block  { color: #ffb35c; &:hover { background: #3d2310; border-color: #c87830; } }
+    }
+
+    &__state { color: #7a9ab8; }
+  }
+}

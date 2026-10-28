@@ -1,0 +1,323 @@
+.cashier-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: #eaf2ff;
+  border: 1px solid #d7e6fb;
+  overflow-y: auto;
+
+  // Cuando se muestra el detalle de una apertura (OpeningCashierPanel, que
+  // ya trae su propio fondo/padding/borde), este contenedor se aplana para
+  // no duplicar esa "tarjeta" adentro de otra.
+  &--nested {
+    padding: 0;
+    background: transparent;
+    border: none;
+    overflow: hidden;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    flex: 0 0 auto;
+  }
+
+  &__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    margin-right: auto;
+  }
+
+  &__heading-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+
+    h2 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 1.125rem/1.25 Roboto, sans-serif;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__icon {
+    flex: 0 0 auto;
+    width: 3rem;
+    height: 3rem;
+    font-size: 3rem;
+    color: #ff7400;
+  }
+
+  &__close {
+    flex: 0 0 auto;
+  }
+
+  &__status {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.625rem;
+    border-radius: 999px;
+    background: var(--app-status-good-bg);
+    color: var(--app-status-good-fg);
+    font-size: 0.75rem;
+    font-weight: 500;
+
+    &--open {
+      background: var(--app-status-open-bg);
+      color: var(--app-status-open-fg);
+      font-weight: 600;
+    }
+
+    &--pending {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+      font-weight: 600;
+    }
+
+    &--inactive {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+
+  &__error {
+    flex: 0 0 auto;
+    margin: 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+
+  &__open-button {
+    flex: 0 0 auto;
+    justify-content: center;
+    height: 2.75rem;
+
+    &--disabled {
+      --mdc-filled-button-disabled-container-color: #dbe4f2;
+      --mdc-filled-button-disabled-label-text-color: #64748b;
+      color: #64748b;
+      cursor: not-allowed;
+      opacity: 1;
+    }
+  }
+
+  // Detalle de una apertura puntual y formulario de "Abrir caja": reusan
+  // sus propios componentes tal cual, ocupando todo el alto disponible.
+  app-opening-cashier-panel,
+  app-opening-cashier-form {
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  &__opening-state {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    color: #536b94;
+    text-align: center;
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__opening-list {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  &__opening-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    background: #fff;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgb(15 23 105 / 8%);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: box-shadow 0.1s ease;
+
+    &:hover {
+      box-shadow: 0 2px 6px rgb(15 23 105 / 14%);
+    }
+  }
+
+  &__opening-item-main,
+  &__opening-item-side {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__opening-item-side {
+    align-items: flex-end;
+  }
+
+  &__opening-item-user {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__opening-item-date {
+    color: #536b94;
+    font-size: 0.75rem;
+  }
+
+  &__opening-item-value {
+    color: #0f1765;
+    font-weight: 600;
+  }
+
+  &__opening-status {
+    margin-top: 0.125rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &--open {
+      background: var(--app-status-open-bg);
+      color: var(--app-status-open-fg);
+      font-weight: 600;
+    }
+
+    &--pending {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+    }
+
+    &--closed {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+
+  &__opening-paginator {
+    flex: 0 0 auto;
+    margin: 0 -1.25rem -1.25rem;
+    background: transparent;
+  }
+}
+
+// ── Dark theme ────────────────────────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .cashier-panel {
+    background: #0c1c32;
+    border-color: #1f3c5c;
+    color: #d8e8ff;
+
+    &__heading-text h2 {
+      color: #f0f6ff;
+    }
+
+    &__icon {
+      color: #ff9138;
+    }
+
+    &__header button[mat-icon-button] {
+      color: #71baff;
+    }
+
+    &__open-button--disabled {
+      --mdc-filled-button-disabled-container-color: #182c44;
+      --mdc-filled-button-disabled-label-text-color: #557294;
+      color: #557294;
+    }
+
+    &__opening-item {
+      background: #102744;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+      color: #d8e8ff;
+
+      &:hover {
+        background: #173a63;
+        box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+      }
+    }
+
+    &__opening-item-user {
+      color: #f0f6ff;
+    }
+
+    &__opening-item-date {
+      color: #8faece;
+    }
+
+    &__opening-item-value {
+      color: #71baff;
+    }
+
+    &__opening-state {
+      color: #8faece;
+    }
+
+    &__status {
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.28);
+
+      &--open {
+        background: rgba(56, 189, 248, 0.14);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+      }
+
+      &--pending {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.38);
+      }
+
+      &--inactive {
+        background: rgba(148, 163, 184, 0.12);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+      }
+    }
+
+    &__opening-status {
+      &--open {
+        background: rgba(56, 189, 248, 0.14);
+        color: #38bdf8;
+      }
+    }
+  }
+
+  ::ng-deep .cashier-panel .mat-mdc-paginator {
+    --mat-paginator-container-background-color: transparent;
+    --mat-paginator-container-text-color: #d8e8ff;
+    color: #d8e8ff;
+  }
+}

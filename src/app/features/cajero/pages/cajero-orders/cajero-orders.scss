@@ -1,0 +1,366 @@
+@use 'breakpoints' as bp;
+
+// Sin esto el host queda `display: inline` (default de un elemento
+// desconocido para el navegador) y `.cajero-orders` no tiene de dónde
+// heredar un alto definido para resolver su `height: 100%` de abajo.
+//
+// El margin negativo + el height con calc() cancelan, solo para esta
+// pantalla, el padding de `main.shell__content` (shell.scss) — que es
+// compartido por todos los módulos y no se toca para no afectarlos. Los
+// valores están duplicados a propósito, pisando cada breakpoint en el que
+// el shell cambia su padding (ver shell.scss).
+:host {
+  display: block;
+  height: calc(100% + 2.5rem);
+  min-height: 0;
+  margin: -1.25rem;
+}
+
+@include bp.from(md) {
+  :host {
+    height: calc(100% + 3rem);
+    margin: -1.5rem;
+  }
+}
+
+@include bp.from(lg) {
+  :host {
+    height: calc(100% + 3.5rem);
+    margin: -1.75rem -2.25rem;
+  }
+}
+
+.cajero-orders {
+  // Fila: a la izquierda el header+grid (columna), a la derecha el panel —
+  // así el panel arranca desde el mismo borde superior que "Cerrar caja",
+  // no desde abajo del header.
+  display: flex;
+  // Llena el alto disponible del área de contenido (debajo del navbar/
+  // sidebar, que quedan afuera de este componente) para que el panel pueda
+  // ocupar todo ese alto sin salirse del layout de la app.
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+  transition: gap 0.22s ease;
+
+  &--panel-open {
+    gap: 1rem;
+
+    // Con el panel abierto, va pegado (sin padding) contra el grid — el
+    // padding derecho de acá solo hace falta cuando no hay panel al lado.
+    .cajero-orders__main {
+      padding-right: 0;
+    }
+  }
+
+  // Solo el header+grid llevan separación del borde de la pantalla; el
+  // panel de detalle (cuando está abierto) queda pegado, sin padding.
+  &__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 1rem 1rem 0 1rem;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+    margin-bottom: 1rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  &__delivery-button {
+    margin-left: auto;
+  }
+
+  &__delivery-button-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    line-height: 1;
+    white-space: nowrap;
+
+    mat-icon {
+      display: block;
+      flex: 0 0 auto;
+    }
+  }
+
+  &__close-button {
+    margin-left: 0.5rem;
+    white-space: nowrap;
+  }
+
+  &__delivery-error {
+    margin: -0.5rem 0 1rem;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-auto-rows: min-content;
+    gap: 1rem;
+    overflow-y: auto;
+  }
+
+  // Ancho 0 por defecto (ocupa cero espacio, no reserva hueco); al abrirse
+  // crece a 380px y el grid de al lado se angosta para hacerle lugar. Al ser
+  // hermano de `__main` (no hijo del grid), ocupa todo el alto de la página
+  // desde el mismo borde de arriba que el header — nunca queda "más abajo".
+  &__panel {
+    flex: 0 0 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    transition: flex-basis 0.22s ease;
+
+    &--open {
+      flex: 0 0 380px;
+    }
+
+    app-order-panel {
+      display: block;
+      width: 380px;
+      height: 100%;
+    }
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem 1.125rem;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgb(0 0 0 / 10%);
+    }
+
+    &--selected {
+      border-color: #006ffd !important;
+      box-shadow: 0 0 0 3px rgba(0, 111, 253, 0.25) !important;
+    }
+
+    &--pending {
+      border-color: #fca5a5;
+      background: #fffcfc;
+
+      &:hover {
+        border-color: #f87171;
+      }
+    }
+
+    &--settled {
+      border-color: #86efac;
+      background: #f7fee7;
+
+      &:hover {
+        border-color: #4ade80;
+      }
+    }
+  }
+
+  &__card-icon {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    font-size: 2.75rem !important;
+    line-height: 1 !important;
+    color: #ff7400;
+  }
+
+  &__card-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #0f1765;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  &__card-amounts {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  &__card-sub {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  &__card-balance {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+
+    &--pending {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+    }
+
+    &--settled {
+      background: #dcfce7;
+      color: #16a34a;
+      border: 1px solid #86efac;
+    }
+  }
+}
+
+// Con el detalle abierto, la columna de pedidos es mÃ¡s angosta. El tÃ­tulo
+// queda en su propia fila para que las acciones no se compriman ni recorten.
+@media (max-width: 68rem) {
+  .cajero-orders--panel-open .cajero-orders__header {
+    flex-wrap: wrap;
+    row-gap: 0.625rem;
+
+    h1 {
+      flex: 1 0 calc(100% - 2.5rem);
+      font-size: 1.9rem;
+    }
+
+    .cajero-orders__delivery-button {
+      margin-left: 0;
+    }
+
+    .cajero-orders__close-button {
+      margin-left: 0;
+    }
+  }
+}
+
+:host-context(.dark-theme) {
+  .cajero-orders {
+    background: transparent;
+
+    &__header {
+      h1 {
+        color: #f0f6ff;
+      }
+
+      button[mat-icon-button] {
+        color: #d8e8ff;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+      }
+    }
+
+    &__card {
+      background: #0d2238;
+      border-color: #1e3d64;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      color: #d8e8ff;
+
+      &:hover {
+        background: #112c48;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      }
+
+      &--selected {
+        border-color: #006ffd !important;
+        box-shadow: 0 0 16px rgba(0, 111, 253, 0.35) !important;
+      }
+
+      &--pending {
+        border-color: rgba(239, 68, 68, 0.45);
+        background: #191c2b;
+
+        &:hover {
+          border-color: #ef4444;
+          background: #202236;
+        }
+
+        .cajero-orders__card-balance--pending {
+          background: rgba(239, 68, 68, 0.16);
+          color: #f87171;
+          border-color: rgba(248, 113, 113, 0.35);
+        }
+      }
+
+      &--settled {
+        border-color: rgba(34, 197, 94, 0.45);
+        background: #0c2420;
+
+        &:hover {
+          border-color: #22c55e;
+          background: #0f2e29;
+        }
+
+        .cajero-orders__card-balance--settled {
+          background: rgba(34, 197, 94, 0.16);
+          color: #4ade80;
+          border-color: rgba(74, 222, 128, 0.35);
+        }
+      }
+    }
+
+    &__card-name {
+      color: #f0f6ff;
+    }
+
+    &__card-sub {
+      color: #829cb8;
+    }
+
+    &__panel {
+      background: #082244;
+      border-left: 1px solid #1a3d68;
+
+    }
+
+    &__state {
+      color: #829cb8;
+    }
+  }
+}

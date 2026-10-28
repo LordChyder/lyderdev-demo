@@ -1,0 +1,189 @@
+<div class="almacen-productos">
+  <header class="almacen-productos__header">
+    <div class="almacen-productos__title">
+      <button mat-icon-button type="button" aria-label="Volver a almacenes" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>
+        Productos
+        @if (summary(); as s) {
+          — {{ s.stockName }}
+        }
+      </h1>
+    </div>
+    <button mat-flat-button color="primary" type="button" (click)="openLinkProduct()">
+      <mat-icon>add_link</mat-icon>
+      Vincular producto
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="almacen-productos__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="almacen-productos__state almacen-productos__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (summary(); as s) {
+    @if (s.products.length === 0) {
+      <div class="almacen-productos__state">
+        <span>Este almacén todavía no tiene productos vinculados.</span>
+      </div>
+    } @else {
+      <div class="almacen-productos__summary">
+        <span
+          ><strong>{{ s.totalProducts }}</strong> productos</span
+        >
+        <span
+          ><strong>{{ s.totalCurrentQuantity }}</strong> en stock</span
+        >
+        <span
+          ><strong>{{ s.totalReservedQuantity }}</strong> reservado</span
+        >
+        <span
+          ><strong>{{ s.totalAvailableQuantity }}</strong> disponible</span
+        >
+      </div>
+
+      <div class="almacen-productos__table-wrapper">
+        <table mat-table [dataSource]="s.products" class="almacen-productos__table">
+          <ng-container matColumnDef="product">
+            <th mat-header-cell *matHeaderCellDef>Producto</th>
+            <td mat-cell *matCellDef="let item">{{ item.productName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="measureUnit">
+            <th mat-header-cell *matHeaderCellDef>Unidad</th>
+            <td mat-cell *matCellDef="let item">{{ item.measureUnitAcronym }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="currentQuantity">
+            <th mat-header-cell *matHeaderCellDef>Actual</th>
+            <td mat-cell *matCellDef="let item">{{ item.currentQuantity }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="reservedQuantity">
+            <th mat-header-cell *matHeaderCellDef>Reservado</th>
+            <td mat-cell *matCellDef="let item">{{ item.reservedQuantity }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="availableQuantity">
+            <th mat-header-cell *matHeaderCellDef>Disponible</th>
+            <td mat-cell *matCellDef="let item">{{ item.availableQuantity }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="quantityMin">
+            <th mat-header-cell *matHeaderCellDef>Mínimo</th>
+            <td mat-cell *matCellDef="let item">{{ item.quantityMin }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="quantityMax">
+            <th mat-header-cell *matHeaderCellDef>Máximo</th>
+            <td mat-cell *matCellDef="let item">{{ item.quantityMax }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="location">
+            <th mat-header-cell *matHeaderCellDef>Ubicación</th>
+            <td mat-cell *matCellDef="let item">{{ item.location }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="active">
+            <th mat-header-cell *matHeaderCellDef>Activo</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="almacen-productos__status" [class.almacen-productos__status--inactive]="!item.isActive">
+                <mat-icon>{{ item.isActive ? 'check' : 'remove' }}</mat-icon>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let item">
+              @if (item.isActive) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="inactivate(item)"
+                  aria-label="Inactivar producto"
+                  matTooltip="Inactivar"
+                  class="almacen-productos__action almacen-productos__action--block"
+                >
+                  <mat-icon>block</mat-icon>
+                </button>
+              } @else {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="activate(item)"
+                  aria-label="Activar producto"
+                  matTooltip="Activar"
+                  class="almacen-productos__action almacen-productos__action--activate"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+              <button
+                mat-icon-button
+                type="button"
+                (click)="remove(item)"
+                aria-label="Quitar producto del almacén"
+                matTooltip="Quitar"
+                class="almacen-productos__action almacen-productos__action--delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <section class="almacen-productos__mobile-list" aria-label="Productos del almacén">
+        @for (item of s.products; track item.stockProductId) {
+          <article class="almacen-productos__mobile-card">
+            <header class="almacen-productos__mobile-card-header">
+              <div>
+                <h2>{{ item.productName }}</h2>
+                <span>{{ item.measureUnitAcronym || 'Sin unidad' }}</span>
+              </div>
+              <span class="almacen-productos__status" [class.almacen-productos__status--inactive]="!item.isActive">
+                <mat-icon>{{ item.isActive ? 'check' : 'remove' }}</mat-icon>
+              </span>
+            </header>
+
+            <div class="almacen-productos__stock-grid">
+              <div><span>Actual</span><strong>{{ item.currentQuantity }}</strong></div>
+              <div><span>Reservado</span><strong>{{ item.reservedQuantity }}</strong></div>
+              <div class="almacen-productos__stock-grid-available"><span>Disponible</span><strong>{{ item.availableQuantity }}</strong></div>
+            </div>
+
+            <div class="almacen-productos__mobile-meta">
+              <span>Min. <strong>{{ item.quantityMin ?? '—' }}</strong></span>
+              <span>Máx. <strong>{{ item.quantityMax ?? '—' }}</strong></span>
+              @if (item.location) { <span>{{ item.location }}</span> }
+            </div>
+
+            <footer class="almacen-productos__mobile-actions">
+              @if (item.isActive) {
+                <button mat-stroked-button type="button" (click)="inactivate(item)">
+                  <mat-icon>block</mat-icon> Inactivar
+                </button>
+              } @else {
+                <button mat-stroked-button type="button" (click)="activate(item)">
+                  <mat-icon>check_circle</mat-icon> Activar
+                </button>
+              }
+              <button mat-icon-button type="button" (click)="remove(item)" aria-label="Quitar producto del almacén" class="almacen-productos__action almacen-productos__action--delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </footer>
+          </article>
+        }
+      </section>
+    }
+  }
+</div>

@@ -1,0 +1,17 @@
+.establishment-contract-payment-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__error {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+}

@@ -1,0 +1,53 @@
+<div class="producto-form">
+  <header class="producto-form__hero">
+    <span class="producto-form__hero-icon"><mat-icon>inventory_2</mat-icon></span>
+    <div>
+      <h1>{{ isEdit ? 'Editar producto' : 'Nuevo producto' }}</h1>
+      <p>{{ isEdit ? 'Actualiza la información del catálogo y de este establecimiento.' : 'Crea el producto y define cómo se administrará en este establecimiento.' }}</p>
+    </div>
+  </header>
+
+  @if (loadingOptions()) {
+    <div class="producto-form__state"><mat-spinner diameter="32" /></div>
+  } @else {
+    <form [formGroup]="form" class="producto-form__form" novalidate>
+      <section class="producto-form__section">
+        <header class="producto-form__section-header">
+          <div><mat-icon>sell</mat-icon><h2>Datos del producto</h2></div>
+          <p>Información principal del catálogo.</p>
+        </header>
+        <div class="producto-form__fields producto-form__fields--catalog">
+          <mat-form-field appearance="outline" class="producto-form__field--wide">
+            <mat-label>Nombre</mat-label><input matInput formControlName="name" />
+            @if (form.controls.name.touched && form.controls.name.invalid) { <mat-error>El nombre es obligatorio.</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Código de barras</mat-label><input matInput formControlName="barcode" /><mat-hint>Opcional</mat-hint></mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Unidad de medida</mat-label><mat-select formControlName="measureUnitId">@for (option of measureUnitOptions(); track option.id) { <mat-option [value]="option.id">{{ option.acronym }} — {{ option.name }}</mat-option> }</mat-select>
+            @if (form.controls.measureUnitId.touched && form.controls.measureUnitId.invalid) { <mat-error>Selecciona una unidad de medida.</mat-error> }
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="producto-form__section">
+        <header class="producto-form__section-header">
+          <div><mat-icon>storefront</mat-icon><h2>Configuración del establecimiento</h2></div>
+          <p>Define cómo se muestra, clasifica y controla el producto aquí.</p>
+        </header>
+        <div class="producto-form__fields producto-form__fields--establishment">
+          <mat-form-field appearance="outline" class="producto-form__field--wide"><mat-label>Nombre complementario</mat-label><input matInput formControlName="complementaryName" /><mat-hint>Opcional, se muestra junto al nombre.</mat-hint></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Peso</mat-label><input matInput type="number" step="0.01" formControlName="weight" /><mat-hint>Opcional</mat-hint></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Destino</mat-label><mat-select formControlName="productDestination">@for (option of destinationOptions(); track option.enumId) { <mat-option [value]="option.enumId">{{ option.description }}</mat-option> }</mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Categoría</mat-label><mat-select formControlName="categoryId"><mat-option [value]="null">Sin categoría</mat-option>@for (option of categoryOptions(); track option.id) { <mat-option [value]="option.id">{{ option.name }}</mat-option> }</mat-select><mat-hint>Opcional</mat-hint></mat-form-field>
+          <div class="producto-form__inventory-toggle"><mat-checkbox formControlName="hasInventory">Maneja inventario</mat-checkbox></div>
+        </div>
+      </section>
+      @if (error()) { <p class="producto-form__error">{{ error() }}</p> }
+    </form>
+  }
+
+  <footer class="producto-form__actions">
+    <button mat-stroked-button type="button" (click)="cancel()">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" [disabled]="loadingOptions() || saving()" (click)="submit()">@if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }<span>{{ saving() ? 'Guardando…' : 'Guardar' }}</span></button>
+  </footer>
+</div>

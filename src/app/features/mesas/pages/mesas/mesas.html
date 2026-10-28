@@ -1,0 +1,64 @@
+<div class="mesas">
+  <header class="mesas__header">
+    <div>
+      <h1>Mesas</h1>
+      <p>Selecciona una mesa para iniciar su pedido.</p>
+    </div>
+  </header>
+
+  @if (createOrderError()) {
+    <div class="mesas__notice mesas__notice--error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ createOrderError() }}</span>
+    </div>
+  }
+
+  @if (!loading() && !hasOpenCashier()) {
+    <div class="mesas__notice mesas__notice--warning" role="status">
+      <span class="mesas__notice-icon" aria-hidden="true">
+        <mat-icon>point_of_sale</mat-icon>
+      </span>
+      <span>No hay una caja abierta. Abre una caja para gestionar pedidos.</span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="mesas__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="mesas__state mesas__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (tables().length === 0) {
+    <div class="mesas__state">
+      <mat-icon>table_restaurant</mat-icon>
+      <span>No hay mesas registradas en este establecimiento.</span>
+    </div>
+  } @else {
+    <div class="mesas__grid">
+      @for (table of tables(); track table.tableId) {
+        <button
+          type="button"
+          class="mesas__card mesas__card--clickable"
+          [class.mesas__card--cashier-closed]="!hasOpenCashier()"
+          [class.mesas__card--available]="table.tableStatus === Status.Available"
+          [class.mesas__card--occupied]="table.tableStatus === Status.Occupied"
+          (click)="openTable(table)"
+          [disabled]="creatingTableId() !== null || !hasOpenCashier()"
+        >
+          @if (creatingTableId() === table.tableId) {
+            <mat-spinner diameter="42" />
+          } @else {
+            <mat-icon class="mesas__card-icon">table_restaurant</mat-icon>
+          }
+          <span class="mesas__card-name">{{ table.tableName }}</span>
+          <span class="mesas__status" [class]="statusClass(table.tableStatus)">
+            {{ statusLabel(table.tableStatus) }}
+          </span>
+        </button>
+      }
+    </div>
+  }
+</div>

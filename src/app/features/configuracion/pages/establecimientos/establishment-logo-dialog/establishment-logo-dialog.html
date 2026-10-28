@@ -1,0 +1,112 @@
+<h2 mat-dialog-title>Logo — {{ data.name || 'Establecimiento' }}</h2>
+
+<mat-dialog-content class="establishment-logo-dialog">
+  @if (loadingCurrent()) {
+    <div class="establishment-logo-dialog__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (cropping()) {
+    <!-- Recorte cuadrado: el visor es fijo y la imagen se mueve/escala detrás de él. -->
+    <div
+      class="establishment-logo-dialog__viewport"
+      [style.width.px]="viewportSize"
+      [style.height.px]="viewportSize"
+      (pointerdown)="onViewportPointerDown($event)"
+    >
+      <img
+        #cropImage
+        [src]="cropSourceUrl()"
+        (load)="onCropImageLoaded()"
+        [style.width]="imageStyle().width"
+        [style.height]="imageStyle().height"
+        [style.left]="imageStyle().left"
+        [style.top]="imageStyle().top"
+        alt=""
+        draggable="false"
+      />
+    </div>
+
+    <label class="establishment-logo-dialog__zoom">
+      <mat-icon>zoom_out</mat-icon>
+      <input type="range" min="1" max="3" step="0.01" [value]="zoom()" (input)="onZoomInput($event)" />
+      <mat-icon>zoom_in</mat-icon>
+    </label>
+
+    <p class="establishment-logo-dialog__hint">Arrastra para mover y usa el control para acercar o alejar.</p>
+  } @else {
+    <div class="establishment-logo-dialog__preview" [style.width.px]="viewportSize" [style.height.px]="viewportSize">
+      @if (currentImageUrl(); as url) {
+        <img [src]="url" alt="Logo del establecimiento" />
+      } @else if (loadError()) {
+        <div class="establishment-logo-dialog__placeholder">
+          <mat-icon>error_outline</mat-icon>
+          <span>No se pudo cargar</span>
+        </div>
+      } @else {
+        <div class="establishment-logo-dialog__placeholder">
+          <mat-icon>image</mat-icon>
+          <span>No tiene imagen</span>
+        </div>
+      }
+    </div>
+
+    @if (loadError()) {
+      <p class="establishment-logo-dialog__error">{{ loadError() }}</p>
+    }
+  }
+
+  <input
+    #fileInput
+    type="file"
+    hidden
+    accept="image/png,image/jpeg"
+    (change)="onFileSelected($event)"
+  />
+
+  @if (!cropping()) {
+    <p class="establishment-logo-dialog__hint">PNG o JPG, máximo 2 MB. Se recorta en cuadrado.</p>
+
+    @if (error()) {
+      <p class="establishment-logo-dialog__error">{{ error() }}</p>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (cropping()) {
+    <button mat-button type="button" [disabled]="saving()" (click)="cancelCrop()">Cancelar</button>
+    <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="confirmCrop()">
+      @if (saving()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        Guardar
+      }
+    </button>
+  } @else {
+    @if (hasImage()) {
+      <button
+        mat-button
+        type="button"
+        class="establishment-logo-dialog__delete"
+        [disabled]="deleting() || loadingCurrent()"
+        (click)="deleteImage()"
+      >
+        @if (deleting()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Eliminar
+        }
+      </button>
+    }
+    <button mat-button type="button" (click)="close()">Cerrar</button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="loadingCurrent()"
+      (click)="fileInput.click()"
+    >
+      {{ hasImage() ? 'Cambiar imagen' : 'Subir imagen' }}
+    </button>
+  }
+</mat-dialog-actions>

@@ -1,0 +1,113 @@
+:host { display: block; height: 100%; }
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+  color: #172d5b;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 72px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #dbeafe;
+    box-sizing: border-box;
+
+    &--condensed { justify-content: center; padding-inline: 0.5rem; }
+  }
+
+  &__brand-icon { width: 40px; height: 40px; flex: 0 0 auto; color: #ff7400; }
+  &__brand-copy { display: flex; flex-direction: column; min-width: 0; }
+  &__brand-copy strong { color: #071b45; font-size: 1.06rem; letter-spacing: -0.035em; line-height: 1.1; }
+  &__brand-copy strong span { color: #1267e8; }
+  &__brand-copy small { margin-top: 0.25rem; color: #4f6590; font-size: 0.72rem; }
+
+  &__nav {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.75rem 0.7rem;
+    box-sizing: border-box;
+  }
+
+  &__account {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0.75rem;
+    padding: 0.7rem;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+
+    &--condensed { justify-content: center; margin-inline: 0.5rem; padding-inline: 0.4rem; }
+  }
+
+  &__avatar {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 50%;
+    background: #1267e8;
+    color: #fff;
+  }
+
+  &__avatar mat-icon { font-size: 23px; width: 23px; height: 23px; }
+  &__account-copy { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+  &__account-copy strong { overflow: hidden; color: #13264f; font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; }
+  &__account-copy small { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.2rem; color: #56709d; font-size: 0.7rem; }
+  &__account-copy i { width: 8px; height: 8px; border-radius: 50%; background: #12aa72; }
+  &__account-arrow { color: #315687; }
+}
+
+:host ::ng-deep .sidebar__nav .mat-mdc-list-item {
+  --mdc-list-list-item-container-shape: 10px;
+  height: 44px;
+  margin-bottom: 0.22rem;
+  border-radius: 10px;
+  color: #294675;
+  font-size: 0.86rem;
+  font-weight: 560;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+:host ::ng-deep .sidebar__nav .mat-mdc-list-item .mat-icon { color: #315687; }
+
+:host ::ng-deep .sidebar__nav .mat-mdc-list-item:hover {
+  background: #eff6ff;
+  color: #0b5ed7;
+}
+
+:host ::ng-deep .sidebar__nav .mat-mdc-list-item:hover .mat-icon { color: #0b5ed7; }
+
+:host ::ng-deep .sidebar__nav .sidebar__link--active {
+  background: #1267e8;
+  color: #fff;
+  box-shadow: 0 4px 8px rgb(18 103 232 / 24%);
+}
+
+:host ::ng-deep .sidebar__nav .sidebar__link--active .mat-icon { color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep .sidebar__nav .mat-mdc-list-item { transition: none; }
+}
+
+:host-context(.dark-theme) {
+  .sidebar { background: #061b34; color: #eaf3ff; }
+  .sidebar__brand-icon path[fill='white'] { fill: transparent; }
+  .sidebar__brand { border-color: #173454; }
+  .sidebar__brand-copy strong { color: #f4f8ff; }
+  .sidebar__brand-copy small { color: #9ab2d1; }
+  .sidebar__account { border-color: #1a3858; background: #08213e; }
+  .sidebar__account-copy strong { color: #edf5ff; }
+  .sidebar__account-copy small, .sidebar__account-arrow { color: #a9c0dc; }
+  :host ::ng-deep .sidebar__nav .mat-mdc-list-item { color: #d7e6fa; }
+  :host ::ng-deep .sidebar__nav .mat-mdc-list-item .mat-icon { color: #b9d3f0; }
+  :host ::ng-deep .sidebar__nav .mat-mdc-list-item:hover { background: #0b2a4b; color: #fff; }
+  :host ::ng-deep .sidebar__nav .mat-mdc-list-item:hover .mat-icon { color: #42bbff; }
+  :host ::ng-deep .sidebar__nav .sidebar__link--active { background: #0757bb; box-shadow: 0 4px 8px rgb(0 113 255 / 24%); }
+}

@@ -1,0 +1,20 @@
+@if (loading()) {
+  <div class="select-establishment__loading">
+    <mat-spinner diameter="32" />
+  </div>
+} @else if (!hasEstablishments()) {
+  <app-page-placeholder icon="lock_clock" title="Sin establecimientos disponibles" [description]="blockedMessage()">
+    @if (blockedPaymentDetail()) {
+      <p class="select-establishment__detail">{{ blockedPaymentDetail() }}</p>
+    }
+    <button mat-flat-button color="primary" type="button" (click)="logout()">
+      Cerrar sesión
+    </button>
+  </app-page-placeholder>
+} @else {
+  <app-page-placeholder
+    icon="storefront"
+    title="Selecciona un establecimiento"
+    description="Elige un establecimiento arriba, en la barra superior, para continuar."
+  />
+}

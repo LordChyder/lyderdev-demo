@@ -1,0 +1,65 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar tipo de impuesto' : 'Crear tipo de impuesto' }}</h2>
+
+<mat-dialog-content class="sale-tax-form">
+  @if (loading()) {
+    <div class="sale-tax-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="sale-tax-form__fields" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Código SUNAT</mat-label>
+        <input matInput type="number" min="1" formControlName="id" [readonly]="isEdit" />
+        @if (form.controls.id.touched && form.controls.id.invalid) {
+          <mat-error>Ingresa un código mayor que cero.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="sale-tax-form__row">
+        <mat-form-field appearance="outline">
+          <mat-label>Siglas</mat-label>
+          <input matInput formControlName="acronym" autocomplete="off" />
+          @if (form.controls.acronym.touched && form.controls.acronym.invalid) {
+            <mat-error>Ingresa las siglas.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Siglas para cálculo</mat-label>
+          <input matInput formControlName="acronymForCalculation" autocomplete="off" />
+          @if (
+            form.controls.acronymForCalculation.touched &&
+            form.controls.acronymForCalculation.invalid
+          ) {
+            <mat-error>Ingresa las siglas para cálculo.</mat-error>
+          }
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="name" autocomplete="off" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>Ingresa el nombre.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (error()) {
+        <p class="sale-tax-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loading() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

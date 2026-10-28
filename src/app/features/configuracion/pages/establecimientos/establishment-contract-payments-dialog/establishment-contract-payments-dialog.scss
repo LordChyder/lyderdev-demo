@@ -1,0 +1,58 @@
+@use 'status';
+
+.establishment-contract-payments-dialog {
+  display: flex;
+  flex-direction: column;
+  min-width: 680px;
+
+  &__table-wrapper {
+    overflow-x: auto;
+  }
+
+  &__table {
+    width: 100%;
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__status {
+    @include status.chip-base;
+
+    &--paid {
+      background: var(--app-status-good-bg);
+      color: var(--app-status-good-fg);
+    }
+
+    &--overdue {
+      background: var(--app-status-critical-bg);
+      color: var(--app-status-critical-fg);
+    }
+
+    &--grace {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+    }
+
+    &--pending {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+
+  &__paid-date {
+    margin-left: 0.375rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.75rem;
+  }
+}

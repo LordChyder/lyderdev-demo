@@ -1,0 +1,60 @@
+.invoice-issued-dialog {
+  min-width: 320px;
+  padding: 24px;
+  text-align: center;
+}
+
+.invoice-issued-dialog__loading,
+.invoice-issued-dialog__success {
+  display: grid;
+  justify-items: center;
+}
+
+.invoice-issued-dialog h2 {
+  margin: 16px 0 6px;
+  color: #17366f;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.invoice-issued-dialog p {
+  margin: 0;
+  color: #4b5c78;
+  line-height: 1.45;
+}
+
+.invoice-issued-dialog__check {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7f7ed;
+  color: #168447;
+}
+
+.invoice-issued-dialog__check mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.invoice-issued-dialog__actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+}
+
+@media (max-width: 440px) {
+  .invoice-issued-dialog {
+    min-width: 0;
+    padding: 20px;
+  }
+
+  .invoice-issued-dialog__actions {
+    display: grid;
+    width: 100%;
+  }
+}

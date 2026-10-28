@@ -1,0 +1,41 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar lista de precios' : 'Nueva lista de precios' }}</h2>
+
+<mat-dialog-content class="price-list-form">
+  <form [formGroup]="form" class="price-list-form__fields" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>El nombre es obligatorio.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Vigente desde</mat-label>
+      <input matInput [matDatepicker]="startPicker" formControlName="periodStart" />
+      <mat-datepicker-toggle matIconSuffix [for]="startPicker" />
+      <mat-datepicker #startPicker />
+      @if (form.controls.periodStart.touched && form.controls.periodStart.invalid) {
+        <mat-error>Selecciona una fecha.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Vigente hasta</mat-label>
+      <input matInput [matDatepicker]="endPicker" formControlName="periodEnd" />
+      <mat-datepicker-toggle matIconSuffix [for]="endPicker" />
+      <mat-datepicker #endPicker />
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="price-list-form__error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="submit()">
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

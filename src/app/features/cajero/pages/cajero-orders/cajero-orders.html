@@ -1,0 +1,119 @@
+<div class="cajero-orders" [class.cajero-orders--panel-open]="selectedOrderId()">
+  <div class="cajero-orders__main">
+    <header class="cajero-orders__header">
+      <button mat-icon-button type="button" aria-label="Volver a cajero" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>
+        Pedidos
+        @if (cashierName(); as name) {
+          — {{ name }}
+        }
+      </h1>
+
+      @if (!loading() && !closed()) {
+        <button
+          mat-stroked-button
+          color="primary"
+          type="button"
+          class="cajero-orders__delivery-button"
+          [disabled]="creatingDelivery()"
+          (click)="newDeliveryOrder()"
+        >
+          @if (creatingDelivery()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <span class="cajero-orders__delivery-button-content">
+              <mat-icon>delivery_dining</mat-icon>
+              <span>Nuevo delivery</span>
+            </span>
+          }
+        </button>
+
+        <button
+          mat-flat-button
+          color="warn"
+          type="button"
+          class="cajero-orders__close-button"
+          [disabled]="closing()"
+          (click)="closeCashier()"
+        >
+          <mat-icon>lock_clock</mat-icon>
+          Cerrar caja
+        </button>
+      }
+    </header>
+
+    @if (deliveryError()) {
+      <p class="cajero-orders__delivery-error">{{ deliveryError() }}</p>
+    }
+
+    @if (loading()) {
+      <div class="cajero-orders__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="cajero-orders__state cajero-orders__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (closed()) {
+      <div class="cajero-orders__state">
+        <mat-icon>lock_clock</mat-icon>
+        <span>Esta caja ya no está abierta.</span>
+      </div>
+    } @else if (orders().length === 0) {
+      <div class="cajero-orders__state">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Todavía no hay pedidos en esta caja.</span>
+      </div>
+    } @else {
+      <div class="cajero-orders__grid">
+        @for (order of orders(); track order.orderId) {
+          <button
+            type="button"
+            class="cajero-orders__card"
+            [class.cajero-orders__card--selected]="order.orderId === selectedOrderId()"
+            [class.cajero-orders__card--pending]="order.balance > 0"
+            [class.cajero-orders__card--settled]="order.balance <= 0"
+            (click)="selectOrder(order)"
+          >
+            <mat-icon class="cajero-orders__card-icon">
+              {{ order.isDelivery ? 'delivery_dining' : 'table_restaurant' }}
+            </mat-icon>
+            <span class="cajero-orders__card-name">
+              {{ order.tableName || (order.isDelivery ? 'Delivery' : '—') }}
+            </span>
+
+            @if (order.balance !== order.total && order.balance > 0) {
+              <div class="cajero-orders__card-amounts">
+                <span class="cajero-orders__card-sub">Total S/. {{ order.total | number: '1.2-2' }}</span>
+                <span class="cajero-orders__card-balance cajero-orders__card-balance--pending">
+                  Saldo S/. {{ order.balance | number: '1.2-2' }}
+                </span>
+              </div>
+            } @else {
+              <span class="cajero-orders__card-balance" [class]="balanceClass(order.balance)">
+                Total S/. {{ (order.balance > 0 ? order.balance : order.total) | number: '1.2-2' }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (selectedOrderId(); as orderId) {
+    <aside class="cajero-orders__panel" [class.cajero-orders__panel--open]="panelOpen()">
+      <app-order-panel
+        [orderId]="orderId"
+        [openingCashierId]="openingCashierId"
+        [openInEditMode]="orderId === justCreatedOrderId()"
+        (closed)="closePanel()"
+        (cancelled)="onOrderCancelled()"
+        (updated)="onOrderUpdated()"
+        (detailChanged)="upsertOrder($event)"
+      />
+    </aside>
+  }
+</div>

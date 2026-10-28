@@ -1,0 +1,33 @@
+<div class="shell">
+  <mat-sidenav-container class="shell__body">
+    <mat-sidenav
+      class="shell__sidenav"
+      [class.shell__sidenav--condensed]="isSidebarCondensed()"
+      [mode]="sidenavMode()"
+      [opened]="opened()"
+      (openedChange)="opened.set($event)"
+    >
+      <app-sidebar [condensed]="isSidebarCondensed()" />
+    </mat-sidenav>
+
+    <mat-sidenav-content class="shell__surface">
+      <app-navbar (menuToggle)="toggleSidenav()" />
+      <app-license-notice-banner />
+      <main class="shell__content">
+        @if (isLicenseBlocked()) {
+          <app-page-placeholder
+            icon="lock_clock"
+            title="Licencia suspendida"
+            [description]="blockedMessage()"
+          >
+            @if (blockedPaymentDetail()) {
+              <p class="shell__blocked-detail">{{ blockedPaymentDetail() }}</p>
+            }
+          </app-page-placeholder>
+        } @else {
+          <router-outlet />
+        }
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

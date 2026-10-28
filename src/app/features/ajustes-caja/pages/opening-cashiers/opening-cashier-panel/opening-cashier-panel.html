@@ -1,0 +1,198 @@
+<div class="opening-cashier-panel">
+  @if (loading()) {
+    <div class="opening-cashier-panel__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="opening-cashier-panel__state opening-cashier-panel__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (detail(); as detail) {
+    <header class="opening-cashier-panel__header">
+      <div class="opening-cashier-panel__heading">
+        <mat-icon class="opening-cashier-panel__icon">point_of_sale</mat-icon>
+        <h2>{{ detail.cashierName }}</h2>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Cerrar detalle"
+        class="opening-cashier-panel__close"
+        (click)="close()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <span class="opening-cashier-panel__status" [class]="statusClass(detail)">
+      {{ statusLabel(detail) }}
+    </span>
+
+    <dl class="opening-cashier-panel__list">
+      <dt>Usuario</dt>
+      <dd>{{ detail.userName || '—' }}</dd>
+
+      <dt>Valor de apertura</dt>
+      <dd>{{ detail.openingValue | number: '1.2-2' }}</dd>
+
+      <dt>Fecha límite</dt>
+      <dd>{{ detail.limitDate | date: 'medium' }}</dd>
+
+      <dt>Apertura</dt>
+      <dd>{{ detail.openingDate | date: 'medium' }} — {{ detail.openingBy || '—' }}</dd>
+
+      <dt>Cierre (operador)</dt>
+      <dd>
+        @if (detail.closureDate) {
+          {{ detail.closureDate | date: 'medium' }} — {{ detail.closureBy || '—' }}
+        } @else {
+          Pendiente
+        }
+      </dd>
+
+      <dt>Cierre (gerente)</dt>
+      <dd>
+        @if (detail.closingDate) {
+          {{ detail.closingDate | date: 'medium' }} — {{ detail.closingBy || '—' }}
+        } @else {
+          Pendiente
+        }
+      </dd>
+
+      @if (detail.reasonForDifference) {
+        <dt>Motivo de la diferencia</dt>
+        <dd>{{ detail.reasonForDifference }}</dd>
+      }
+    </dl>
+
+    <section class="opening-cashier-panel__payments" aria-labelledby="payments-summary-title">
+      <div class="opening-cashier-panel__section-heading">
+        <mat-icon>payments</mat-icon>
+        <h3 id="payments-summary-title">Resumen de pagos</h3>
+      </div>
+
+      @if (loadingPaymentsSummary()) {
+        <div class="opening-cashier-panel__payments-state">
+          <mat-spinner diameter="20" />
+          <span>Cargando resumen...</span>
+        </div>
+      } @else if (paymentsSummaryError()) {
+        <p class="opening-cashier-panel__payments-state opening-cashier-panel__payments-state--error">
+          {{ paymentsSummaryError() }}
+        </p>
+      } @else if (paymentsSummary(); as summary) {
+        <dl class="opening-cashier-panel__payment-totals">
+          <dt>Pagos registrados</dt>
+          <dd>{{ summary.paymentsCount }}</dd>
+          <dt>Total cobrado</dt>
+          <dd>{{ summary.totalAmount | number: '1.2-2' }}</dd>
+          <dt>Total recibido</dt>
+          <dd>{{ summary.totalReceived | number: '1.2-2' }}</dd>
+          @if (summary.totalChange > 0) {
+            <dt>Vuelto entregado</dt>
+            <dd>{{ summary.totalChange | number: '1.2-2' }}</dd>
+          }
+        </dl>
+
+        @if (summary.paymentTypes?.length) {
+          <ul class="opening-cashier-panel__payment-types">
+            @for (payment of summary.paymentTypes; track payment.paymentTypeId) {
+              <li>
+                <span>{{ payment.paymentTypeName || 'Sin tipo de pago' }} ({{ payment.count }})</span>
+                <strong>{{ payment.amount | number: '1.2-2' }}</strong>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="opening-cashier-panel__payments-state">Aún no hay pagos registrados.</p>
+        }
+      }
+    </section>
+
+    @if (detail.closureDate && paymentsSummary(); as summary) {
+      <section
+        #closingReport
+        class="opening-cashier-panel__closing-report"
+        aria-labelledby="closing-report-title"
+      >
+        <div class="opening-cashier-panel__section-heading">
+          <mat-icon>receipt_long</mat-icon>
+          <div>
+            <h3 id="closing-report-title">Arqueo de cierre</h3>
+            <p>Efectivo y medios de pago registrados en la apertura.</p>
+          </div>
+        </div>
+
+        <dl class="opening-cashier-panel__closing-totals">
+          <dt>Fondo inicial</dt>
+          <dd>{{ detail.openingValue | number: '1.2-2' }}</dd>
+          <dt>Ventas en efectivo</dt>
+          <dd>{{ cashPaymentAmount(summary) | number: '1.2-2' }}</dd>
+          <dt class="opening-cashier-panel__expected-cash-label">Efectivo esperado</dt>
+          <dd class="opening-cashier-panel__expected-cash">
+            {{ expectedCash(detail, summary) | number: '1.2-2' }}
+          </dd>
+        </dl>
+
+        @if (summary.paymentTypes?.length) {
+          <section class="opening-cashier-panel__closing-payment-methods" aria-label="Ingresos por medio de pago">
+            <h4>Ingresos por medio de pago</h4>
+            <dl>
+              @for (payment of summary.paymentTypes; track payment.paymentTypeId) {
+                <dt>{{ payment.paymentTypeName || 'Sin tipo de pago' }} ({{ payment.count }})</dt>
+                <dd>{{ payment.amount | number: '1.2-2' }}</dd>
+              }
+              <dt class="opening-cashier-panel__payments-total-label">Total ventas</dt>
+              <dd class="opening-cashier-panel__payments-total">
+                {{ summary.totalAmount | number: '1.2-2' }}
+              </dd>
+            </dl>
+          </section>
+        }
+
+        <p class="opening-cashier-panel__closing-note">
+          Cuente el efectivo físico y verifique los ingresos digitales antes del cierre de gerente.
+        </p>
+
+        <dl class="opening-cashier-panel__print-meta">
+          <dt>Caja</dt>
+          <dd>{{ detail.cashierName }}</dd>
+          <dt>Operador</dt>
+          <dd>{{ detail.closureBy || '—' }}</dd>
+          <dt>Primer cierre</dt>
+          <dd>{{ detail.closureDate | date: 'medium' }}</dd>
+        </dl>
+      </section>
+    }
+
+    <div class="opening-cashier-panel__actions">
+      @if (!detail.closureDate) {
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          [disabled]="closing()"
+          (click)="closeByOperator()"
+        >
+          @if (closing()) {
+            <mat-spinner diameter="18" />
+          } @else {
+            <mat-icon>lock_clock</mat-icon>
+          }
+          Cerrar (operador)
+        </button>
+      } @else if (!detail.closingDate) {
+        <button mat-stroked-button type="button" (click)="printClosingReport()">
+          <mat-icon>print</mat-icon>
+          Imprimir arqueo
+        </button>
+        <button mat-flat-button color="primary" type="button" (click)="closeByManager()">
+          <mat-icon>task_alt</mat-icon>
+          Cerrar (gerente)
+        </button>
+      }
+    </div>
+  }
+</div>

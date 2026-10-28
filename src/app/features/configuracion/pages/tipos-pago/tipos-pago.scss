@@ -1,0 +1,123 @@
+.tipos-pago {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: min(44rem, calc(100dvh - 2rem));
+  max-height: min(44rem, calc(100dvh - 2rem));
+  overflow: hidden;
+  // Deja aire debajo del paginador para que el FAB no tape la última fila.
+  padding-bottom: 4.5rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.5rem 0 1rem;
+    flex: 0 0 auto;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+    padding: 0.5rem 1rem;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  &__table {
+    width: 100%;
+  }
+
+  &__mobile-list { display: none; }
+
+  &__fab {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  > mat-paginator { flex: 0 0 auto; }
+
+  @media (max-width: 48rem) {
+    padding-bottom: 5rem;
+
+    &__header { padding: 0.75rem 1rem 0; }
+    &__header h1 { font-size: 1.75rem; }
+    &__table-wrapper { padding: 0.5rem 1rem; overflow-y: auto; overscroll-behavior: contain; }
+    &__table { display: none; }
+    &__mobile-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    &__mobile-card { display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d7e6fb; border-radius: 12px; background: var(--mat-sys-surface-container-lowest); }
+    &__mobile-card > div { padding: 0.625rem 0.75rem; background: #f4f8ff; }
+    &__mobile-card > div > span { color: #52698e; font-size: 0.7rem; font-weight: 700; }
+    &__mobile-card h2 { margin: 0.2rem 0 0; color: #101a63; font: 700 0.9375rem/1.2 Roboto, sans-serif; overflow-wrap: anywhere; }
+    &__mobile-card > div > strong { display: block; margin-top: 0.2rem; color: #1c5da1; font-size: 0.8125rem; }
+    &__mobile-card footer { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.45rem 0.75rem; border-top: 1px solid #e2ecfa; }
+    &__mobile-status { display: inline-flex; align-items: center; gap: 0.3rem; color: #197245; font-size: 0.75rem; font-weight: 700; }
+    &__mobile-status mat-icon { width: 1rem; height: 1rem; font-size: 1rem; }
+    &__mobile-status--inactive { color: #7a8391; }
+    &__mobile-edit { display: inline-flex !important; align-items: center; justify-content: center; width: 2.125rem; height: 2.125rem; border: 1px solid #cfe1fa; border-radius: 9px; color: #0875eb; }
+    &__fab { right: 1rem; bottom: 1rem; }
+  }
+}
+
+// Paleta oscura compartida con los listados administrativos.
+:host-context(.dark-theme) {
+  .tipos-pago {
+    color: #d8e8ff;
+
+    &__header h1 { color: #f0f6ff; }
+    &__table-wrapper { border-color: #2d557d; }
+
+    @media (max-width: 48rem) {
+      &__mobile-card { border-color: #2d557d; background: #0c1c32; }
+      &__mobile-card > div { background: #102744; }
+      &__mobile-card > div > span { color: #9bb1cb; }
+      &__mobile-card h2 { color: #e7f1ff; }
+      &__mobile-card > div > strong { color: #71baff; }
+      &__mobile-card footer { border-top-color: #1f3c5c; }
+      &__mobile-edit { border-color: #41698f; background: #102744; color: #71baff; }
+    }
+  }
+
+  ::ng-deep {
+    .tipos-pago__table {
+      overflow: hidden;
+      border: 1px solid #2d557d;
+      border-radius: 12px;
+      background: #0c1c32;
+
+      .mat-mdc-header-row { background: #173a63; }
+      .mat-mdc-header-cell { border-bottom-color: #2d557d; color: #e7f1ff; }
+      .mat-mdc-row { background: #0c1c32; &:hover { background: #112b4a !important; } }
+      .mat-mdc-cell { border-bottom-color: #2d557d; color: #d8e8ff; }
+      .mat-mdc-icon-button { border: 1px solid #41698f; border-radius: 9px; background: #102744; color: #71baff; }
+      .mat-column-isActive mat-icon { color: #63e6ae; }
+    }
+
+    .tipos-pago .mat-mdc-paginator {
+      --mat-paginator-container-background-color: transparent;
+      --mat-paginator-container-text-color: #d8e8ff;
+      color: #d8e8ff;
+    }
+  }
+}

@@ -1,0 +1,103 @@
+<h2 mat-dialog-title>Licencias de {{ data.establishmentName }}</h2>
+
+<mat-dialog-content class="establishment-contracts-dialog">
+  <div class="establishment-contracts-dialog__table-wrapper">
+    @if (loading()) {
+      <div class="establishment-contracts-dialog__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div class="establishment-contracts-dialog__state establishment-contracts-dialog__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (contracts().length === 0) {
+      <div class="establishment-contracts-dialog__state">
+        <span>
+          Este establecimiento no tiene licencia registrada. Mientras no tenga contrato, puede usar
+          el sistema sin restricciones.
+        </span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="contracts()" class="establishment-contracts-dialog__table">
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let contract">
+            <span class="establishment-contracts-dialog__status" [class]="statusClass(contract)">
+              {{ contract.active ? 'Activo' : 'Histórico' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="type">
+          <th mat-header-cell *matHeaderCellDef>Tipo</th>
+          <td mat-cell *matCellDef="let contract">{{ contractTypeLabel(contract) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="contract">
+          <th mat-header-cell *matHeaderCellDef>Contrato</th>
+          <td mat-cell *matCellDef="let contract">{{ contractRange(contract) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="trial">
+          <th mat-header-cell *matHeaderCellDef>Prueba</th>
+          <td mat-cell *matCellDef="let contract">{{ trialRange(contract) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="graceDays">
+          <th mat-header-cell *matHeaderCellDef>Días de aplazo</th>
+          <td mat-cell *matCellDef="let contract">{{ contract.paymentGraceDays }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="payments">
+          <th mat-header-cell *matHeaderCellDef>Cuotas</th>
+          <td mat-cell *matCellDef="let contract">
+            <div class="establishment-contracts-dialog__payments">
+              <span>{{ contract.paidPayments }} / {{ contract.totalPayments }}</span>
+              @if (contract.overduePayments > 0) {
+                <span class="establishment-contracts-dialog__overdue">
+                  {{ contract.overduePayments }} vencida{{ contract.overduePayments > 1 ? 's' : '' }}
+                </span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let contract">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar contrato"
+              matTooltip="Editar"
+              (click)="openEdit(contract)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Ver cuotas"
+              matTooltip="Ver cuotas"
+              (click)="openPayments(contract)"
+            >
+              <mat-icon>receipt_long</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="openNew()">
+    <mat-icon>add</mat-icon>
+    Nuevo contrato
+  </button>
+  <button mat-flat-button color="primary" type="button" (click)="close()">Cerrar</button>
+</mat-dialog-actions>

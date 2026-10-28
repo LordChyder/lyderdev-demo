@@ -1,0 +1,545 @@
+<div class="order-panel">
+  @if (loading()) {
+    <div class="order-panel__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="order-panel__state order-panel__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (detail(); as detail) {
+    <header class="order-panel__header">
+      <div class="order-panel__heading">
+        <mat-icon class="order-panel__icon">{{ detail.isDelivery ? 'delivery_dining' : 'table_restaurant' }}</mat-icon>
+        <div>
+          <h2>{{ detail.tableName || (detail.isDelivery ? 'Delivery' : '—') }}</h2>
+          <span class="order-panel__order-number">Pedido #{{ detail.orderNumber }}</span>
+        </div>
+      </div>
+
+      <button
+        mat-stroked-button
+        type="button"
+        disabled
+        matTooltip="Próximamente"
+        class="order-panel__change-table"
+      >
+        <mat-icon>swap_horiz</mat-icon>
+        Cambiar mesa
+      </button>
+
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Cerrar detalle"
+        matTooltip="Cerrar"
+        class="order-panel__close"
+        (click)="close()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <p class="order-panel__waiter">Mesero: {{ detail.waiterName || '—' }}</p>
+
+    @if (editing()) {
+      <!-- Modo edición: catálogo para agregar productos + líneas ya agregadas con +/- -->
+      <div class="order-panel__edit">
+        @if (loadingCashiers()) {
+          <div class="order-panel__state">
+            <mat-spinner diameter="32" />
+          </div>
+        } @else if (cashiersError()) {
+          <p class="order-panel__cancel-error">{{ cashiersError() }}</p>
+        } @else if (activeCashiers().length === 0) {
+          <p class="order-panel__cancel-error">No hay ninguna caja abierta en este establecimiento.</p>
+        } @else if (activeCashiers().length > 1 && !selectedCashierOpeningId()) {
+          <p class="order-panel__hint">Hay más de una caja activa. Elige con cuál vas a trabajar:</p>
+          <mat-radio-group class="order-panel__cashiers" (change)="selectCashier($event.value)">
+            @for (cashier of activeCashiers(); track cashier.cashierOpeningId) {
+              <mat-radio-button [value]="cashier.cashierOpeningId">{{ cashier.name }}</mat-radio-button>
+            }
+          </mat-radio-group>
+        } @else if (loadingCatalog()) {
+          <div class="order-panel__state">
+            <mat-spinner diameter="32" />
+          </div>
+        } @else if (catalogError()) {
+          <p class="order-panel__cancel-error">{{ catalogError() }}</p>
+        } @else {
+          @if (priceLists().length > 1) {
+            <section class="order-panel__price-list-picker" aria-label="Lista de precios">
+              <div class="order-panel__price-list-options" role="group" aria-label="Elegir lista de precios">
+                @for (list of priceLists(); track list.priceListId) {
+                  <button
+                    type="button"
+                    class="order-panel__price-list-button"
+                    [class.order-panel__price-list-button--selected]="list.priceListId === selectedPriceListId()"
+                    [attr.aria-pressed]="list.priceListId === selectedPriceListId()"
+                    (click)="selectedPriceListId.set(list.priceListId)"
+                  >
+                    {{ list.priceListName || 'Lista sin nombre' }}
+                  </button>
+                }
+              </div>
+            </section>
+          }
+
+          @if (addItemError()) {
+            <p class="order-panel__cancel-error">{{ addItemError() }}</p>
+          }
+
+          <div class="order-panel__products">
+            @for (product of selectedPriceList?.products ?? []; track product.productEstablishmentId) {
+              <div class="order-panel__product">
+                <div class="order-panel__product-info">
+                  <span class="order-panel__product-name">{{ product.productName }}</span>
+                  <span class="order-panel__product-price">{{ product.price | number: '1.2-2' }}</span>
+                </div>
+                <button
+                  mat-icon-button
+                  type="button"
+                  color="primary"
+                  class="order-panel__quantity-button"
+                  aria-label="Agregar producto"
+                  [disabled]="updatingOrder()"
+                  (click)="addProduct(product)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+                @if (!detail.isDelivery) {
+                  <label class="order-panel__takeaway-toggle">
+                    <input
+                      type="checkbox"
+                      [checked]="isTakeawayEnabled(product)"
+                      [disabled]="updatingOrder()"
+                      (change)="toggleTakeaway(product, $any($event.target).checked)"
+                    />
+                    <span>Para llevar</span>
+                  </label>
+                  @if (isTakeawayEnabled(product)) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="order-panel__quantity-button order-panel__quantity-button--takeaway"
+                      aria-label="Agregar una unidad para llevar"
+                      [disabled]="updatingOrder()"
+                      (click)="addProduct(product, true)"
+                    >
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  }
+                }
+              </div>
+            } @empty {
+              <p class="order-panel__hint">Esta lista de precios no tiene productos.</p>
+            }
+          </div>
+
+          @if (editItems().length) {
+            <div class="order-panel__edit-items">
+              @for (item of editItems(); track item.key) {
+                <div
+                  class="order-panel__edit-item"
+                  [class.order-panel__edit-item--removed]="item.quantity === 0"
+                  [class.order-panel__edit-item--takeaway]="item.takeaway && !detail.isDelivery"
+                >
+                  <div class="order-panel__edit-item-details">
+                    <span class="order-panel__edit-item-name">{{ item.productName }}</span>
+                    @if (item.takeaway && !detail.isDelivery) {
+                      <span class="order-panel__takeaway-badge">
+                        <mat-icon inline>takeout_dining</mat-icon>Para llevar
+                      </span>
+                    }
+                  </div>
+
+                  <div class="order-panel__edit-item-qty">
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="order-panel__quantity-button"
+                      aria-label="Restar cantidad"
+                      [disabled]="updatingOrder()"
+                      (click)="decreaseItem(item)"
+                    >
+                      <mat-icon>remove</mat-icon>
+                    </button>
+
+                    <span>{{ item.quantity }}</span>
+
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="order-panel__quantity-button"
+                      aria-label="Sumar cantidad"
+                      [disabled]="updatingOrder()"
+                      (click)="increaseItem(item)"
+                    >
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  </div>
+
+                  <span class="order-panel__edit-item-amount">
+                    {{ item.quantity * item.unitPrice - item.discount | number: '1.2-2' }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+
+        }
+      </div>
+    } @else if (detail.items?.length) {
+      <ul class="order-panel__items">
+        @for (item of detail.items; track item.id) {
+          <li>
+            <div class="order-panel__item-main">
+              <span class="order-panel__item-qty">{{ item.quantity }}×</span>
+              <span class="order-panel__item-name">
+                @if (item.isDeliveryFee) {
+                  <mat-icon inline class="order-panel__delivery-fee-icon">local_shipping</mat-icon>
+                }
+                {{ item.productName }}
+              </span>
+              <span class="order-panel__item-amount">{{ item.amountToPay | number: '1.2-2' }}</span>
+            </div>
+            @if (item.observation) {
+              <span class="order-panel__item-observation">{{ item.observation }}</span>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="order-panel__empty">Este pedido todavía no tiene productos.</p>
+    }
+
+    @if (canManage && detail.isDelivery && detail.isHomeDelivery && !hasDeliveryFee) {
+      @if (loadingDeliveryFeeProduct()) {
+        <p class="order-panel__hint">Cargando producto de delivery…</p>
+      } @else if (!deliveryFeeProduct()) {
+        <p class="order-panel__hint">
+          Configura el producto "Servicio de Delivery" en el catálogo para poder cobrar el cargo.
+        </p>
+      } @else {
+        <div class="order-panel__delivery-fee">
+          <mat-form-field class="order-panel__delivery-fee-input">
+            <mat-label>Cargo por delivery</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              step="0.10"
+              [value]="deliveryFeeAmount() || ''"
+              (input)="deliveryFeeAmount.set(+$any($event.target).value)"
+            />
+          </mat-form-field>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="addingDeliveryFee()"
+            (click)="addDeliveryFee()"
+          >
+            @if (addingDeliveryFee()) {
+              <mat-spinner diameter="18" />
+            } @else {
+              Agregar delivery
+            }
+          </button>
+        </div>
+      }
+      @if (deliveryFeeError()) {
+        <p class="order-panel__cancel-error">{{ deliveryFeeError() }}</p>
+      }
+    }
+
+    @if (!editing() && detail.status === OrderStatus.Closed) {
+      <div class="order-panel__note">
+        <div class="order-panel__note-header">
+          <span>Observación general</span>
+          @if (!editingNote()) {
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar observación general"
+              matTooltip="Editar"
+              (click)="startEditNote()"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          }
+        </div>
+
+        @if (editingNote()) {
+          <textarea
+            rows="2"
+            placeholder="Observación general del pedido (se reenvía a cocina)"
+            [value]="noteDraft()"
+            (input)="noteDraft.set($any($event.target).value)"
+          ></textarea>
+          @if (noteError()) {
+            <p class="order-panel__cancel-error">{{ noteError() }}</p>
+          }
+          <div class="order-panel__cancel-actions">
+            <button mat-button type="button" [disabled]="savingNote()" (click)="cancelEditNote()">
+              Cancelar
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              [disabled]="savingNote()"
+              (click)="saveNote()"
+            >
+              @if (savingNote()) {
+                <mat-spinner diameter="18" />
+              } @else {
+                Guardar
+              }
+            </button>
+          </div>
+        } @else if (detail.additionalInformation) {
+          <p class="order-panel__note-text">{{ detail.additionalInformation }}</p>
+        } @else {
+          <p class="order-panel__hint">Sin observación.</p>
+        }
+      </div>
+    }
+
+    <dl class="order-panel__totals">
+      <dt>Subtotal</dt>
+      <dd>{{ detail.total | number: '1.2-2' }}</dd>
+      <dt>Pagado</dt>
+      <dd>{{ detail.paid | number: '1.2-2' }}</dd>
+      <dt class="order-panel__totals-balance-label">Saldo</dt>
+      <dd class="order-panel__totals-balance">{{ detail.balance | number: '1.2-2' }}</dd>
+    </dl>
+
+    @if (editing()) {
+      @if (updateOrderError()) {
+        <p class="order-panel__cancel-error">{{ updateOrderError() }}</p>
+      }
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="order-panel__pay"
+        [disabled]="updatingOrder()"
+        (click)="updateOrder()"
+      >
+        @if (updatingOrder()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Actualizar
+        }
+      </button>
+    } @else {
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="order-panel__pay"
+        [disabled]="(detail.status !== OrderStatus.Closed && detail.status !== OrderStatus.Delivered) || startingCobro()"
+        [matTooltip]="detail.status === OrderStatus.Open ? 'Primero hay que cerrar el pedido' : ''"
+        (click)="goToCobrar()"
+      >
+        @if (startingCobro()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          <ng-container>
+            <mat-icon>payments</mat-icon>
+            Cobrar ({{ detail.balance | number: '1.2-2' }})
+          </ng-container>
+        }
+      </button>
+
+      @if (cobroError()) {
+        <p class="order-panel__cancel-error">{{ cobroError() }}</p>
+      }
+
+      @if (reopenError()) {
+        <p class="order-panel__cancel-error">{{ reopenError() }}</p>
+      }
+
+      @if (detail.status === OrderStatus.Delivered && (noteSaleRegistered() || detail.orderNoteSaleNumber)) {
+        <div class="order-panel__note-sale-success">
+          <mat-icon>check_circle</mat-icon>
+          <p>
+            Se registró nota de venta
+            @if (detail.orderNoteSaleNumber) {
+              #{{ detail.orderNoteSaleNumber }}
+            }
+            .
+          </p>
+          <button mat-flat-button color="primary" type="button" (click)="printNoteSale()">
+            <mat-icon>print</mat-icon>
+            Imprimir nota de venta
+          </button>
+        </div>
+      }
+
+      <div class="order-panel__secondary-actions">
+        <button
+          mat-stroked-button
+          type="button"
+          matTooltip="Imprimir precuenta"
+          (click)="printPrecuenta()"
+        >
+          <mat-icon>print</mat-icon>
+          Precuenta
+        </button>
+        @if (canManage) {
+          <button mat-stroked-button type="button" [disabled]="reopening()" (click)="startEdit()">
+            <mat-icon>edit</mat-icon>
+            @if (reopening()) {
+              <mat-spinner diameter="18" />
+            } @else {
+              Editar pedido
+            }
+          </button>
+        }
+      </div>
+
+      @if (canManage) {
+        @if (cancelingMode()) {
+          <div class="order-panel__cancel">
+            <label for="order-panel-cancel-reason">Motivo de la cancelación (opcional)</label>
+            <textarea
+              id="order-panel-cancel-reason"
+              rows="2"
+              [value]="cancelReason()"
+              (input)="cancelReason.set($any($event.target).value)"
+            ></textarea>
+            @if (cancelError()) {
+              <p class="order-panel__cancel-error">{{ cancelError() }}</p>
+            }
+            <div class="order-panel__cancel-actions">
+              <button mat-button type="button" [disabled]="canceling()" (click)="cancelCancel()">
+                Volver
+              </button>
+              <button
+                mat-flat-button
+                color="warn"
+                type="button"
+                [disabled]="canceling()"
+                (click)="confirmCancel()"
+              >
+                @if (canceling()) {
+                  <mat-spinner diameter="18" />
+                } @else {
+                  Confirmar cancelación
+                }
+              </button>
+            </div>
+          </div>
+        } @else {
+          <button
+            mat-stroked-button
+            color="warn"
+            type="button"
+            class="order-panel__cancel-trigger"
+            (click)="startCancel()"
+          >
+            <mat-icon>cancel</mat-icon>
+            Cancelar y liberar mesa
+          </button>
+        }
+      }
+    }
+
+    @if (!detail.orderNoteSaleNumber) {
+      <!-- Precuenta: oculta en pantalla, se imprime clonándola a un iframe
+           aislado (ver printPrecuenta()) en vez de con @media print sobre
+           toda la app. No es un comprobante fiscal, es el detalle para que
+           el cliente revise antes de pagar. Formato para ticketera de 80mm. -->
+      <div class="order-panel__precuenta" #precuentaTicket>
+        <p class="order-panel__precuenta-establishment">{{ establishmentName || '—' }}</p>
+        <p class="order-panel__precuenta-title">PRECUENTA</p>
+        @if (detail.tableName) {
+          <p class="order-panel__precuenta-table">MESA: {{ detail.tableName }}</p>
+        }
+        <div class="order-panel__precuenta-divider"></div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th>Cant.</th>
+              <th>Importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of detail.items; track item.id) {
+              <tr>
+                <td>
+                  {{ item.productName }}
+                  @if (item.unitPrice) {
+                    <span class="order-panel__precuenta-unit-price">
+                      ({{ item.unitPrice | number: '1.2-2' }} c/u)
+                    </span>
+                  }
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.amountToPay | number: '1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3">Sin productos</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="order-panel__precuenta-divider"></div>
+
+        <dl class="order-panel__precuenta-totals">
+          <dt>Total</dt>
+          <dd>S/ {{ detail.total | number: '1.2-2' }}</dd>
+        @if (detail.paid) {
+            <dt>Pagado</dt>
+            <dd>S/ {{ detail.paid | number: '1.2-2' }}</dd>
+            <dt>Saldo</dt>
+          <dd>S/ {{ detail.balance | number: '1.2-2' }}</dd>
+        }
+        </dl>
+      </div>
+    }
+
+    @if (detail.orderNoteSaleNumber) {
+      <!-- Solo visible al imprimir (ver @media print en order-panel.scss). No es un comprobante fiscal. -->
+      <div class="order-panel__receipt">
+        <h3>{{ detail.tableName || (detail.isDelivery ? 'Delivery' : '—') }}</h3>
+        <p>Pedido #{{ detail.orderNumber }} — Nota de venta #{{ detail.orderNoteSaleNumber }}</p>
+        <p>{{ detail.registerDate | date: 'medium' }}</p>
+        <p>Cliente: {{ customerName() || detail.customerName || 'Cliente varios' }}</p>
+        @if (customerDocNumber() || detail.customerDocNumber) {
+          <p>Doc: {{ customerDocNumber() || detail.customerDocNumber }}</p>
+        }
+
+        <table>
+          <thead>
+            <tr>
+              <th>Cant.</th>
+              <th>Producto</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of detail.items; track item.id) {
+              <tr>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.productName }}</td>
+                <td>{{ item.amountToPay | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <p class="order-panel__receipt-total">Total: {{ detail.total | number: '1.2-2' }}</p>
+        @if (selectedPaymentTypeName) {
+          <p>Pago: {{ selectedPaymentTypeName }} — {{ paymentAmount() | number: '1.2-2' }}</p>
+        }
+      </div>
+    }
+  }
+</div>

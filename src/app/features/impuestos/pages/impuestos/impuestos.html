@@ -1,0 +1,153 @@
+<div class="impuestos">
+  <header class="impuestos__header">
+    <h1>Impuestos</h1>
+    <button
+      mat-fab
+      extended
+      color="primary"
+      type="button"
+      class="impuestos__fab"
+      [disabled]="!selectedTax"
+      (click)="openCreate()"
+    >
+      <mat-icon>add</mat-icon>
+      Nueva configuración
+    </button>
+  </header>
+
+  <div class="impuestos__filters" [formGroup]="filterForm">
+    @if (saleTaxes().length > 0) {
+    <mat-form-field appearance="outline" class="impuestos__search">
+      <mat-label>Impuesto</mat-label>
+      <mat-select formControlName="saleTaxId">
+        @for (tax of saleTaxes(); track tax.id) {
+          <mat-option [value]="tax.id">{{ taxLabel(tax) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline" class="impuestos__search">
+      <mat-label>Buscar</mat-label>
+      <input matInput formControlName="term" placeholder="Agrupar por" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+  </div>
+
+  @if (loading()) {
+    <div class="impuestos__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="impuestos__state impuestos__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (configurations().length === 0) {
+    <div class="impuestos__state">
+      <span>Este impuesto aún no está configurado en el establecimiento.</span>
+    </div>
+  } @else {
+    <div class="impuestos__table-wrapper">
+      <table mat-table [dataSource]="configurations()" class="impuestos__table">
+        <ng-container matColumnDef="aliquot">
+          <th mat-header-cell *matHeaderCellDef>Alícuota</th>
+          <td mat-cell *matCellDef="let config">
+            <strong>{{ config.aliquot !== null ? (config.aliquot | number: '1.0-2') + ' %' : '—' }}</strong>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="groupBy">
+          <th mat-header-cell *matHeaderCellDef>Agrupar por</th>
+          <td mat-cell *matCellDef="let config">{{ config.groupBy || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="isExempt">
+          <th mat-header-cell *matHeaderCellDef>Exonerado</th>
+          <td mat-cell *matCellDef="let config">
+            <span class="impuestos__status" [class.impuestos__status--inactive]="!config.isExempt">
+              {{ config.isExempt ? 'Sí' : 'No' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="hasConfigureInProduct">
+          <th mat-header-cell *matHeaderCellDef>Config. en producto</th>
+          <td mat-cell *matCellDef="let config">
+            <span class="impuestos__status" [class.impuestos__status--inactive]="!config.hasConfigureInProduct">
+              {{ config.hasConfigureInProduct ? 'Sí' : 'No' }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let config">
+            <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ $implicit: config }" />
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <section class="impuestos__mobile-list" aria-label="Impuestos del establecimiento">
+      @for (config of configurations(); track config.id) {
+        <article class="impuestos__mobile-card">
+          <header>
+            <div>
+              <span>{{ config.groupBy || 'Sin agrupación' }}</span>
+              <h2>{{ config.aliquot !== null ? (config.aliquot | number: '1.0-2') + ' %' : '—' }}</h2>
+            </div>
+          </header>
+          <footer>
+            <span>
+              {{ config.isExempt ? 'Exonerado' : 'No exonerado' }} ·
+              {{ config.hasConfigureInProduct ? 'Config. en producto' : 'Config. general' }}
+            </span>
+            <div>
+              <ng-container [ngTemplateOutlet]="rowActions" [ngTemplateOutletContext]="{ $implicit: config }" />
+            </div>
+          </footer>
+        </article>
+      }
+    </section>
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>
+
+<ng-template #rowActions let-config>
+  <button
+    mat-icon-button
+    type="button"
+    class="impuestos__action impuestos__action--edit"
+    (click)="openEdit(config)"
+    aria-label="Editar configuración"
+    matTooltip="Editar"
+  >
+    <mat-icon>edit</mat-icon>
+  </button>
+  <button
+    mat-icon-button
+    type="button"
+    class="impuestos__action impuestos__action--delete"
+    [disabled]="deletingId() === config.id"
+    (click)="deleteConfiguration(config)"
+    aria-label="Eliminar configuración"
+    matTooltip="Eliminar"
+  >
+    @if (deletingId() === config.id) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>delete</mat-icon>
+    }
+  </button>
+</ng-template>

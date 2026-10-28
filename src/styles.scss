@@ -1,0 +1,668 @@
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+// Tema claro (por defecto) y tema oscuro (activado con la clase `.dark-theme` en <html>,
+// controlada por ThemeService). Ambos comparten paleta, tipografía y densidad; solo cambia
+// `theme-type`, que es lo que hace que Angular Material recalcule las variables de color.
+html {
+  height: 100%;
+  color-scheme: light;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: light,
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  // Colores de estado semánticos: bueno/advertencia/crítico/neutro.
+  --app-status-good: #0ca30c;
+  --app-status-good-bg: #e3f6e8;
+  --app-status-good-fg: #1e8e3e;
+
+  --app-status-warning: #fab219;
+  --app-status-warning-bg: #fef3e0;
+  --app-status-warning-fg: #b06000;
+
+  --app-status-critical: #d03b3b;
+  --app-status-critical-bg: #fdeaea;
+  --app-status-critical-fg: #c5221f;
+
+  --app-status-neutral-bg: #eceff1;
+  --app-status-neutral-fg: #607d8b;
+
+  --app-status-open: #0284c7;
+  --app-status-open-bg: #e0f2fe;
+  --app-status-open-fg: #0284c7;
+
+  // Overlays flotantes (panel de mat-select, mat-menu, autocomplete)
+  --mat-select-panel-background-color: var(--mat-sys-surface-container-high);
+  --mat-menu-container-color: var(--mat-sys-surface-container-high);
+  --mat-menu-container-shape: 16px;
+  --mat-autocomplete-background-color: var(--mat-sys-surface-container-high);
+  --mat-autocomplete-container-shape: 16px;
+
+  &.dark-theme {
+    color-scheme: dark;
+
+    @include mat.theme(
+      (
+        color: (
+          theme-type: dark,
+          primary: mat.$azure-palette,
+          tertiary: mat.$blue-palette,
+        ),
+      )
+    );
+
+    --app-status-good: #35c765;
+    --app-status-good-bg: #14321f;
+    --app-status-good-fg: #6fe08f;
+
+    --app-status-warning: #ffc247;
+    --app-status-warning-bg: #3a2c0f;
+    --app-status-warning-fg: #ffb84d;
+
+    --app-status-critical: #ff6b6b;
+    --app-status-critical-bg: #3a1616;
+    --app-status-critical-fg: #ff8a8a;
+
+    --app-status-neutral-bg: #2a2f33;
+    --app-status-neutral-fg: #9aa5ab;
+
+    --app-status-open: #38bdf8;
+    --app-status-open-bg: #082f49;
+    --app-status-open-fg: #38bdf8;
+  }
+}
+
+body {
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}
+
+main.shell__content > :not(router-outlet):not(app-cajero-page):not(app-cajero-orders-page):not(app-cobrar-pedido-page):not(app-ajustes-caja-page):not(app-new-order-page) {
+  display: block;
+  margin: -1.25rem;
+}
+
+main.shell__content > app-dashboard,
+main.shell__content > app-reporte {
+  box-sizing: border-box;
+  padding: 1rem;
+}
+
+@media (min-width: 600px) {
+  main.shell__content > :not(router-outlet):not(app-cajero-page):not(app-cajero-orders-page):not(app-cobrar-pedido-page):not(app-ajustes-caja-page):not(app-new-order-page) {
+    margin: -1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  main.shell__content > :not(router-outlet):not(app-cajero-page):not(app-cajero-orders-page):not(app-cobrar-pedido-page):not(app-ajustes-caja-page):not(app-new-order-page) {
+    margin: -1.75rem -2.25rem;
+  }
+}
+
+.mat-mdc-select-panel {
+  border-radius: 16px !important;
+}
+
+.app-snackbar {
+  &.app-snackbar--error {
+    --mdc-snackbar-container-color: var(--mat-sys-error);
+    --mdc-snackbar-supporting-text-color: var(--mat-sys-on-error);
+    --mat-snack-bar-button-color: var(--mat-sys-on-error);
+  }
+
+  &.app-snackbar--success {
+    --mdc-snackbar-container-color: var(--app-status-good);
+    --mdc-snackbar-supporting-text-color: #fff;
+    --mat-snack-bar-button-color: #fff;
+  }
+
+  &.app-snackbar--warning {
+    --mdc-snackbar-container-color: var(--app-status-warning);
+    --mdc-snackbar-supporting-text-color: #1c1c1c;
+    --mat-snack-bar-button-color: #1c1c1c;
+  }
+
+  &.app-snackbar--info {
+    --mdc-snackbar-container-color: var(--mat-sys-inverse-surface);
+    --mdc-snackbar-supporting-text-color: var(--mat-sys-inverse-on-surface);
+    --mat-snack-bar-button-color: var(--mat-sys-inverse-on-surface);
+  }
+}
+
+// La precuenta se imprime desde un iframe aislado (ver printElement() en
+// core/utils/print.util.ts y printPrecuenta() en order-panel.ts), no con
+// @media print sobre toda la página — por eso ya no tiene reglas acá.
+//
+// NOTA: la nota de venta (.order-panel__receipt, abajo) todavía usa el
+// patrón viejo (`visibility:hidden` sobre todo el body). Tiene el mismo
+// riesgo de colgar la vista previa de impresión en máquinas modestas; si
+// pasa, migrarla al mismo enfoque de iframe.
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .order-panel__receipt,
+  .order-panel__receipt * {
+    visibility: visible;
+  }
+
+  .order-panel__receipt {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 0.25rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .order-panel__receipt-total {
+      margin-top: 0.5rem;
+      font-weight: 700;
+    }
+  }
+}
+
+// ── Paginador en una sola fila (Desktop y Móvil) ─────────────────────────────
+.mat-mdc-paginator-container {
+  flex-wrap: nowrap !important;
+  justify-content: flex-end;
+}
+
+@media (max-width: 37.5rem) {
+  .mat-mdc-paginator-container {
+    padding: 0 0.25rem !important;
+    min-height: 3rem !important;
+    gap: 0.25rem;
+  }
+
+  .mat-mdc-paginator-page-size {
+    margin-right: 0.25rem !important;
+  }
+
+  // En pantallas móviles ocultamos el texto largo "Items per page:" para que
+  // el selector, el rango y las flechas entren siempre en una sola fila.
+  .mat-mdc-paginator-page-size-label {
+    display: none !important;
+  }
+
+  .mat-mdc-paginator-range-label {
+    margin: 0 0.25rem !important;
+    font-size: 0.8125rem !important;
+    white-space: nowrap !important;
+  }
+
+  .mat-mdc-paginator-navigation-previous,
+  .mat-mdc-paginator-navigation-next {
+    width: 2rem !important;
+    height: 2rem !important;
+    padding: 0 !important;
+  }
+}
+
+// ── Diálogos (Modales) globales: contenedor oscuro y responsivo ─────────────
+html.dark-theme {
+  .mat-mdc-dialog-container .mat-mdc-dialog-surface {
+    background-color: #0b1a2e !important;
+    border: 1px solid #1f3c5c;
+    box-shadow: 0 16px 36px rgb(0 0 0 / 60%);
+  }
+
+  // ── Panel de Detalle de Pedido (OrderPanel) en Modo Oscuro ────────────────
+  .order-panel {
+    background: #082244 !important;
+    border-color: #1a3d68 !important;
+    color: #d8e8ff !important;
+
+    &__state {
+      color: #829cb8 !important;
+    }
+
+    &__heading h2 {
+      color: #f0f6ff !important;
+    }
+
+    &__order-number,
+    &__waiter,
+    &__hint {
+      color: #829cb8 !important;
+    }
+
+    &__close {
+      color: #829cb8 !important;
+
+      &:hover {
+        color: #f0f6ff !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+    }
+
+    &__items,
+    &__empty,
+    &__products,
+    &__edit-items,
+    &__note-sale,
+    &__note-sale-success {
+      background: #04162b !important;
+      border: 1px solid #16375f !important;
+      box-shadow: none !important;
+      color: #d8e8ff !important;
+    }
+
+    &__items li:not(:last-child),
+    &__product:not(:last-child),
+    &__edit-item:not(:last-child) {
+      border-bottom-color: #16375f !important;
+    }
+
+    &__item-qty {
+      color: #71baff !important;
+    }
+
+    &__item-name,
+    &__product-name,
+    &__edit-item-name {
+      color: #e2e8f0 !important;
+    }
+
+    &__item-amount,
+    &__product-price,
+    &__edit-item-amount {
+      color: #4ade80 !important;
+    }
+
+    &__item-observation {
+      color: #829cb8 !important;
+    }
+
+    &__product-qty {
+      background: #082244 !important;
+      border-color: #1a3d68 !important;
+      color: #f0f6ff !important;
+    }
+
+    &__totals {
+      border-top-color: #16375f !important;
+      color: #829cb8 !important;
+
+      dt {
+        color: #829cb8 !important;
+      }
+
+      dd {
+        color: #e2e8f0 !important;
+      }
+    }
+
+    &__totals-balance-label,
+    &__totals-balance {
+      color: #f0f6ff !important;
+    }
+
+    &__pay {
+      --mdc-filled-button-container-color: #006ffd !important;
+      --mdc-filled-button-label-text-color: #ffffff !important;
+
+      &[disabled] {
+        --mdc-filled-button-disabled-container-color: #14283f !important;
+        --mdc-filled-button-disabled-label-text-color: #4b6685 !important;
+        color: #4b6685 !important;
+      }
+    }
+
+    &__secondary-actions button.mat-mdc-outlined-button {
+      color: #71baff !important;
+      border-color: #2d557d !important;
+      background: #102744 !important;
+
+      &:hover:not([disabled]) {
+        background: #173a63 !important;
+        border-color: #41698f !important;
+      }
+
+      &[disabled] {
+        color: #4b6685 !important;
+        border-color: #19314d !important;
+        background: #0c1c2e !important;
+      }
+    }
+
+    &__cancel-trigger {
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+      background: rgba(239, 68, 68, 0.08) !important;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.16) !important;
+      }
+    }
+
+    &__cancel label {
+      color: #829cb8 !important;
+    }
+
+    &__cancel textarea {
+      background: #04162b !important;
+      border-color: #16375f !important;
+      color: #f0f6ff !important;
+    }
+  }
+
+  // ── Cobrar Pedido en Modo Oscuro ──────────────────────────────────────────
+  .cobrar-pedido {
+    color: #d8e8ff !important;
+
+    &__header {
+      h1 {
+        color: #f0f6ff !important;
+      }
+
+      button[mat-icon-button] {
+        color: #d8e8ff !important;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.08) !important;
+        }
+      }
+    }
+
+    &__breadcrumb {
+      background: #082244 !important;
+      border-color: #1a3d68 !important;
+      color: #d8e8ff !important;
+    }
+
+    &__card {
+      background: #082244 !important;
+      border-color: #1a3d68 !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+      color: #d8e8ff !important;
+    }
+
+    &__order-heading h2 {
+      color: #f0f6ff !important;
+    }
+
+    &__order-number,
+    &__meta-label,
+    &__hint {
+      color: #829cb8 !important;
+    }
+
+    &__meta-item mat-icon {
+      color: #829cb8 !important;
+    }
+
+    &__meta-value {
+      color: #e2e8f0 !important;
+    }
+
+    &__items-title {
+      color: #f0f6ff !important;
+    }
+
+    &__card-title {
+      color: #f0f6ff !important;
+    }
+
+    &__items {
+      th {
+        color: #829cb8 !important;
+      }
+
+      td {
+        border-bottom-color: #16375f !important;
+        color: #d8e8ff !important;
+      }
+    }
+
+    &__item-name {
+      color: #f0f6ff !important;
+    }
+
+    &__item-sub {
+      color: #829cb8 !important;
+    }
+
+    &__item-amount {
+      color: #4ade80 !important;
+    }
+
+    &__totals {
+      dt {
+        color: #829cb8 !important;
+      }
+
+      dd {
+        color: #e2e8f0 !important;
+      }
+    }
+
+    &__grand-total {
+      border-top-color: #16375f !important;
+      color: #f0f6ff !important;
+
+      strong {
+        color: #4ade80 !important;
+      }
+    }
+
+    &__voucher-tab {
+      background: #04162b !important;
+      border-color: #16375f !important;
+      color: #64748b !important;
+
+      &--active {
+        background: #0d2a52 !important;
+        border-color: #006ffd !important;
+        color: #71baff !important;
+
+        mat-icon {
+          color: #006ffd !important;
+        }
+      }
+    }
+
+    &__radio {
+      background: #04162b !important;
+      border-color: #16375f !important;
+      color: #829cb8 !important;
+
+      small {
+        color: #5a738e !important;
+      }
+
+      &--selected {
+        background: #0d2a52 !important;
+        border-color: #006ffd !important;
+        color: #f0f6ff !important;
+
+        small {
+          color: #829cb8 !important;
+        }
+      }
+    }
+
+    &__info {
+      background: #0d2a52 !important;
+      border: 1px solid #1a3d68 !important;
+      color: #d8e8ff !important;
+
+      mat-icon {
+        color: #006ffd !important;
+      }
+    }
+
+    &__method {
+      background: #04162b !important;
+      border-color: #16375f !important;
+      color: #d8e8ff !important;
+
+      &--active {
+        background: #0d2a52 !important;
+        border-color: #006ffd !important;
+      }
+
+      &--badge-green .cobrar-pedido__method-badge {
+        background: rgba(34, 197, 94, 0.16) !important;
+        color: #4ade80 !important;
+      }
+
+      &--badge-blue .cobrar-pedido__method-badge {
+        background: rgba(0, 111, 253, 0.16) !important;
+        color: #71baff !important;
+      }
+
+      &--badge-purple .cobrar-pedido__method-badge {
+        background: rgba(168, 85, 247, 0.16) !important;
+        color: #c084fc !important;
+      }
+
+      &--badge-cyan .cobrar-pedido__method-badge {
+        background: rgba(6, 182, 212, 0.16) !important;
+        color: #22d3ee !important;
+      }
+
+      &--badge-indigo .cobrar-pedido__method-badge {
+        background: rgba(99, 102, 241, 0.16) !important;
+        color: #818cf8 !important;
+      }
+
+      &--badge-gray .cobrar-pedido__method-badge {
+        background: rgba(148, 163, 184, 0.16) !important;
+        color: #94a3b8 !important;
+      }
+    }
+
+    &__method-amount {
+      background: #082244 !important;
+      border-color: #1a3d68 !important;
+      color: #f0f6ff !important;
+    }
+
+    &__key {
+      background: #04162b !important;
+      border-color: #16375f !important;
+      color: #f0f6ff !important;
+
+      &:hover {
+        background: #102744 !important;
+        border-color: #2d557d !important;
+      }
+
+      &:active {
+        background: #173a63 !important;
+      }
+
+      &--back {
+        background: #102744 !important;
+        border-color: #2d557d !important;
+        color: #f0f6ff !important;
+
+        &:hover {
+          background: #173a63 !important;
+        }
+
+        &:active {
+          background: #1f4b7e !important;
+        }
+      }
+    }
+
+    &__footer button.mat-primary {
+      --mdc-filled-button-container-color: #006ffd !important;
+      --mdc-filled-button-label-text-color: #ffffff !important;
+
+      &[disabled] {
+        --mdc-filled-button-disabled-container-color: #14283f !important;
+        --mdc-filled-button-disabled-label-text-color: #4b6685 !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 37.5rem) {
+  .cdk-overlay-pane.mat-mdc-dialog-panel {
+    max-width: calc(100vw - 1.25rem) !important;
+  }
+
+  .mat-mdc-dialog-container .mat-mdc-dialog-surface {
+    border-radius: 16px !important;
+  }
+}
+
+// Panel lateral para crear pedidos delivery. Conserva la interacción de
+// diálogo, pero se presenta como la bandeja de detalle/cobro de Caja.
+.cdk-overlay-pane.new-delivery-side-panel {
+  width: min(30rem, 100vw) !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  animation: new-delivery-side-panel-enter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  .mat-mdc-dialog-container,
+  .mat-mdc-dialog-surface {
+    height: 100%;
+    min-height: 0;
+    border-radius: 0 !important;
+  }
+
+  .mat-mdc-dialog-surface {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mat-mdc-dialog-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .mat-mdc-dialog-actions {
+    flex: 0 0 auto;
+    min-height: 4.5rem;
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+html.dark-theme .cdk-overlay-pane.new-delivery-side-panel .mat-mdc-dialog-surface {
+  border: 0;
+  box-shadow: -8px 0 20px rgb(0 0 0 / 28%);
+}
+
+@keyframes new-delivery-side-panel-enter {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+

@@ -1,0 +1,145 @@
+<div
+  class="cashier-panel"
+  [class.cashier-panel--nested]="selectedOpeningId() || creatingOpening()"
+>
+  @if (selectedOpeningId(); as openingId) {
+    <app-opening-cashier-panel
+      [openingId]="openingId"
+      (closed)="backToOpeningsList()"
+      (changed)="onOpeningChanged()"
+    />
+  } @else if (creatingOpening()) {
+    <app-opening-cashier-form
+      [cashierId]="cashier.id"
+      [cashierName]="cashier.name"
+      (created)="onOpeningCreated()"
+      (cancelled)="cancelCreateOpening()"
+    />
+  } @else {
+    <header class="cashier-panel__header">
+      <div class="cashier-panel__heading">
+        <mat-icon class="cashier-panel__icon">point_of_sale</mat-icon>
+        <div class="cashier-panel__heading-text">
+          <h2>{{ cashier.name }}</h2>
+          <span
+            class="cashier-panel__status"
+            [class.cashier-panel__status--open]="currentOpeningStatus() === 'open'"
+            [class.cashier-panel__status--pending]="currentOpeningStatus() === 'pending'"
+            [class.cashier-panel__status--inactive]="!cashier.isActive"
+          >
+            {{ headerStatusLabel() }}
+          </span>
+        </div>
+      </div>
+
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Editar caja"
+        matTooltip="Editar"
+        (click)="edit()"
+      >
+        <mat-icon>edit</mat-icon>
+      </button>
+
+      <button
+        mat-icon-button
+        type="button"
+        [disabled]="busy()"
+        [attr.aria-label]="cashier.isActive ? 'Inactivar caja' : 'Activar caja'"
+        [matTooltip]="cashier.isActive ? 'Inactivar' : 'Activar'"
+        (click)="toggleActive()"
+      >
+        @if (busy()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          <mat-icon>{{ cashier.isActive ? 'block' : 'check_circle' }}</mat-icon>
+        }
+      </button>
+
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Cerrar detalle"
+        class="cashier-panel__close"
+        (click)="close()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    @if (error()) {
+      <p class="cashier-panel__error">{{ error() }}</p>
+    }
+
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      class="cashier-panel__open-button"
+      [class.cashier-panel__open-button--disabled]="!cashier.isActive || activeOpeningStateLoading() || hasCurrentCashierOpening()"
+      [disabled]="!cashier.isActive || activeOpeningStateLoading() || hasCurrentCashierOpening()"
+      [matTooltip]="
+        !cashier.isActive
+          ? 'Activa la caja para poder abrirla'
+          : activeOpeningStateLoading()
+          ? 'Verificando cajas abiertas...'
+          : hasCurrentCashierOpening()
+            ? 'Esta caja ya está abierta'
+            : 'Abrir caja'
+      "
+      (click)="createOpening()"
+    >
+      <mat-icon>add</mat-icon>
+      Abrir caja
+    </button>
+
+    @if (openingsLoading()) {
+      <div class="cashier-panel__opening-state">
+        <mat-spinner diameter="28" />
+      </div>
+    } @else if (openingsError()) {
+      <div class="cashier-panel__opening-state cashier-panel__opening-state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ openingsError() }}</span>
+      </div>
+    } @else if (openings().length === 0) {
+      <div class="cashier-panel__opening-state">
+        <span>No hay aperturas registradas.</span>
+      </div>
+    } @else {
+      <ul class="cashier-panel__opening-list">
+        @for (opening of openings(); track opening.id) {
+          <li>
+            <button type="button" class="cashier-panel__opening-item" (click)="selectOpening(opening)">
+              <div class="cashier-panel__opening-item-main">
+                <span class="cashier-panel__opening-item-user">{{ opening.userName }}</span>
+                <span class="cashier-panel__opening-item-date">
+                  {{ opening.openingDate | date: 'short' }}
+                </span>
+              </div>
+              <div class="cashier-panel__opening-item-side">
+                <span class="cashier-panel__opening-item-value">
+                  {{ opening.openingValue | number: '1.2-2' }}
+                </span>
+                <span class="cashier-panel__opening-status" [class]="statusClass(opening)">
+                  {{ statusLabel(opening) }}
+                </span>
+              </div>
+            </button>
+          </li>
+        }
+      </ul>
+
+      <mat-paginator
+        class="cashier-panel__opening-paginator"
+        [length]="openingsTotal()"
+        [pageIndex]="openingsPageIndex()"
+        [pageSize]="10"
+        [pageSizeOptions]="[10]"
+        [hidePageSize]="true"
+        (page)="onOpeningsPage($event)"
+      />
+    }
+  }
+</div>

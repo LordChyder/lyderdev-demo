@@ -1,0 +1,70 @@
+.price-list-bulk-add-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 520px;
+  max-height: 60vh;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  &__hint {
+    margin: 0 0 0.5rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.8125rem;
+  }
+
+  &__empty {
+    margin: 1rem 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 2rem 1fr 5rem 7rem 7rem;
+    align-items: center;
+    gap: 0.75rem;
+
+    &--header {
+      font-weight: 600;
+      font-size: 0.8125rem;
+      color: var(--mat-sys-on-surface-variant);
+      padding-bottom: 0.25rem;
+    }
+  }
+
+  &__product-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__field {
+    margin-top: 0.5rem;
+  }
+
+  &__error {
+    margin: 0.5rem 0 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+
+  &__summary {
+    margin: 0.5rem 0 0;
+    font-size: 0.875rem;
+  }
+}

@@ -1,0 +1,59 @@
+// Breakpoints compartidos por todos los componentes.
+// Coinciden exactamente con los rangos de Angular CDK (`Breakpoints.XSmall/Small/Medium/Large/XLarge`)
+// para que el layout responsivo en SCSS y la lógica en TypeScript (BreakpointService) queden alineados.
+//
+// super-pequeño (xs) : 0      – 599.98px
+// pequeño       (sm) : 600px  – 959.98px
+// mediano       (md) : 960px  – 1279.98px
+// largo         (lg) : 1280px – 1919.98px
+// extra-largo   (xl) : 1920px –
+
+@use 'sass:map';
+
+$breakpoints: (
+  xs: 0,
+  sm: 600px,
+  md: 960px,
+  lg: 1280px,
+  xl: 1920px,
+);
+
+/// Aplica el contenido a partir de un breakpoint (mobile-first).
+@mixin from($name) {
+  $min: map.get($breakpoints, $name);
+
+  @if $min == 0 {
+    @content;
+  } @else {
+    @media (min-width: $min) {
+      @content;
+    }
+  }
+}
+
+/// Aplica el contenido únicamente dentro de un breakpoint (entre su mínimo y el mínimo del siguiente).
+@mixin only($name) {
+  $names: map.keys($breakpoints);
+  $index: index($names, $name);
+  $min: map.get($breakpoints, $name);
+  $next: if($index < length($names), nth($names, $index + 1), null);
+
+  @if $next {
+    $max: map.get($breakpoints, $next) - 0.02px;
+    @media (min-width: $min) and (max-width: $max) {
+      @content;
+    }
+  } @else {
+    @include from($name) {
+      @content;
+    }
+  }
+}
+
+/// Aplica el contenido hasta un breakpoint (exclusivo).
+@mixin until($name) {
+  $max: map.get($breakpoints, $name) - 0.02px;
+  @media (max-width: $max) {
+    @content;
+  }
+}

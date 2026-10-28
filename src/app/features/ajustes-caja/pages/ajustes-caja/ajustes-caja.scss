@@ -1,0 +1,401 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  height: calc(100% + 2.5rem);
+  min-height: 0;
+  margin: -1.25rem;
+}
+
+@include bp.from(md) {
+  :host {
+    height: calc(100% + 3rem);
+    margin: -1.5rem;
+  }
+}
+
+@include bp.from(lg) {
+  :host {
+    height: calc(100% + 3.5rem);
+    margin: -1.75rem -2.25rem;
+  }
+}
+
+.ajustes-caja {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+  transition: gap 0.22s ease;
+
+  &--panel-open {
+    gap: 1rem;
+
+    .ajustes-caja__main {
+      padding-right: 0;
+    }
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 1rem 1rem 0 1rem;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex: 0 0 auto;
+    margin-bottom: 1rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    button {
+      flex-shrink: 0;
+      border-radius: 10px;
+    }
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-auto-rows: min-content;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    overflow-y: auto;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 1.25rem 1rem 1rem;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      transform 0.1s ease,
+      box-shadow 0.1s ease,
+      border-color 0.1s ease,
+      background-color 0.1s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgb(0 0 0 / 10%);
+    }
+
+    &--selected {
+      border-color: var(--mat-sys-primary);
+    }
+
+    // Modo Claro: Caja Abierta (fondo celeste suave)
+    &--open {
+      background: #f0f9ff;
+      border-color: #bae6fd;
+      &:hover { border-color: #7dd3fc; }
+    }
+
+    // Modo Claro: Caja Activa (fondo verde suave)
+    &--active {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      &:hover { border-color: #86efac; }
+    }
+
+    // Modo Claro: Pendiente cierre gerente (fondo ámbar suave)
+    &--pending {
+      background: #fffbeb;
+      border-color: #fde68a;
+      &:hover { border-color: #f59e0b; }
+    }
+
+    // Modo Claro: Caja Inactiva (fondo grisáceo e icono gris)
+    &--inactive {
+      opacity: 0.75;
+      background: #f8fafc;
+      border-color: #cbd5e1;
+
+      .ajustes-caja__card-icon {
+        color: #94a3b8; // Ícono gris solo cuando está inactivo
+      }
+
+      .ajustes-caja__card-name {
+        color: #64748b;
+      }
+
+      &:hover { border-color: #94a3b8; }
+    }
+  }
+
+  &__card-icon {
+    width: 4rem;
+    height: 4rem;
+    font-size: 4rem;
+    color: #ff7400;
+  }
+
+  &__card-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  &__card-status {
+    margin-top: 0.25rem;
+    padding: 0.15rem 0.625rem;
+    border-radius: 999px;
+    background: var(--app-status-good-bg);
+    color: var(--app-status-good-fg);
+    font-size: 0.8125rem;
+    font-weight: 500;
+
+    &--open {
+      background: var(--app-status-open-bg);
+      color: var(--app-status-open-fg);
+      font-weight: 600;
+    }
+
+    &--pending {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+      font-weight: 600;
+    }
+
+    &--inactive {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+
+  &__panel {
+    flex: 0 0 0;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    transition: flex-basis 0.22s ease;
+
+    &--open {
+      flex: 0 0 380px;
+    }
+
+    app-cashier-panel {
+      display: block;
+      width: 380px;
+      height: 100%;
+    }
+  }
+
+  // ── Adaptación Móvil (<= 768px) ──────────────────────────────────────────
+  @media (max-width: 48rem) {
+    &__header {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    &__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    &__card {
+      padding: 1rem 0.5rem 0.875rem;
+      border-radius: 14px;
+    }
+
+    &__card-icon {
+      width: 3.25rem;
+      height: 3.25rem;
+      font-size: 3.25rem;
+    }
+
+    &__card-name {
+      font-size: 0.9375rem;
+      word-break: break-word;
+    }
+
+    &__card-status {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+    }
+
+    &--panel-open {
+      gap: 0;
+
+      // Al abrir el panel en móvil, oculta el listado principal para que no se superponga
+      .ajustes-caja__main {
+        display: none;
+      }
+
+      .ajustes-caja__panel {
+        flex: 1 1 100%;
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+
+    &__panel {
+      width: 100%;
+      max-width: 100%;
+
+      &--open {
+        flex: 1 1 100%;
+      }
+
+      app-cashier-panel {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+  }
+}
+
+// ── Dark Theme ───────────────────────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .ajustes-caja {
+    &__header h1 {
+      color: #f0f6ff;
+    }
+
+    &__card {
+      border-color: #2d557d;
+      background: #102744;
+      color: #d8e8ff;
+      box-shadow: none;
+
+      &:hover {
+        border-color: #41698f;
+        background: #173a63;
+        box-shadow: none;
+      }
+
+      &--selected {
+        border-color: #71baff;
+        background: #173a63;
+      }
+
+      &--open {
+        border-color: #0284c7;
+        background: #092642;
+        box-shadow: 0 0 12px rgb(2 132 199 / 18%);
+
+        &:hover {
+          background: #0d3257;
+          border-color: #38bdf8;
+        }
+      }
+
+      // Fondo verdoso oscuro para la tarjeta Activa que hace contraste con el badge
+      &--active {
+        border-color: #1b5e3a;
+        background: #0d281e;
+        box-shadow: 0 0 10px rgb(34 197 94 / 12%);
+
+        &:hover {
+          background: #113427;
+          border-color: #22c55e;
+        }
+      }
+
+      // Modo Oscuro: Pendiente cierre gerente (fondo ámbar oscuro)
+      &--pending {
+        border-color: #f59e0b;
+        background: #2b1805;
+        box-shadow: 0 0 12px rgb(245 158 11 / 18%);
+
+        &:hover {
+          background: #382007;
+          border-color: #fbbf24;
+        }
+      }
+
+      &--inactive {
+        opacity: 0.65;
+        border-color: #1e334a;
+        background: #0b1a2e;
+
+        .ajustes-caja__card-icon {
+          color: #5a738e;
+        }
+
+        .ajustes-caja__card-name {
+          color: #829cb8;
+        }
+
+        &:hover {
+          background: #0e2139;
+          border-color: #284462;
+        }
+      }
+    }
+
+    &__card-name {
+      color: #e7f1ff;
+    }
+
+    // Fondo menos verde, más sutil y elegante para Activa
+    &__card-status {
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.28);
+
+      &--open {
+        background: rgba(56, 189, 248, 0.14);
+        color: #38bdf8;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+      }
+
+      &--pending {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.38);
+      }
+
+      &--inactive {
+        background: rgba(148, 163, 184, 0.12);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+      }
+    }
+  }
+
+  ::ng-deep .ajustes-caja .mat-mdc-paginator {
+    --mat-paginator-container-background-color: transparent;
+    --mat-paginator-container-text-color: #d8e8ff;
+    color: #d8e8ff;
+  }
+}

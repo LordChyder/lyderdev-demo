@@ -1,0 +1,95 @@
+<h2 mat-dialog-title class="stock-product-form__title">
+  Vincular producto al almacén
+  <span>Define los límites de inventario y la ubicación del producto.</span>
+</h2>
+
+<mat-dialog-content class="stock-product-form">
+  @if (loadingOptions()) {
+    <div class="stock-product-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="stock-product-form__fields" novalidate>
+      <section class="stock-product-form__bento stock-product-form__bento--product">
+        <p class="stock-product-form__section-label">Producto a vincular</p>
+        <mat-form-field appearance="outline" class="stock-product-form__field">
+          <mat-label>Buscar producto</mat-label>
+          <input
+            matInput
+            formControlName="productSearch"
+            [matAutocomplete]="productOptionsAutocomplete"
+            autocomplete="off"
+          />
+          <mat-autocomplete
+            #productOptionsAutocomplete="matAutocomplete"
+            [displayWith]="displayProduct"
+            autoActiveFirstOption
+            (optionSelected)="selectProduct($event)"
+          >
+            @for (option of filteredProductOptions(); track option.productEstablishmentId) {
+              <mat-option [value]="option">
+                {{ option.productName }}
+                @if (option.complementaryName) {
+                  ({{ option.complementaryName }})
+                }
+              </mat-option>
+            }
+          </mat-autocomplete>
+          @if (
+            form.controls.productEstablishmentId.touched &&
+            form.controls.productEstablishmentId.invalid
+          ) {
+            <mat-error>Selecciona un producto.</mat-error>
+          }
+          @if (productOptions().length === 0) {
+            <mat-hint>No hay productos con inventario disponibles para vincular.</mat-hint>
+          }
+        </mat-form-field>
+      </section>
+
+      <section class="stock-product-form__bento stock-product-form__bento--inventory">
+        <div class="stock-product-form__section-heading">
+          <p class="stock-product-form__section-label">Control de inventario</p>
+          <span>Los límites son opcionales.</span>
+        </div>
+
+        <div class="stock-product-form__inventory-grid">
+          <mat-form-field appearance="outline" class="stock-product-form__field">
+            <mat-label>Cantidad mínima</mat-label>
+            <input matInput type="number" step="0.01" formControlName="quantityMin" />
+            <mat-hint>Opcional</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="stock-product-form__field">
+            <mat-label>Cantidad máxima</mat-label>
+            <input matInput type="number" step="0.01" formControlName="quantityMax" />
+            <mat-hint>Opcional</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="stock-product-form__field stock-product-form__field--location">
+            <mat-label>Ubicación</mat-label>
+            <input matInput formControlName="location" />
+            <mat-hint>Opcional, ej. "Pasillo A"</mat-hint>
+          </mat-form-field>
+        </div>
+      </section>
+
+      @if (error()) {
+        <p class="stock-product-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loadingOptions() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Vincular' }}
+  </button>
+</mat-dialog-actions>

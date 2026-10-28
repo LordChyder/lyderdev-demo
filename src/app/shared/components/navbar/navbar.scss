@@ -1,0 +1,95 @@
+@use 'breakpoints' as bp;
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  min-height: 68px;
+  gap: 0.4rem;
+  padding: 0 0.75rem;
+  background: #fff;
+  border-bottom: 1px solid #dbeafe;
+  box-shadow: 0 2px 8px rgb(17 68 142 / 6%);
+  color: #18345f;
+
+  @include bp.from(md) { padding-inline: 1.25rem; }
+}
+
+.navbar__mobile-brand {
+  margin-right: 0.35rem;
+  color: #071b45;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+.navbar__mobile-brand span { color: #1267e8; }
+.navbar__establishment { display: inline-flex; align-items: center; gap: 0.25rem; min-width: 0; }
+.navbar__spacer { flex: 1 1 auto; }
+
+.navbar__cash-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: 0.25rem;
+  color: #0d9d6b;
+  font-size: 0.8rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.navbar__cash-status i { width: 10px; height: 10px; border-radius: 50%; background: #12aa72; }
+
+.navbar__clock {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.375rem;
+  margin-right: 0.25rem;
+  padding: 0.4rem 0.875rem;
+  border: 1px solid #d7e6fb;
+  border-radius: 999px;
+  background: #eaf2ff;
+  color: #0f1765;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  mat-icon { width: 1.125rem; height: 1.125rem; font-size: 1.125rem; color: #0072f5; }
+}
+
+:host ::ng-deep .establishment-switcher {
+  min-height: 38px;
+  padding-inline: 0.7rem;
+  border: 1px solid #cfe0fb;
+  border-radius: 12px;
+  background: #f7fbff;
+  color: #18345f;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+:host ::ng-deep .establishment-switcher .mat-icon { color: #234a82; }
+
+:host ::ng-deep .mat-mdc-icon-button {
+  color: #234a82;
+  --mdc-icon-button-icon-size: 21px;
+}
+
+@media (max-width: 599.98px) {
+  .navbar { gap: 0.1rem; padding-inline: 0.35rem; }
+  .navbar__cash-status { display: none; }
+  :host ::ng-deep .establishment-switcher { min-width: 0; padding-inline: 0.35rem; border-color: transparent; background: transparent; }
+}
+
+:host-context(.dark-theme) {
+  .navbar { background: #071d37; border-color: #173454; box-shadow: 0 2px 8px rgb(0 0 0 / 16%); color: #e8f2ff; }
+  .navbar__mobile-brand { color: #f4f8ff; }
+  .navbar__cash-status { color: #2ce0ac; }
+  :host ::ng-deep .establishment-switcher { border-color: #234667; background: #102843; color: #edf5ff; }
+  :host ::ng-deep .establishment-switcher .mat-icon, :host ::ng-deep .mat-mdc-icon-button { color: #c9e0fb; }
+  .navbar__clock { border-color: #234667; background: #102843; color: #edf5ff; }
+  .navbar__clock mat-icon { color: #3faeff; }
+}

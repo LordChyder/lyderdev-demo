@@ -1,0 +1,22 @@
+<mat-card class="page-placeholder" appearance="outlined">
+  @if (isDialog) {
+    <button
+      mat-icon-button
+      type="button"
+      class="page-placeholder__close"
+      aria-label="Cerrar"
+      (click)="close()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+
+  <mat-card-content class="page-placeholder__content">
+    <mat-icon class="page-placeholder__icon">{{ icon() }}</mat-icon>
+    <h1 class="page-placeholder__title">{{ title() }}</h1>
+    <p class="page-placeholder__description">{{ description() }}</p>
+    <div class="page-placeholder__actions">
+      <ng-content />
+    </div>
+  </mat-card-content>
+</mat-card>

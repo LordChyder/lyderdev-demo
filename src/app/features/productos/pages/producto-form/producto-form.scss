@@ -1,0 +1,31 @@
+.producto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 76rem;
+  padding: 1.25rem;
+  color: #142452;
+
+  h1, h2, p { margin: 0; }
+  &__hero, &__section { border: 1px solid #d7e6fb; border-radius: 14px; background: #fff; }
+  &__hero { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
+    h1 { color: #0f1765; font: 700 2rem/1.15 Roboto, sans-serif; letter-spacing: -0.02em; }
+    p { margin-top: .25rem; color: #5c6c87; }
+  }
+  &__hero-icon { display: grid; place-items: center; flex: 0 0 auto; width: 3.5rem; height: 3.5rem; border-radius: 12px; background: #ff6d19; color: #fff; mat-icon { transform: scale(1.15); } }
+  &__form { display: grid; gap: 1.25rem; }
+  &__section { overflow: hidden; }
+  &__section-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid #e6eef9;
+    > div { display: flex; align-items: center; gap: .6rem; } > div mat-icon { color: #086bd7; } h2 { font: 700 1.1rem/1.2 Roboto, sans-serif; } p { color: #5c6c87; font-size: .85rem; text-align: right; }
+  }
+  &__fields { display: grid; gap: .75rem 1rem; padding: 1rem 1.25rem .25rem;
+    &--catalog { grid-template-columns: minmax(16rem, 2fr) minmax(12rem, 1fr) minmax(13rem, 1fr); }
+    &--establishment { grid-template-columns: minmax(16rem, 2fr) minmax(9rem, 1fr) minmax(12rem, 1fr) minmax(12rem, 1fr); }
+  }
+  &__inventory-toggle { display: flex; align-items: center; min-height: 3.5rem; padding-bottom: 1.25rem; }
+  &__state { display: flex; justify-content: center; padding: 3rem; }
+  &__error { padding: .75rem 1rem; border-radius: 10px; background: #ffebe9; color: #a21c1c; }
+  &__actions { display: flex; justify-content: flex-start; gap: .75rem; padding-top: .25rem; button { min-width: 0; height: 2.5rem; padding-inline: 1rem; border-radius: 8px; } }
+  @media (max-width: 60rem) { &__fields--catalog, &__fields--establishment { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 48rem) { padding: 1rem; &__hero { align-items: flex-start; } &__section-header { align-items: flex-start; flex-direction: column; } &__section-header p { text-align: left; } &__fields--catalog, &__fields--establishment { grid-template-columns: 1fr; padding: 1rem 1rem .25rem; } &__actions button { flex: 1; } }
+}

@@ -1,0 +1,164 @@
+﻿<div class="usuarios">
+  <header class="usuarios__header">
+    <h1>Usuarios</h1>
+  </header>
+
+  @if (loading()) {
+    <div class="usuarios__state">
+      <mat-spinner diameter="32" />
+      <span>Cargando Usuarios</span>
+    </div>
+  } @else if (error()) {
+    <div class="usuarios__state usuarios__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (users().length === 0) {
+    <div class="usuarios__state">
+      <mat-icon>group_off</mat-icon>
+      <span>
+        @if (establishmentName(); as name) {
+          No tienes ningún usuario en {{ name }}.
+        } @else {
+          No tienes ningún usuario en este establecimiento.
+        }
+      </span>
+    </div>
+  } @else {
+    <!-- Vista Escritorio y Tablet (Tabla tradicional) -->
+    <div class="usuarios__table-wrapper">
+      <table mat-table [dataSource]="users()" class="usuarios__table">
+        <ng-container matColumnDef="username">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let user">{{ user.username }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let user">{{ user.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="groups">
+          <th mat-header-cell *matHeaderCellDef>Rol</th>
+          <td mat-cell *matCellDef="let user">{{ groupNames(user) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let user">
+            <span
+              class="usuarios__status"
+              [class.usuarios__status--inactive]="!user.active"
+              [attr.aria-label]="user.active ? 'Usuario activo' : 'Usuario inactivo'"
+            >
+              <mat-icon>{{ user.active ? 'check' : 'remove' }}</mat-icon>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let user">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar usuario"
+              matTooltip="Editar"
+              (click)="openEdit(user)"
+              class="usuarios__action usuarios__action--edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Permisos del usuario"
+              matTooltip="Permisos"
+              (click)="openPermissions(user)"
+              class="usuarios__action usuarios__action--permissions"
+            >
+              <mat-icon>key</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <!-- Vista Móvil: Divs / Cards -->
+    <div class="usuarios__cards">
+      @for (user of users(); track user.userEstablishmentId) {
+        <div class="usuarios__card" [class.usuarios__card--inactive]="!user.active">
+          <div class="usuarios__card-top">
+            <div class="usuarios__card-identity">
+              <div class="usuarios__card-avatar">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="usuarios__card-headings">
+                <span class="usuarios__card-username">{{ user.username }}</span>
+                <span class="usuarios__card-fullname">{{ user.name }}</span>
+              </div>
+            </div>
+
+            <span
+              class="usuarios__status"
+              [class.usuarios__status--inactive]="!user.active"
+              [attr.aria-label]="user.active ? 'Usuario activo' : 'Usuario inactivo'"
+            >
+              <mat-icon>{{ user.active ? 'check' : 'remove' }}</mat-icon>
+            </span>
+          </div>
+
+          <div class="usuarios__card-details">
+            <div class="usuarios__card-row">
+              <mat-icon class="usuarios__card-icon">mail_outline</mat-icon>
+              <span class="usuarios__card-text">{{ user.email || 'Sin correo' }}</span>
+            </div>
+            <div class="usuarios__card-row">
+              <mat-icon class="usuarios__card-icon">badge</mat-icon>
+              <span class="usuarios__card-badge">{{ groupNames(user) }}</span>
+            </div>
+          </div>
+
+          <div class="usuarios__card-actions">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar usuario"
+              matTooltip="Editar"
+              (click)="openEdit(user)"
+              class="usuarios__action usuarios__action--edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Permisos del usuario"
+              matTooltip="Permisos"
+              (click)="openPermissions(user)"
+              class="usuarios__action usuarios__action--permissions"
+            >
+              <mat-icon>key</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <mat-paginator
+    [length]="totalRows()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="pageSizeOptions"
+    (page)="onPage($event)"
+  />
+</div>

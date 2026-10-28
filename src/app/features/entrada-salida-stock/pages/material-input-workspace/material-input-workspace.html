@@ -1,0 +1,36 @@
+<div class="input-workspace">
+  <header class="input-workspace__heading">
+    <span class="input-workspace__hero-icon"><mat-icon>inventory_2</mat-icon></span>
+    <div><h1>Nueva entrada de inventario</h1><p>{{ isSupplierPurchase ? 'Registra compras con trazabilidad de proveedor y documento.' : 'Registra productos preparados internamente.' }}</p></div>
+  </header>
+
+  @if (loading()) { <div class="input-workspace__state"><mat-spinner diameter="32" /></div> } @else {
+    @if (error()) { <p class="input-workspace__error" role="alert">{{ error() }}</p> }
+    <form class="input-workspace__header-form" [formGroup]="headerForm">
+      <mat-form-field appearance="outline"><mat-label>Tipo de entrada</mat-label><mat-select formControlName="inputType">@for (type of types(); track type.enumId) { <mat-option [value]="type.enumId">{{ type.description }}</mat-option> }</mat-select></mat-form-field>
+      @if (isSupplierPurchase) { <mat-form-field appearance="outline"><mat-label>Proveedor</mat-label><input matInput formControlName="supplier" /></mat-form-field><mat-form-field appearance="outline"><mat-label>N° de documento</mat-label><input matInput formControlName="docNumber" /></mat-form-field> }
+      <mat-form-field appearance="outline"><mat-label>Fecha</mat-label><input matInput [matDatepicker]="picker" formControlName="dateIssue" /><mat-datepicker-toggle matIconSuffix [for]="picker" /><mat-datepicker #picker /></mat-form-field>
+      <mat-form-field appearance="outline" class="input-workspace__observation"><mat-label>Observación (opcional)</mat-label><input matInput formControlName="observation" /></mat-form-field>
+    </form>
+
+    <section class="input-workspace__add-panel">
+      <header><div><mat-icon>add_circle</mat-icon><h2>Agregar productos</h2></div><p><mat-icon>info</mat-icon> Selecciona un producto antes de agregar el almacén.</p></header>
+      <form class="input-workspace__product-form" [formGroup]="productForm" (ngSubmit)="addLine()">
+        <mat-form-field appearance="outline"><mat-label>Buscar producto</mat-label><input matInput formControlName="productSearch" [matAutocomplete]="productOptions" [matAutocompleteDisabled]="!products().length" autocomplete="off" /><mat-autocomplete #productOptions="matAutocomplete" [displayWith]="displayProduct" autoActiveFirstOption (optionSelected)="selectProduct($event)">@for (product of filteredProducts(); track product.productEstablishmentId) { <mat-option [value]="product">{{ product.productName }}</mat-option> }</mat-autocomplete>@if (productForm.controls.productSearch.touched && productForm.controls.productSearch.invalid) { <mat-error>Selecciona un producto.</mat-error> }</mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Almacén</mat-label><mat-select formControlName="stockProductId" [disabled]="loadingStocks()"><mat-option [value]="null">Selecciona un almacén</mat-option>@for (stock of stocks(); track stock.stockProductId) { <mat-option [value]="stock.stockProductId">{{ stockName(stock) }}</mat-option> }</mat-select></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Cantidad</mat-label><input matInput type="number" min="0.01" formControlName="quantity" /></mat-form-field>
+        @if (isSupplierPurchase) { <mat-form-field appearance="outline"><mat-label>Costo unitario</mat-label><input matInput type="number" min="0" formControlName="unitValue" /></mat-form-field> }
+        <button mat-flat-button color="primary" type="submit"><mat-icon>add</mat-icon> Agregar</button>
+      </form>
+    </section>
+
+    <section class="input-workspace__items-panel">
+      <header><h2><mat-icon>article</mat-icon> Productos agregados ({{ lines().length }})</h2>@if (lines().length) { <button mat-button color="warn" type="button" (click)="clearLines()"><mat-icon>delete_outline</mat-icon> Limpiar lista</button> }</header>
+      @if (!lines().length) { <div class="input-workspace__empty">Agrega los productos que ingresarán al inventario.</div> } @else {
+        <div class="input-workspace__table-wrap"><table><thead><tr><th>Producto</th><th>Almacén</th><th>Unidad</th>@if (!isSupplierPurchase) { <th>Stock actual</th> }<th>Cantidad</th>@if (isSupplierPurchase) { <th>Costo unitario</th><th>Subtotal</th> } @else { <th>Stock final</th> }<th>Acciones</th></tr></thead><tbody>@for (line of lines(); track line.key) { <tr><td>{{ line.productName }}</td><td>{{ line.stockName }}</td><td>{{ line.unit }}</td>@if (!isSupplierPurchase) { <td>{{ line.currentStock ?? '—' }}</td> }<td>{{ line.quantity | number:'1.0-2' }}</td>@if (isSupplierPurchase) { <td>S/ {{ line.unitValue | number:'1.2-2' }}</td><td>S/ {{ line.quantity * line.unitValue | number:'1.2-2' }}</td> } @else { <td>{{ finalStock(line) ?? '—' }}</td> }<td><button mat-icon-button color="warn" type="button" aria-label="Quitar producto" (click)="removeLine(line)"><mat-icon>delete_outline</mat-icon></button></td></tr> }</tbody></table></div>
+      }
+      @if (isSupplierPurchase && lines().length) { <footer class="input-workspace__total"><span>Total del documento</span><strong>S/ {{ documentTotal | number:'1.2-2' }}</strong></footer> }
+    </section>
+    <footer class="input-workspace__actions"><button mat-stroked-button type="button" (click)="cancel()">Cancelar</button><button mat-flat-button color="primary" type="button" [disabled]="saving() || !lines().length" (click)="saveAndClose()">@if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }<span>{{ saving() ? 'Guardando…' : 'Guardar y cerrar' }}</span></button></footer>
+  }
+</div>

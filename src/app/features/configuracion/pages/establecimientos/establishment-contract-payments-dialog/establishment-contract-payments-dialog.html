@@ -1,0 +1,116 @@
+<h2 mat-dialog-title>Cuotas — {{ data.establishmentName }}</h2>
+
+<mat-dialog-content class="establishment-contract-payments-dialog">
+  <div class="establishment-contract-payments-dialog__table-wrapper">
+    @if (loading()) {
+      <div class="establishment-contract-payments-dialog__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (error()) {
+      <div
+        class="establishment-contract-payments-dialog__state establishment-contract-payments-dialog__state--error"
+      >
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (payments().length === 0) {
+      <div class="establishment-contract-payments-dialog__state">
+        <span>Este contrato todavía no tiene cuotas generadas.</span>
+      </div>
+    } @else {
+      <table mat-table [dataSource]="payments()" class="establishment-contract-payments-dialog__table">
+        <ng-container matColumnDef="number">
+          <th mat-header-cell *matHeaderCellDef>N.°</th>
+          <td mat-cell *matCellDef="let payment">{{ payment.number }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="period">
+          <th mat-header-cell *matHeaderCellDef>Periodo</th>
+          <td mat-cell *matCellDef="let payment">{{ periodLabel(payment) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dueDate">
+          <th mat-header-cell *matHeaderCellDef>Fecha de cobro</th>
+          <td mat-cell *matCellDef="let payment">{{ formatDateOnly(payment.dueDate) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="graceEndDate">
+          <th mat-header-cell *matHeaderCellDef>Pagar hasta</th>
+          <td mat-cell *matCellDef="let payment">{{ formatDateOnly(payment.graceEndDate) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let payment">
+            <span
+              class="establishment-contract-payments-dialog__status"
+              [class]="statusClass(payment)"
+            >
+              {{ statusLabel(payment) }}
+            </span>
+            @if (payment.paid && payment.paidDate) {
+              <span class="establishment-contract-payments-dialog__paid-date">
+                el {{ formatDateOnly(payment.paidDate) }}
+              </span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="reminder">
+          <th mat-header-cell *matHeaderCellDef>Recordatorio</th>
+          <td mat-cell *matCellDef="let payment">
+            {{ payment.reminderSentAt ? ('Enviado ' + (payment.reminderSentAt | date: 'dd/MM/yyyy HH:mm')) : '—' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let payment">
+            @if (!payment.paid) {
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Registrar pago"
+                matTooltip="Registrar pago"
+                (click)="registerPayment(payment)"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Enviar recordatorio"
+                matTooltip="Enviar recordatorio por correo"
+                [disabled]="isSendingReminder(payment)"
+                (click)="sendReminder(payment)"
+              >
+                @if (isSendingReminder(payment)) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  <mat-icon>forward_to_inbox</mat-icon>
+                }
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                aria-label="Anular pago"
+                matTooltip="Anular pago"
+                (click)="cancelPayment(payment)"
+              >
+                <mat-icon>undo</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-flat-button color="primary" type="button" (click)="close()">Cerrar</button>
+</mat-dialog-actions>

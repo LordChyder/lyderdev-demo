@@ -1,0 +1,236 @@
+<div class="almacenes">
+  <header class="almacenes__header">
+    <div class="almacenes__title-group">
+      <h1>Almacenes</h1>
+    </div>
+
+    <label class="almacenes__search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        placeholder="Buscar almacén..."
+        aria-label="Buscar almacén"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+      @if (search()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="almacenes__search-clear"
+          aria-label="Limpiar búsqueda"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </label>
+
+    <button
+      mat-fab
+      extended
+      color="primary"
+      type="button"
+      class="almacenes__fab"
+      (click)="openCreate()"
+    >
+      <mat-icon>add</mat-icon>
+      Nuevo almacén
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="almacenes__state">
+      <mat-spinner diameter="32" />
+      <span>Cargando almacenes...</span>
+    </div>
+  } @else if (error()) {
+    <div class="almacenes__state almacenes__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (stocks().length === 0) {
+    <div class="almacenes__state">
+      <mat-icon>inventory_2</mat-icon>
+      @if (search().trim()) {
+        <span>No se encontraron almacenes para "{{ search() }}".</span>
+      } @else {
+        <span>No hay almacenes registrados.</span>
+      }
+    </div>
+  } @else {
+    <!-- Vista de escritorio / tablet: Tabla -->
+    <div class="almacenes__table-wrapper">
+      <table mat-table [dataSource]="stocks()" class="almacenes__table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let stock">{{ stock.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="address">
+          <th mat-header-cell *matHeaderCellDef>Dirección</th>
+          <td mat-cell *matCellDef="let stock">{{ stock.address }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="products">
+          <th mat-header-cell *matHeaderCellDef>Productos</th>
+          <td mat-cell *matCellDef="let stock">{{ stock.products }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let stock">
+            <span
+              class="almacenes__status"
+              [class.almacenes__status--inactive]="!stock.isActive"
+            >
+              <mat-icon>{{ stock.isActive ? 'check' : 'remove' }}</mat-icon>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let stock">
+            <button
+              mat-icon-button
+              type="button"
+              class="almacenes__action almacenes__action--edit"
+              (click)="openEdit(stock)"
+              aria-label="Editar almacén"
+              matTooltip="Editar"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            @if (stock.isActive) {
+              <button
+                mat-icon-button
+                type="button"
+                class="almacenes__action almacenes__action--state"
+                (click)="inactivate(stock)"
+                aria-label="Inactivar almacén"
+                matTooltip="Inactivar"
+              >
+                <mat-icon>block</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                class="almacenes__action almacenes__action--state"
+                (click)="activate(stock)"
+                aria-label="Activar almacén"
+                matTooltip="Activar"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              type="button"
+              class="almacenes__action almacenes__action--products"
+              (click)="viewProducts(stock)"
+              aria-label="Ver productos del almacén"
+              matTooltip="Ver productos"
+            >
+              <mat-icon>inventory_2</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <!-- Vista móvil: Cards -->
+    <div class="almacenes__cards">
+      @for (stock of stocks(); track stock.id) {
+        <div class="almacenes__card">
+          <div class="almacenes__card-header">
+            <div class="almacenes__card-avatar">
+              <mat-icon>warehouse</mat-icon>
+            </div>
+            <div class="almacenes__card-info">
+              <span class="almacenes__card-title">{{ stock.name }}</span>
+              <span class="almacenes__card-products">
+                <mat-icon>inventory_2</mat-icon>
+                {{ stock.products }} {{ stock.products === 1 ? 'producto' : 'productos' }}
+              </span>
+            </div>
+            <div class="almacenes__card-badge">
+              <span
+                class="almacenes__badge"
+                [class.almacenes__badge--active]="stock.isActive"
+                [class.almacenes__badge--inactive]="!stock.isActive"
+              >
+                {{ stock.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="almacenes__card-body">
+            <div class="almacenes__card-row">
+              <mat-icon class="almacenes__card-icon">place</mat-icon>
+              <span class="almacenes__card-address">{{ stock.address || 'Sin dirección registrada' }}</span>
+            </div>
+          </div>
+
+          <div class="almacenes__card-actions">
+            <button
+              mat-icon-button
+              type="button"
+              class="almacenes__action almacenes__action--products"
+              (click)="viewProducts(stock)"
+              aria-label="Ver productos del almacén"
+              matTooltip="Ver productos"
+            >
+              <mat-icon>inventory_2</mat-icon>
+            </button>
+            @if (stock.isActive) {
+              <button
+                mat-icon-button
+                type="button"
+                class="almacenes__action almacenes__action--state"
+                (click)="inactivate(stock)"
+                aria-label="Inactivar almacén"
+                matTooltip="Inactivar"
+              >
+                <mat-icon>block</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                class="almacenes__action almacenes__action--state"
+                (click)="activate(stock)"
+                aria-label="Activar almacén"
+                matTooltip="Activar"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              type="button"
+              class="almacenes__action almacenes__action--edit"
+              (click)="openEdit(stock)"
+              aria-label="Editar almacén"
+              matTooltip="Editar"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

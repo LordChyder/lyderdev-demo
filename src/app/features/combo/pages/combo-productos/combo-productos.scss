@@ -1,0 +1,184 @@
+.combo-productos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1rem;
+  color: #233d89;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    h1 {
+      flex: 1;
+      margin: 0;
+      color: #0f1765;
+      font: 700 2.25rem/1.15 Roboto, sans-serif;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  &__table-wrapper {
+    overflow-x: auto;
+    border: 1px solid #d7e6fb;
+    border-radius: 12px;
+    background: var(--mat-sys-surface-container-lowest);
+  }
+
+  &__table {
+    width: 100%;
+    min-width: 560px;
+    background: transparent;
+
+    .mat-mdc-header-row {
+      height: 3.375rem;
+      background: #e3efff;
+    }
+
+    .mat-mdc-header-cell {
+      box-sizing: border-box;
+      height: 3.375rem;
+      padding: 0 1.4375rem;
+      border-bottom: 0;
+      color: #101a63;
+      font: 600 1rem/1.25 Roboto, sans-serif;
+    }
+
+    .mat-mdc-row {
+      height: 3.6875rem;
+      transition: background-color 180ms ease-out;
+      &:hover { background: #f0f6ff; }
+    }
+
+    .mat-mdc-cell {
+      box-sizing: border-box;
+      height: 3.6875rem;
+      padding: 0 1.4375rem;
+      border-bottom-color: #dbe9fb;
+      color: #253f8d;
+      font: 400 1rem/1.35 Roboto, sans-serif;
+    }
+
+    .mat-column-productName { width: 45%; }
+    .mat-column-quantity { width: 15%; }
+    .mat-column-active { width: 20%; }
+    .mat-column-actions {
+      width: 20%;
+      padding-right: 1.25rem;
+      padding-left: 0.5rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+  }
+
+  &__active-icon { color: #04a443; }
+
+  &__action {
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-left: 0.5rem;
+    border: 1px solid #d7e7ff;
+    border-radius: 9px;
+    --mat-icon-button-container-shape: 9px;
+    transition: background-color 180ms ease-out, border-color 180ms ease-out;
+
+    &:focus-visible { outline: 3px solid rgb(0 105 230 / 30%); outline-offset: 2px; }
+
+    &--edit   { color: #0072f5; &:hover { background: #edf5ff; border-color: #9bc7ff; } }
+    &--delete { color: #c5221f; &:hover { background: #fdeaea; border-color: #f4a4a4; } }
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+    &--error { color: var(--mat-sys-error); }
+  }
+
+  @media (max-width: 48rem) {
+    padding: 1.5rem 1rem;
+    &__header h1 { font-size: 1.625rem; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combo-productos__table .mat-mdc-row,
+  .combo-productos__action { transition: none; }
+}
+
+:host ::ng-deep {
+  .combo-productos__table {
+    .mat-mdc-header-row { background: #e3efff !important; }
+
+    .mat-mdc-header-cell {
+      height: 3.375rem;
+      padding: 0 1.4375rem;
+      border-bottom: 0;
+      color: #101a63;
+      font: 600 1rem/1.25 Roboto, sans-serif;
+    }
+
+    .mat-mdc-row {
+      height: 3.6875rem;
+      &:hover { background: #f0f6ff !important; }
+    }
+
+    .mat-mdc-cell {
+      height: 3.6875rem;
+      padding: 0 1.4375rem;
+      border-bottom-color: #dbe9fb;
+      color: #253f8d;
+      font: 400 1rem/1.35 Roboto, sans-serif;
+    }
+  }
+
+  .combo-productos .mat-mdc-paginator {
+    --mat-paginator-container-background-color: transparent;
+  }
+}
+
+:host-context(.dark-theme) {
+  .combo-productos {
+    color: #d8e8ff;
+
+    &__header h1 { color: #f0f6ff; }
+
+    &__table-wrapper {
+      border-color: #1f3c5c;
+      background: #0c1c32;
+    }
+
+    &__active-icon { color: #63e6ae; }
+
+    &__action {
+      border-color: #2a4d72;
+      background: #0a1e35;
+
+      &--edit   { color: #71baff; &:hover { background: #173a63; border-color: #4a7eb8; } }
+      &--delete { color: #ff8a8a; &:hover { background: #3a1616; border-color: #c74444; } }
+    }
+  }
+
+  ::ng-deep {
+    .combo-productos__table {
+      background: #0c1c32;
+
+      .mat-mdc-header-row { background: #173a63 !important; }
+      .mat-mdc-header-cell { border-bottom-color: #1f3c5c; color: #e7f1ff; }
+      .mat-mdc-row { background: #0c1c32; &:hover { background: #112b4a !important; } }
+      .mat-mdc-cell { border-bottom-color: #1f3c5c; color: #d8e8ff; }
+    }
+
+    .combo-productos .mat-mdc-paginator {
+      --mat-paginator-container-background-color: transparent;
+      --mat-paginator-container-text-color: #d8e8ff;
+      color: #d8e8ff;
+    }
+  }
+}

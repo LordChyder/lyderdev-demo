@@ -1,0 +1,224 @@
+﻿<div class="grupos">
+  @if (claimsGroup(); as group) {
+    <app-group-claims-form
+      [groupId]="group.id"
+      [groupName]="group.name ?? ''"
+      (back)="closeClaims()"
+      (saved)="onClaimsSaved()"
+    />
+  } @else {
+    <header class="grupos__header">
+      <h1>Grupos</h1>
+      <app-add-button label="Agregar grupo" tooltip="Crear grupo" (pressed)="openCreate()" />
+    </header>
+
+    @if (loading()) {
+      <div class="grupos__state">
+        <mat-spinner diameter="32" />
+        <span>Cargando grupos</span>
+      </div>
+    } @else if (error()) {
+      <div class="grupos__state grupos__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (groups().length === 0) {
+      <div class="grupos__state">
+        <span>No hay grupos registrados.</span>
+      </div>
+    } @else {
+      <!-- Vista Escritorio y Tablet: Tabla estándar -->
+      <div class="grupos__table-wrapper">
+        <table mat-table [dataSource]="groups()" class="grupos__table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let group">{{ group.name }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="active">
+            <th mat-header-cell *matHeaderCellDef>Activo</th>
+            <td mat-cell *matCellDef="let group">
+              <span
+                class="grupos__status"
+                [class.grupos__status--inactive]="!group.active"
+                [attr.aria-label]="group.active ? 'Grupo activo' : 'Grupo inactivo'"
+              >
+                <mat-icon>{{ group.active ? 'check' : 'remove' }}</mat-icon>
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let group">
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openEdit(group)"
+                aria-label="Editar grupo"
+                matTooltip="Editar"
+                class="grupos__action grupos__action--edit"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openUsers(group)"
+                aria-label="Ver usuarios del grupo"
+                matTooltip="Usuarios del grupo"
+                class="grupos__action grupos__action--users"
+              >
+                <mat-icon>group</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openClaims(group)"
+                aria-label="Ver permisos del grupo"
+                matTooltip="Permisos del grupo"
+                class="grupos__action grupos__action--claims"
+              >
+                <mat-icon>key</mat-icon>
+              </button>
+              @if (group.active) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="inactivate(group)"
+                  aria-label="Inactivar grupo"
+                  matTooltip="Inactivar"
+                  class="grupos__action grupos__action--block"
+                >
+                  <mat-icon>block</mat-icon>
+                </button>
+              } @else {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="activate(group)"
+                  aria-label="Activar grupo"
+                  matTooltip="Activar"
+                  class="grupos__action grupos__action--activate"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+              <button
+                mat-icon-button
+                type="button"
+                (click)="remove(group)"
+                aria-label="Eliminar grupo"
+                matTooltip="Eliminar"
+                class="grupos__action grupos__action--delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+
+      <!-- Vista Móvil: Divs / Cards Compactas -->
+      <div class="grupos__cards">
+        @for (group of groups(); track group.id) {
+          <div class="grupos__card" [class.grupos__card--inactive]="!group.active">
+            <div class="grupos__card-top">
+              <div class="grupos__card-identity">
+                <div class="grupos__card-avatar">
+                  <mat-icon>groups</mat-icon>
+                </div>
+                <span class="grupos__card-name">{{ group.name }}</span>
+              </div>
+
+              <span
+                class="grupos__status"
+                [class.grupos__status--inactive]="!group.active"
+                [attr.aria-label]="group.active ? 'Grupo activo' : 'Grupo inactivo'"
+              >
+                <mat-icon>{{ group.active ? 'check' : 'remove' }}</mat-icon>
+              </span>
+            </div>
+
+            <div class="grupos__card-actions">
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openEdit(group)"
+                aria-label="Editar grupo"
+                matTooltip="Editar"
+                class="grupos__action grupos__action--edit"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openUsers(group)"
+                aria-label="Ver usuarios del grupo"
+                matTooltip="Usuarios del grupo"
+                class="grupos__action grupos__action--users"
+              >
+                <mat-icon>group</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="openClaims(group)"
+                aria-label="Ver permisos del grupo"
+                matTooltip="Permisos del grupo"
+                class="grupos__action grupos__action--claims"
+              >
+                <mat-icon>key</mat-icon>
+              </button>
+              @if (group.active) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="inactivate(group)"
+                  aria-label="Inactivar grupo"
+                  matTooltip="Inactivar"
+                  class="grupos__action grupos__action--block"
+                >
+                  <mat-icon>block</mat-icon>
+                </button>
+              } @else {
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="activate(group)"
+                  aria-label="Activar grupo"
+                  matTooltip="Activar"
+                  class="grupos__action grupos__action--activate"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+              <button
+                mat-icon-button
+                type="button"
+                (click)="remove(group)"
+                aria-label="Eliminar grupo"
+                matTooltip="Eliminar"
+                class="grupos__action grupos__action--delete"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

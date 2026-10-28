@@ -1,0 +1,380 @@
+<div class="cobrar-pedido">
+  <header class="cobrar-pedido__header">
+    <div class="cobrar-pedido__title-block">
+      <button mat-icon-button type="button" aria-label="Volver" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>Cobrar pedido</h1>
+    </div>
+
+    <span class="cobrar-pedido__breadcrumb">
+      Pedidos
+      @if (cashierName(); as name) {
+        &nbsp;›&nbsp;{{ name }}
+      }
+      &nbsp;›&nbsp;Cobrar
+    </span>
+  </header>
+
+  @if (loading()) {
+    <div class="cobrar-pedido__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="cobrar-pedido__state cobrar-pedido__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (detail(); as detail) {
+    <div class="cobrar-pedido__columns">
+      <!-- Columna 1: pedido -->
+      <section class="cobrar-pedido__card cobrar-pedido__order">
+        <header class="cobrar-pedido__card-header">
+          <div class="cobrar-pedido__order-heading">
+            <mat-icon class="cobrar-pedido__order-icon">table_restaurant</mat-icon>
+            <h2>{{ detail.tableName || (detail.isDelivery ? 'Delivery' : '—') }}</h2>
+          </div>
+        </header>
+
+        <div class="cobrar-pedido__meta">
+          <div class="cobrar-pedido__meta-item">
+            <mat-icon>person</mat-icon>
+            <div>
+              <span class="cobrar-pedido__meta-label">Mesero</span>
+              <span class="cobrar-pedido__meta-value">{{ detail.waiterName || '—' }}</span>
+            </div>
+          </div>
+
+          <div class="cobrar-pedido__meta-item">
+            <mat-icon>schedule</mat-icon>
+            <div>
+              <span class="cobrar-pedido__meta-label">Hora del pedido</span>
+              <span class="cobrar-pedido__meta-value">{{ detail.registerDate | date: 'HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="cobrar-pedido__items-title">Productos del pedido ({{ detail.items?.length || 0 }})</h3>
+
+        <div class="cobrar-pedido__items-wrapper">
+          <table class="cobrar-pedido__items">
+            <thead>
+              <tr>
+                <th class="cobrar-pedido__items-qty-col">Cant.</th>
+                <th>Producto</th>
+                <th class="cobrar-pedido__items-num-col">S/.</th>
+                <th class="cobrar-pedido__items-num-col">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of detail.items; track item.id) {
+                <tr>
+                  <td class="cobrar-pedido__items-qty-col">{{ item.quantity }}</td>
+                  <td>
+                    <span class="cobrar-pedido__item-name">{{ item.productName }}</span>
+                    @if (item.isTakeAway) {
+                      <span class="cobrar-pedido__takeaway">
+                        <mat-icon aria-hidden="true">takeout_dining</mat-icon>
+                        Para llevar
+                      </span>
+                    }
+                    @if (item.productComplementaryName) {
+                      <span class="cobrar-pedido__item-sub">{{ item.productComplementaryName }}</span>
+                    }
+                    @if (item.observation) {
+                      <span class="cobrar-pedido__item-sub">{{ item.observation }}</span>
+                    }
+                  </td>
+                  <td class="cobrar-pedido__items-num-col">S/ {{ item.unitPrice | number: '1.2-2' }}</td>
+                  <td class="cobrar-pedido__items-num-col cobrar-pedido__item-amount">
+                    S/ {{ item.amountToPay | number: '1.2-2' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <dl class="cobrar-pedido__totals">
+          <dt>Subtotal</dt>
+          <dd>S/ {{ subtotal() | number: '1.2-2' }}</dd>
+          <dt>Descuentos</dt>
+          <dd>S/ {{ discounts() | number: '1.2-2' }}</dd>
+        </dl>
+
+        <div class="cobrar-pedido__grand-total">
+          <span>Total a pagar</span>
+          <strong>S/ {{ totalToPay() | number: '1.2-2' }}</strong>
+        </div>
+        @if (totalEntered() > 0) {
+          <div class="cobrar-pedido__change">
+            <span>Vuelto</span>
+            <strong>S/ {{ changeDue() | number: '1.2-2' }}</strong>
+          </div>
+        }
+      </section>
+
+      <!-- Columna derecha: comprobante arriba, métodos de pago abajo -->
+      <div class="cobrar-pedido__right">
+        <section class="cobrar-pedido__card cobrar-pedido__voucher-payment">
+          <h2 class="cobrar-pedido__card-title">
+            <mat-icon>description</mat-icon>
+            Comprobante de pago
+          </h2>
+          <p class="cobrar-pedido__hint">Selecciona el tipo de comprobante.</p>
+
+          <div class="cobrar-pedido__voucher-tabs">
+            @for (
+              option of [
+                { value: 'Boleta', label: 'Boleta' },
+                { value: 'Factura', label: 'Factura' },
+                { value: 'NoteSale', label: 'Nota de venta' },
+              ];
+              track option.value
+            ) {
+              <button
+                type="button"
+                class="cobrar-pedido__voucher-tab"
+                [class.cobrar-pedido__voucher-tab--active]="voucherType() === option.value"
+                [attr.aria-pressed]="voucherType() === option.value"
+                [disabled]="submitting()"
+                (click)="selectVoucherType($any(option.value))"
+              >
+                <mat-icon>{{ voucherType() === option.value ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                {{ option.label }}
+              </button>
+            }
+          </div>
+
+          <h3 class="cobrar-pedido__card-title cobrar-pedido__card-title--small">
+            <mat-icon>group</mat-icon>
+            Datos del cliente
+          </h3>
+
+          @if (!isInvoice()) {
+            <div class="cobrar-pedido__client-options">
+              <label
+                class="cobrar-pedido__radio"
+                [class.cobrar-pedido__radio--selected]="!withCustomerData()"
+              >
+                <input
+                  type="radio"
+                  name="customerMode"
+                  [checked]="!withCustomerData()"
+                  (change)="setWithCustomerData(false)"
+                />
+                <span>
+                  <strong>Cliente varios</strong>
+                  <small>
+                    Se emitirá {{ voucherType() === 'Boleta' ? 'una boleta' : 'una nota de venta' }} sin datos
+                    del cliente.
+                  </small>
+                </span>
+              </label>
+
+              <label
+                class="cobrar-pedido__radio"
+                [class.cobrar-pedido__radio--selected]="withCustomerData()"
+              >
+                <input
+                  type="radio"
+                  name="customerMode"
+                  [checked]="withCustomerData()"
+                  (change)="setWithCustomerData(true)"
+                />
+                <span>
+                  <strong>Con datos del cliente</strong>
+                  <small>Ingresa el DNI y nombre del cliente para la emisión.</small>
+                </span>
+              </label>
+            </div>
+          } @else {
+            <p class="cobrar-pedido__hint">La factura se emite a nombre de una empresa con RUC.</p>
+          }
+
+          @if (requiresCustomerData()) {
+            <div class="cobrar-pedido__customer-form">
+              <div class="cobrar-pedido__field cobrar-pedido__field--wide cobrar-pedido__doc-search">
+                <span>Documento *</span>
+                <div class="cobrar-pedido__doc-row">
+                  @if (isInvoice()) {
+                    <span
+                      class="cobrar-pedido__doc-type cobrar-pedido__doc-type--locked"
+                      aria-label="Tipo de documento: RUC"
+                    >
+                      RUC
+                    </span>
+                  } @else {
+                    <select
+                      class="cobrar-pedido__doc-type"
+                      [disabled]="submitting()"
+                      [value]="customerDocTypeId() ?? ''"
+                      (change)="onCustomerDocTypeChange($event)"
+                    >
+                      <option value="" disabled>
+                        {{ loadingDocumentTypes() ? 'Cargando...' : 'Selecciona' }}
+                      </option>
+                      @for (docType of documentTypes(); track docType.id) {
+                        <option [value]="docType.id">{{ docType.code }}</option>
+                      }
+                    </select>
+                  }
+                  <input
+                    type="text"
+                    [attr.inputmode]="customerDocExpectedLength() !== null ? 'numeric' : 'text'"
+                    autocomplete="off"
+                    placeholder="Número de documento"
+                    [attr.maxlength]="customerDocExpectedLength() ?? 20"
+                    [disabled]="!isInvoice() && !selectedDocumentType()"
+                    [value]="customerDocNumber()"
+                    (pointerdown)="selectCustomerDocumentInput()"
+                    (focus)="selectCustomerDocumentInput()"
+                    (input)="onCustomerDocNumberInput($event)"
+                  />
+                  <button
+                    type="button"
+                    class="cobrar-pedido__doc-search-btn"
+                    [disabled]="!isCustomerDocNumberComplete() || searchingCustomer() || submitting()"
+                    (click)="searchCustomer()"
+                  >
+                    @if (searchingCustomer()) {
+                      <mat-spinner diameter="16" />
+                    } @else {
+                      <mat-icon>search</mat-icon>
+                    }
+                    Buscar
+                  </button>
+                </div>
+                @if (documentTypesError(); as docTypesErrorMessage) {
+                  <p class="cobrar-pedido__error">{{ docTypesErrorMessage }}</p>
+                }
+                @if (customerSearchError(); as searchErrorMessage) {
+                  <p class="cobrar-pedido__error">{{ searchErrorMessage }}</p>
+                }
+              </div>
+              <label class="cobrar-pedido__field cobrar-pedido__field--wide">
+                <span>{{ customerNameLabel() }} *</span>
+                <input
+                  type="text"
+                  autocomplete="off"
+                  maxlength="200"
+                  [value]="customerName()"
+                  (input)="customerName.set(inputValue($event))"
+                />
+              </label>
+            </div>
+            @if (customerValidationMessage(); as customerMessage) {
+              @if (customerDocNumber() || customerName()) {
+                <p class="cobrar-pedido__error">{{ customerMessage }}</p>
+              }
+            }
+          }
+
+          @if (alreadyPaid()) {
+            <p class="cobrar-pedido__hint">
+              <mat-icon inline>info</mat-icon>
+              Los pagos de este pedido ya están registrados: solo falta emitir el comprobante.
+            </p>
+          }
+
+          @if (alreadyPaid()) {
+            <!-- Ya no hay nada que cobrar: no se muestran métodos de pago ni teclado para no sugerir que se puede volver a pagar. -->
+          } @else if (loadingPaymentTypes()) {
+            <div class="cobrar-pedido__state">
+              <mat-spinner diameter="28" />
+            </div>
+          } @else if (paymentTypesError()) {
+            <p class="cobrar-pedido__error">{{ paymentTypesError() }}</p>
+          } @else if (paymentTypes().length === 0) {
+            <p class="cobrar-pedido__error">No hay tipos de pago configurados.</p>
+          } @else {
+            <div class="cobrar-pedido__payment-entry">
+              <div class="cobrar-pedido__payment-methods">
+                <h2 class="cobrar-pedido__card-title">
+                  <mat-icon>credit_card</mat-icon>
+                  Método(s) de pago
+                </h2>
+                <p class="cobrar-pedido__hint">Ingresa los montos recibidos. Puedes usar uno o más métodos.</p>
+
+                <div class="cobrar-pedido__methods">
+              @for (paymentType of paymentTypes(); track paymentType.paymentTypeId) {
+                <button
+                  type="button"
+                  class="cobrar-pedido__method"
+                  [class]="badgeClass(paymentType)"
+                  [class.cobrar-pedido__method--active]="activePaymentTypeId() === paymentType.paymentTypeId"
+                  (click)="selectPaymentRow(paymentType.paymentTypeId)"
+                >
+                  <span class="cobrar-pedido__method-badge">
+                    <mat-icon>{{ iconFor(paymentType) }}</mat-icon>
+                  </span>
+                  <span class="cobrar-pedido__method-name">{{ paymentType.name }}</span>
+                  <span class="cobrar-pedido__method-amount">
+                    S/ {{ amountFor(paymentType.paymentTypeId) }}
+                  </span>
+                </button>
+              }
+                </div>
+              </div>
+
+              <div class="cobrar-pedido__payment-keypad">
+                <h3 class="cobrar-pedido__card-title cobrar-pedido__card-title--small">
+              Ingresar monto
+                </h3>
+
+            <div class="cobrar-pedido__keypad-row">
+              <div class="cobrar-pedido__keypad">
+                    @for (key of ['7', '8', '9', '4', '5', '6', '1', '2', '3', 'back', '.', '0']; track key) {
+                  @if (key === 'back') {
+                    <button
+                      type="button"
+                      class="cobrar-pedido__key cobrar-pedido__key--back"
+                      (click)="keypadBackspace()"
+                    >
+                      <mat-icon>backspace</mat-icon>
+                    </button>
+                  } @else {
+                    <button type="button" class="cobrar-pedido__key" (click)="keypadPress(key)">
+                      {{ key }}
+                    </button>
+                  }
+                }
+              </div>
+
+                </div>
+              </div>
+            </div>
+
+            @if (yapeValidationMessage(); as yapeMessage) {
+              <p class="cobrar-pedido__error">{{ yapeMessage }}</p>
+            }
+          }
+
+          @if (submitError()) {
+            <p class="cobrar-pedido__error">{{ submitError() }}</p>
+          }
+        </section>
+      </div>
+    </div>
+
+    <footer class="cobrar-pedido__footer">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="cobrar-pedido__submit"
+        [disabled]="!canSubmit()"
+        (click)="submit()"
+      >
+        @if (submitting()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          <ng-container>
+            <mat-icon>check</mat-icon>
+            {{ submitLabel() }} (S/ {{ (alreadyPaid() ? detail.total : totalToPay()) | number: '1.2-2' }})
+          </ng-container>
+        }
+      </button>
+    </footer>
+  }
+</div>

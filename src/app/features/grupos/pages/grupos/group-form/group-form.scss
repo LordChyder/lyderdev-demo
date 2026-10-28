@@ -1,0 +1,41 @@
+@use 'dialog';
+
+.group-form {
+  @include dialog.content;
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__error {
+    @include dialog.error-text;
+  }
+}
+
+.group-form__title {
+  @include dialog.title;
+}
+
+.group-form__actions {
+  @include dialog.actions;
+}
+
+:host ::ng-deep {
+  .group-form__field {
+    @include dialog.field-tokens;
+  }
+}
+
+@media (max-width: 30rem) {
+  .group-form {
+    @include dialog.narrow-screen-padding;
+  }
+
+  .group-form__title,
+  .group-form__actions {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+}

@@ -1,0 +1,92 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar punto de emisión' : 'Nuevo punto de emisión' }}</h2>
+
+<mat-dialog-content class="emission-point-form">
+  @if (loading()) {
+    <div class="emission-point-form__loading">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+  <form [formGroup]="form" class="emission-point-form__fields" novalidate>
+    <div class="emission-point-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de comprobante</mat-label>
+        <mat-select formControlName="taxDocumentType">
+          @for (option of taxDocumentTypeOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de operación</mat-label>
+        <mat-select formControlName="operationType">
+          @for (option of operationTypeOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="emission-point-form__row">
+      <mat-form-field appearance="outline">
+        <mat-label>Serie</mat-label>
+        <input matInput formControlName="seriesDescription" maxlength="400" placeholder="B" />
+        @if (form.controls.seriesDescription.touched && form.controls.seriesDescription.invalid) {
+          <mat-error>La serie es obligatoria.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Código</mat-label>
+        <input matInput formControlName="code" maxlength="400" placeholder="001" />
+        @if (form.controls.code.touched && form.controls.code.invalid) {
+          <mat-error>El código es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Siguiente número</mat-label>
+        <input matInput type="number" min="1" step="1" formControlName="nextNumber" />
+        @if (form.controls.nextNumber.touched && form.controls.nextNumber.invalid) {
+          <mat-error>Debe ser mayor a cero.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (hasIssuedInvoices()) {
+      <p class="emission-point-form__hint">
+        Este punto de emisión ya tiene comprobantes emitidos: la serie y el siguiente número no se pueden modificar.
+      </p>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Caja</mat-label>
+      <mat-select formControlName="cashierId">
+        <mat-option [value]="null">Sin caja</mat-option>
+        @for (cashier of cashiers(); track cashier.id) {
+          <mat-option [value]="cashier.id">{{ cashier.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isUseWeb">Usar en la web</mat-checkbox>
+
+    @if (error()) {
+      <p class="emission-point-form__error">{{ error() }}</p>
+    }
+  </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="saving() || loading()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

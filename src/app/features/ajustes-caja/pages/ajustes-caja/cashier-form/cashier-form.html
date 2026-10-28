@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar caja' : 'Crear caja' }}</h2>
+
+<mat-dialog-content class="cashier-form">
+  <form [formGroup]="form" class="cashier-form__fields" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" autocomplete="off" />
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <mat-error>Ingresa el nombre.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="cashier-form__error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

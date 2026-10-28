@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>Añadir todos los productos de un almacén</h2>
+
+<mat-dialog-content class="price-list-bulk-add-form">
+  @if (loadingStocks()) {
+    <div class="price-list-bulk-add-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <mat-form-field appearance="outline">
+      <mat-label>Almacén</mat-label>
+      <mat-select
+        [value]="selectedStockId()"
+        (selectionChange)="onStockChange($event.value)"
+      >
+        @for (stock of stocks(); track stock.id) {
+          <mat-option [value]="stock.id">{{ stock.name }}</mat-option>
+        }
+      </mat-select>
+      @if (stocks().length === 0) {
+        <mat-hint>No hay almacenes registrados.</mat-hint>
+      }
+    </mat-form-field>
+
+    @if (loadingProducts()) {
+      <div class="price-list-bulk-add-form__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (rowsLoaded() && rows().length === 0) {
+      <p class="price-list-bulk-add-form__empty">
+        Este almacén no tiene productos con stock disponible que puedan agregarse.
+      </p>
+    } @else if (rows().length > 0) {
+      <p class="price-list-bulk-add-form__hint">
+        Se excluyen los productos sin stock disponible y los que ya están en esta lista de precios.
+        Ingresa el precio de cada uno antes de guardar.
+      </p>
+
+      <div class="price-list-bulk-add-form__rows">
+        <div class="price-list-bulk-add-form__row price-list-bulk-add-form__row--header">
+          <span></span>
+          <span>Producto</span>
+          <span>Disponible</span>
+          <span>Precio</span>
+          <span>Descuento máx.</span>
+        </div>
+
+        @for (row of items.controls; track row.controls.productEstablishmentId.value) {
+          <div class="price-list-bulk-add-form__row" [formGroup]="row">
+            <mat-checkbox formControlName="included" />
+            <span class="price-list-bulk-add-form__product-name">{{ row.controls.productName.value }}</span>
+            <span>{{ row.controls.availableQuantity.value }}</span>
+
+            <mat-form-field appearance="outline" class="price-list-bulk-add-form__field">
+              <input matInput type="number" step="0.01" formControlName="price" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="price-list-bulk-add-form__field">
+              <input matInput type="number" step="0.01" formControlName="maximumDiscount" />
+            </mat-form-field>
+          </div>
+        }
+      </div>
+    }
+
+    @if (error()) {
+      <p class="price-list-bulk-add-form__error">{{ error() }}</p>
+    }
+
+    @if (saveSummary()) {
+      <p class="price-list-bulk-add-form__summary">{{ saveSummary() }}</p>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cerrar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="rows().length === 0 || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Agregar seleccionados' }}
+  </button>
+</mat-dialog-actions>

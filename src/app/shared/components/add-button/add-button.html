@@ -1,0 +1,14 @@
+<button
+  mat-fab
+  extended
+  color="primary"
+  type="button"
+  class="app-add-button"
+  [attr.aria-label]="tooltip() ?? label()"
+  [matTooltip]="tooltip() ?? label()"
+  [disabled]="disabled()"
+  (click)="pressed.emit()"
+>
+  <mat-icon>{{ icon() }}</mat-icon>
+  {{ label() }}
+</button>

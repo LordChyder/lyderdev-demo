@@ -1,0 +1,126 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar contrato' : 'Nuevo contrato' }}</h2>
+
+<mat-dialog-content class="establishment-contract-form">
+  @if (loading()) {
+    <div class="establishment-contract-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="establishment-contract-form__fields" novalidate>
+      @if (hasPaidPayments()) {
+        <p class="establishment-contract-form__notice">
+          Este contrato ya tiene cuotas pagadas; para cambiar el tipo o las fechas, registre un
+          contrato nuevo.
+        </p>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo de contrato</mat-label>
+        <mat-select formControlName="contractType">
+          @for (option of contractTypeOptions; track option) {
+            <mat-option [value]="option">{{ contractTypeLabels[option] }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.contractType.touched && form.errors?.['contractTypeRequired']) {
+          <mat-error>Selecciona el tipo de contrato.</mat-error>
+        }
+      </mat-form-field>
+
+      <p class="establishment-contract-form__section-label">Contrato</p>
+      <div class="establishment-contract-form__row">
+        <mat-form-field appearance="outline">
+          <mat-label>Inicio de contrato</mat-label>
+          <input matInput [matDatepicker]="contractStartPicker" formControlName="contractStartDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="contractStartPicker" />
+          <mat-datepicker #contractStartPicker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fin de contrato</mat-label>
+          <input matInput [matDatepicker]="contractEndPicker" formControlName="contractEndDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="contractEndPicker" />
+          <mat-datepicker #contractEndPicker />
+        </mat-form-field>
+      </div>
+
+      <p class="establishment-contract-form__section-label">Prueba</p>
+      <div class="establishment-contract-form__row">
+        <mat-form-field appearance="outline">
+          <mat-label>Inicio de prueba</mat-label>
+          <input matInput [matDatepicker]="trialStartPicker" formControlName="trialStartDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="trialStartPicker" />
+          <mat-datepicker #trialStartPicker />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Fin de prueba</mat-label>
+          <input matInput [matDatepicker]="trialEndPicker" formControlName="trialEndDate" />
+          <mat-datepicker-toggle matIconSuffix [for]="trialEndPicker" />
+          <mat-datepicker #trialEndPicker />
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Días de aplazo de pago</mat-label>
+        <input matInput type="number" min="0" max="365" step="1" formControlName="paymentGraceDays" />
+        <mat-hint>Días después de cada fecha de cobro antes de suspender el acceso.</mat-hint>
+      </mat-form-field>
+
+      @if (form.touched && form.errors) {
+        <ul class="establishment-contract-form__errors">
+          @if (form.errors['missingBoth']) {
+            <li>Debe haber prueba, contrato o ambos.</li>
+          }
+          @if (form.errors['contractRange']) {
+            <li>El fin de contrato debe ser mayor que el inicio de contrato.</li>
+          }
+          @if (form.errors['trialRange']) {
+            <li>El fin de prueba debe ser mayor o igual que el inicio de prueba.</li>
+          }
+          @if (form.errors['trialBeforeContract']) {
+            <li>La prueba debe terminar antes del inicio de contrato.</li>
+          }
+          @if (form.errors['minDuration']) {
+            <li>El contrato debe durar al menos un periodo completo de su tipo.</li>
+          }
+        </ul>
+      }
+
+      @if (quotaPreview().length > 0) {
+        <div class="establishment-contract-form__preview">
+          <p class="establishment-contract-form__section-label">
+            Vista previa: se generarán {{ quotaPreview().length }} cuota{{
+              quotaPreview().length > 1 ? 's' : ''
+            }}
+          </p>
+          <ul class="establishment-contract-form__preview-list">
+            @for (item of quotaPreview(); track item.number) {
+              <li>
+                #{{ item.number }} — Cobra: {{ formatDateOnly(toDateOnly(item.dueDate)) }} — Periodo:
+                {{ formatDateOnly(toDateOnly(item.periodStartDate)) }} –
+                {{ formatDateOnly(toDateOnly(item.periodEndDate)) }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (error()) {
+        <p class="establishment-contract-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="saving() || loading()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

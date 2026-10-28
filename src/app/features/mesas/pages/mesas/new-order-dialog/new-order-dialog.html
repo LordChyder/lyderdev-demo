@@ -1,0 +1,189 @@
+<h2 mat-dialog-title>
+  Nuevo pedido
+  @if (data.tableName) {
+    — {{ data.tableName }}
+  }
+</h2>
+
+<mat-dialog-content class="new-order-dialog">
+  @if (loadingCashiers()) {
+    <div class="new-order-dialog__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (cashiersError()) {
+    <p class="new-order-dialog__error">{{ cashiersError() }}</p>
+  } @else if (activeCashiers().length === 0) {
+    <p class="new-order-dialog__error">
+      No hay ninguna caja abierta en este establecimiento. Abre una caja para poder tomar pedidos.
+    </p>
+  } @else if (!orderId()) {
+    <!-- Paso 1: elegir caja (si hay más de una activa) -->
+    @if (activeCashiers().length > 1) {
+      <p class="new-order-dialog__hint">Hay más de una caja activa. Elige con cuál vas a trabajar:</p>
+      <mat-radio-group
+        class="new-order-dialog__cashiers"
+        [value]="selectedCashierOpeningId()"
+        (change)="selectedCashierOpeningId.set($event.value)"
+      >
+        @for (cashier of activeCashiers(); track cashier.cashierOpeningId) {
+          <mat-radio-button [value]="cashier.cashierOpeningId">{{ cashier.name }}</mat-radio-button>
+        }
+      </mat-radio-group>
+    } @else {
+      <p class="new-order-dialog__hint">
+        Trabajando con la caja <strong>{{ activeCashiers()[0].name }}</strong>.
+      </p>
+    }
+
+    <!-- Paso 2: crear el pedido -->
+    @if (createOrderError()) {
+      <p class="new-order-dialog__error">{{ createOrderError() }}</p>
+    }
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="!selectedCashierOpeningId() || creatingOrder()"
+      (click)="createOrder()"
+    >
+      @if (creatingOrder()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        Crear pedido
+      }
+    </button>
+  } @else {
+    <!-- Paso 3: catálogo -->
+    @if (loadingCatalog()) {
+      <div class="new-order-dialog__state">
+        <mat-spinner diameter="32" />
+      </div>
+    } @else if (catalogError()) {
+      <p class="new-order-dialog__error">{{ catalogError() }}</p>
+    } @else {
+      @if (priceLists().length > 1) {
+        <mat-form-field class="new-order-dialog__price-list-select">
+          <mat-label>Lista de precios</mat-label>
+          <mat-select
+            [value]="selectedPriceListId()"
+            (selectionChange)="selectedPriceListId.set($event.value)"
+          >
+            @for (list of priceLists(); track list.priceListId) {
+              <mat-option [value]="list.priceListId">{{ list.priceListName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      @if (addItemError()) {
+        <p class="new-order-dialog__error">{{ addItemError() }}</p>
+      }
+
+      <div class="new-order-dialog__products">
+        @for (product of selectedPriceList?.products ?? []; track product.productEstablishmentId) {
+          <div class="new-order-dialog__product">
+            <div class="new-order-dialog__product-info">
+              <span class="new-order-dialog__product-name">{{ product.productName }}</span>
+              <span class="new-order-dialog__product-price">{{ product.price | number: '1.2-2' }}</span>
+            </div>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              class="new-order-dialog__product-qty"
+              [value]="quantityFor(product.productEstablishmentId)"
+              (change)="setQuantity(product.productEstablishmentId, $any($event.target).value)"
+            />
+            <button
+              mat-icon-button
+              type="button"
+              color="primary"
+              aria-label="Agregar producto"
+              [disabled]="addingProductId() === product.productEstablishmentId"
+              (click)="addProduct(product)"
+            >
+              @if (addingProductId() === product.productEstablishmentId) {
+                <mat-spinner diameter="20" />
+              } @else {
+                <mat-icon>add_circle</mat-icon>
+              }
+            </button>
+          </div>
+        } @empty {
+          <p class="new-order-dialog__hint">Esta lista de precios no tiene productos.</p>
+        }
+      </div>
+    }
+
+    @if (order(); as order) {
+      <div class="new-order-dialog__summary">
+        <h3>Pedido #{{ order.orderNumber }}</h3>
+        @if ((order.items?.length ?? 0) === 0) {
+          <p class="new-order-dialog__hint">Todavía no agregaste productos.</p>
+        } @else {
+          <div class="new-order-dialog__summary-list">
+            @for (item of order.items; track item.id) {
+              <div class="new-order-dialog__summary-item">
+                <span class="new-order-dialog__summary-name">{{ item.productName }}</span>
+
+                <div class="new-order-dialog__summary-qty">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Restar cantidad"
+                    [disabled]="updatingItemId() === item.id"
+                    (click)="decreaseItem(item)"
+                  >
+                    <mat-icon>remove_circle_outline</mat-icon>
+                  </button>
+
+                  @if (updatingItemId() === item.id) {
+                    <mat-spinner diameter="18" />
+                  } @else {
+                    <span>{{ item.quantity }}</span>
+                  }
+
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Sumar cantidad"
+                    [disabled]="updatingItemId() === item.id"
+                    (click)="increaseItem(item)"
+                  >
+                    <mat-icon>add_circle_outline</mat-icon>
+                  </button>
+                </div>
+
+                <span class="new-order-dialog__summary-amount">{{ item.amountToPay | number: '1.2-2' }}</span>
+              </div>
+            }
+          </div>
+        }
+        <p class="new-order-dialog__total">Total: {{ order.total | number: '1.2-2' }}</p>
+      </div>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (orderId()) {
+    @if (closeOrderError()) {
+      <p class="new-order-dialog__error">{{ closeOrderError() }}</p>
+    }
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      [disabled]="closingOrder()"
+      (click)="finish()"
+    >
+      @if (closingOrder()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        Listo
+      }
+    </button>
+  } @else {
+    <button mat-button type="button" mat-dialog-close>Cerrar</button>
+  }
+</mat-dialog-actions>

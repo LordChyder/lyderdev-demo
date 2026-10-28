@@ -1,0 +1,73 @@
+.establishment-contract-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  max-width: 520px;
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__row {
+    display: flex;
+    gap: 0.75rem;
+
+    mat-form-field {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__section-label {
+    margin: 0.5rem 0 0;
+    color: var(--mat-sys-on-surface-variant);
+    font: 700 0.75rem/1.2 Roboto, sans-serif;
+    text-transform: uppercase;
+  }
+
+  &__notice {
+    margin: 0 0 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 8px;
+    background: var(--app-status-warning-bg);
+    color: var(--app-status-warning-fg);
+    font-size: 0.8125rem;
+  }
+
+  &__errors {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+    color: var(--mat-sys-error);
+    font-size: 0.8125rem;
+  }
+
+  &__preview {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 8px;
+  }
+
+  &__preview-list {
+    margin: 0.25rem 0 0;
+    padding-left: 1.25rem;
+    max-height: 10rem;
+    overflow-y: auto;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.8125rem;
+  }
+
+  &__error {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+
+  &__state {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+}

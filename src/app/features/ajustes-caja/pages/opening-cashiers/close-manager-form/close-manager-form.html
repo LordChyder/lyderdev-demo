@@ -1,0 +1,77 @@
+<div class="close-manager-form__header">
+  <div class="close-manager-form__icon-wrap">
+    <mat-icon>task_alt</mat-icon>
+  </div>
+  <div class="close-manager-form__header-text">
+    <h2 mat-dialog-title class="close-manager-form__title">Cerrar caja (gerente)</h2>
+    <p class="close-manager-form__subtitle">Confirmación y cierre definitivo de la caja</p>
+  </div>
+  <button
+    mat-icon-button
+    type="button"
+    class="close-manager-form__close-btn"
+    (click)="cancel()"
+    aria-label="Cerrar modal"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="close-manager-form">
+  <form [formGroup]="form" class="close-manager-form__fields" novalidate>
+    <div class="close-manager-form__field-group">
+      <label class="close-manager-form__label" for="reasonForDifference">
+        Motivo de la diferencia (opcional)
+      </label>
+      <mat-form-field appearance="outline" class="close-manager-form__field">
+        <textarea
+          id="reasonForDifference"
+          matInput
+          formControlName="reasonForDifference"
+          rows="3"
+          placeholder="Escribe el motivo si hubo diferencias..."
+        ></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="close-manager-form__field-group">
+      <label class="close-manager-form__label" for="managerUsername">
+        Usuario*
+      </label>
+      <mat-form-field appearance="outline" class="close-manager-form__field">
+        <input id="managerUsername" matInput formControlName="username" autocomplete="off" readonly />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <mat-error>Ingresa el usuario.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    @if (error()) {
+      <div class="close-manager-form__error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="close-manager-form__actions">
+  <button mat-button type="button" class="close-manager-form__cancel" (click)="cancel()">
+    Cancelar
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    class="close-manager-form__submit"
+    [disabled]="saving()"
+    (click)="submit()"
+  >
+    @if (saving()) {
+      <mat-spinner diameter="18" />
+    } @else {
+      <mat-icon>task_alt</mat-icon>
+    }
+    <span>{{ saving() ? 'Cerrando...' : 'Cerrar caja' }}</span>
+  </button>
+</mat-dialog-actions>

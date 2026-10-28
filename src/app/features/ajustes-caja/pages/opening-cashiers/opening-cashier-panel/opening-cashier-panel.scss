@@ -1,0 +1,381 @@
+.opening-cashier-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #eaf2ff;
+  border: 1px solid #d7e6fb;
+  overflow-y: auto;
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: #536b94;
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-right: 2.25rem;
+  }
+
+  &__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+
+    h2 {
+      margin: 0;
+      color: #0f1765;
+      font: 700 1.25rem/1.25 Roboto, sans-serif;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__icon {
+    flex: 0 0 auto;
+    color: #ff7400;
+  }
+
+  &__close {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  &__status {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+
+    &--open {
+      background: var(--app-status-open-bg);
+      color: var(--app-status-open-fg);
+      font-weight: 600;
+    }
+
+    &--pending {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+    }
+
+    &--closed {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+
+  &__list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgb(15 23 105 / 8%);
+
+    dt {
+      color: #536b94;
+      font-weight: 500;
+    }
+
+    dd {
+      margin: 0;
+      color: #253f8d;
+      text-align: right;
+    }
+  }
+
+  &__actions {
+    margin-top: auto;
+    display: grid;
+    gap: 0.625rem;
+
+    button {
+      width: 100%;
+      justify-content: center;
+      height: 2.75rem;
+    }
+  }
+
+  &__payments {
+    padding: 1rem;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgb(15 23 105 / 8%);
+  }
+
+  &__section-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.875rem;
+    color: #253f8d;
+
+    mat-icon {
+      color: #ff7400;
+    }
+
+    h3 {
+      margin: 0;
+      font: 700 1rem/1.25 Roboto, sans-serif;
+    }
+
+    p {
+      margin: 0.15rem 0 0;
+      color: #536b94;
+      font-size: 0.75rem;
+    }
+  }
+
+  &__closing-report {
+    padding: 1rem;
+    background: #f7fbff;
+    border: 1px solid #bdd9fb;
+    border-radius: 14px;
+  }
+
+  &__closing-totals,
+  &__print-meta {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+    margin: 0;
+
+    dd {
+      margin: 0;
+      color: #253f8d;
+      font-weight: 600;
+      text-align: right;
+    }
+  }
+
+  &__expected-cash-label,
+  &__expected-cash {
+    margin-top: 0.375rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #bdd9fb;
+    color: #0f1765;
+    font-weight: 700;
+  }
+
+  &__expected-cash {
+    font-size: 1.125rem;
+  }
+
+  &__closing-note {
+    margin: 0.875rem 0;
+    color: #536b94;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  &__closing-payment-methods {
+    margin-top: 1rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid #d7e6fb;
+
+    h4 {
+      margin: 0 0 0.625rem;
+      color: #253f8d;
+      font: 700 0.875rem/1.25 Roboto, sans-serif;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem 1rem;
+      margin: 0;
+      color: #536b94;
+      font-size: 0.875rem;
+    }
+
+    dd {
+      margin: 0;
+      color: #253f8d;
+      font-weight: 600;
+      text-align: right;
+    }
+  }
+
+  &__payments-total-label,
+  &__payments-total {
+    margin-top: 0.25rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid #bdd9fb;
+    color: #0f1765;
+    font-weight: 700;
+  }
+
+  &__print-meta {
+    padding-top: 0.875rem;
+    border-top: 1px solid #d7e6fb;
+    color: #536b94;
+    font-size: 0.8125rem;
+  }
+
+  &__payment-totals {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    color: #536b94;
+
+    dd {
+      margin: 0;
+      color: #253f8d;
+      font-weight: 600;
+      text-align: right;
+    }
+  }
+
+  &__payment-types {
+    display: grid;
+    gap: 0.5rem;
+    margin: 1rem 0 0;
+    padding: 0.875rem 0 0;
+    border-top: 1px solid #d7e6fb;
+    list-style: none;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      color: #536b94;
+    }
+
+    strong {
+      color: #253f8d;
+      white-space: nowrap;
+    }
+  }
+
+  &__payments-state {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: #536b94;
+    font-size: 0.875rem;
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+}
+
+// ── Dark theme ────────────────────────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .opening-cashier-panel {
+    background: #0c1c32;
+    border-color: #1f3c5c;
+    color: #d8e8ff;
+
+    &__heading h2 {
+      color: #f0f6ff;
+    }
+
+    &__close {
+      color: #71baff;
+    }
+
+    &__list {
+      background: #102744;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+
+      dt {
+        color: #8faece;
+      }
+
+      dd {
+        color: #f0f6ff;
+      }
+    }
+
+    &__payments {
+      background: #102744;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+    }
+
+    &__closing-report {
+      background: #102744;
+      border-color: #2a5680;
+    }
+
+    &__section-heading,
+    &__payment-totals dd,
+    &__payment-types strong,
+    &__closing-totals dd,
+    &__print-meta dd {
+      color: #f0f6ff;
+    }
+
+    &__section-heading p,
+    &__closing-note,
+    &__print-meta {
+      color: #8faece;
+    }
+
+    &__expected-cash-label,
+    &__expected-cash {
+      border-color: #2a5680;
+      color: #f0f6ff;
+    }
+
+    &__closing-payment-methods {
+      border-color: #1f3c5c;
+
+      h4,
+      dd {
+        color: #f0f6ff;
+      }
+
+      dl {
+        color: #8faece;
+      }
+    }
+
+    &__payments-total-label,
+    &__payments-total {
+      border-color: #2a5680;
+      color: #f0f6ff;
+    }
+
+    &__payment-totals,
+    &__payment-types,
+    &__payments-state {
+      color: #8faece;
+    }
+
+    &__payment-types {
+      border-color: #1f3c5c;
+    }
+
+    &__print-meta {
+      border-color: #1f3c5c;
+    }
+
+    &__state {
+      color: #8faece;
+    }
+  }
+}

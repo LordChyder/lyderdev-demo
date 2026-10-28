@@ -1,0 +1,99 @@
+﻿// Look & feel estándar de los diálogos de formulario (mat-dialog): título,
+// pie con borde superior y overrides de mat-form-field/mat-slide-toggle.
+// Nace en Usuarios > Crear/editar usuario; cualquier diálogo nuevo hace
+// `@use 'dialog'` y aplica estos mixins sobre sus propias clases en vez de
+// repetir los valores a mano.
+
+// ── Light ────────────────────────────────────────────────────────────────────
+@mixin title {
+  margin: 0;
+  padding: 1.5rem 1.75rem 0.75rem;
+  color: #0f1765;
+  font: 700 1.625rem/1.2 Roboto, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+@mixin content {
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  padding: 0.5rem 1.75rem 1rem;
+}
+
+@mixin actions {
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1.75rem 1.5rem;
+  border-top: 1px solid #d7e6fb;
+
+  button[mat-flat-button] {
+    min-width: 6.75rem;
+    border-radius: 9px;
+  }
+}
+
+@mixin field-tokens {
+  width: 100%;
+  --mat-form-field-outlined-container-shape: 10px;
+  --mdc-outlined-text-field-container-shape: 10px;
+
+  // Light tokens
+  --mdc-outlined-text-field-outline-color:             #bdcde5;
+  --mdc-outlined-text-field-hover-outline-color:       #6d9cda;
+  --mdc-outlined-text-field-focus-outline-color:       #006fe6;
+  --mdc-outlined-text-field-label-text-color:          #536b94;
+  --mdc-outlined-text-field-focus-label-text-color:    #006fe6;
+  --mdc-outlined-text-field-input-text-color:          #172d59;
+}
+
+@mixin toggles-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0.75rem;
+  border: 1px solid #d7e6fb;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+@mixin state-box {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+@mixin error-text {
+  margin: 0.5rem 0 0;
+  color: var(--mat-sys-error);
+  font-size: 0.875rem;
+}
+
+@mixin list-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// En pantallas chicas el diálogo ocupa casi todo el ancho: cada .scss repite
+// esta media query sobre sus propias clases para achicar el padding lateral
+// y el min-width del mixin `content` (ver user-form.scss).
+@mixin narrow-screen-padding {
+  min-width: 0;
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+// ── Dark-mode field tokens (usa ::ng-deep dentro de :host-context) ───────────
+@mixin field-tokens-dark {
+  --mdc-outlined-text-field-outline-color:             #2a4d72;
+  --mdc-outlined-text-field-hover-outline-color:       #4a8bc4;
+  --mdc-outlined-text-field-focus-outline-color:       #71baff;
+  --mdc-outlined-text-field-label-text-color:          #7a9ab8;
+  --mdc-outlined-text-field-focus-label-text-color:    #71baff;
+  --mdc-outlined-text-field-input-text-color:          #d8eaff;
+  --mdc-outlined-text-field-disabled-outline-color:    #1e3552;
+}

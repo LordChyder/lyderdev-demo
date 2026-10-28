@@ -1,0 +1,36 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar categoría' : 'Nueva categoría' }}</h2>
+
+<mat-dialog-content class="category-form">
+  @if (loading()) {
+    <div class="category-form__loading">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="category-form__fields" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="name" maxlength="200" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>El nombre es obligatorio.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (error()) {
+        <p class="category-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="saving() || loading()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

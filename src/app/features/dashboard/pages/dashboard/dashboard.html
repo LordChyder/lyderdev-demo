@@ -1,0 +1,58 @@
+<div class="dashboard">
+  @if (loading()) {
+    <div class="dashboard__state" aria-live="polite"><mat-spinner diameter="32" /><span>Actualizando operación...</span></div>
+  } @else if (error()) {
+    <div class="dashboard__state dashboard__state--error" role="alert"><mat-icon>error_outline</mat-icon><span>{{ error() }}</span></div>
+  } @else if (data(); as dashboard) {
+    <header class="dashboard__header">
+      <div><h1>Resumen del día</h1><p>Aquí tienes el pulso de la operación de tu restaurante.</p></div>
+    </header>
+
+    <section class="dashboard__metrics" aria-label="Indicadores financieros del día">
+      <article class="metric metric--sales"><span class="metric__icon"><mat-icon>leaderboard</mat-icon></span><div class="metric__content"><span class="metric__label">Ventas del día</span><strong>{{ dashboard.dailySales | number: '1.2-2' }}</strong><span class="metric__note"><mat-icon>trending_up</mat-icon> Operación en curso</span></div><span class="metric__spark metric__spark--sales" aria-hidden="true"></span></article>
+      <article class="metric metric--expenses"><span class="metric__icon"><mat-icon>account_balance_wallet</mat-icon></span><div class="metric__content"><span class="metric__label">Gastos del día</span><strong>{{ dashboard.dailyExpenses | number: '1.2-2' }}</strong><span class="metric__note metric__note--muted">Registrados hoy</span></div><span class="metric__spark metric__spark--expenses" aria-hidden="true"></span></article>
+      <article class="metric metric--profit"><span class="metric__icon"><mat-icon>monitoring</mat-icon></span><div class="metric__content"><span class="metric__label">Utilidad neta</span><strong [class.metric__value--critical]="dashboard.netProfit < 0">{{ dashboard.netProfit | number: '1.2-2' }}</strong><span class="metric__note" [class.metric__note--critical]="dashboard.netProfit < 0"><mat-icon>{{ dashboard.netProfit >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>{{ dashboard.netProfit >= 0 ? 'Resultado positivo' : 'Revisar operación' }}</span></div><span class="metric__spark metric__spark--profit" aria-hidden="true"></span></article>
+    </section>
+
+    <section class="dashboard__quick" aria-label="Resumen operativo">
+      <article class="quick-stat"><span><mat-icon>assignment</mat-icon></span><div><strong>{{ dashboard.quickSummary.closedOrders }}</strong><small>Pedidos atendidos</small></div></article>
+      <article class="quick-stat"><span><mat-icon>table_restaurant</mat-icon></span><div><strong>{{ dashboard.quickSummary.occupiedTables }}</strong><small>Mesas ocupadas</small></div></article>
+      <article class="quick-stat"><span><mat-icon>groups</mat-icon></span><div><strong>{{ dashboard.quickSummary.activeTables }}</strong><small>Mesas activas</small></div></article>
+      <article class="quick-stat"><span><mat-icon>room_service</mat-icon></span><div><strong>{{ dashboard.quickSummary.deliveries }}</strong><small>Entregas</small></div></article>
+      <article class="quick-stat"><span><mat-icon>receipt_long</mat-icon></span><div><strong>{{ dashboard.quickSummary.registeredExpenses }}</strong><small>Gastos registrados</small></div></article>
+      <article class="quick-stat" [class.quick-stat--warning]="dashboard.quickSummary.lowStockProducts > 0"><span><mat-icon>inventory_2</mat-icon></span><div><strong>{{ dashboard.quickSummary.lowStockProducts }}</strong><small>Stock bajo</small></div></article>
+    </section>
+
+    <section class="dashboard__workspace" aria-label="Actividad reciente">
+      <article class="panel panel--orders">
+        <header class="panel__header"><span class="panel__icon"><mat-icon>description</mat-icon></span><div><h2>Pedidos recientes</h2><p>Últimos registros realizados en caja.</p></div><a routerLink="/cajero" class="panel__action">Ir a caja <mat-icon>chevron_right</mat-icon></a></header>
+        @if (dashboard.recentOrders && dashboard.recentOrders.length > 0) {
+          <div class="panel__table-wrap"><table mat-table [dataSource]="dashboard.recentOrders" class="dashboard__table">
+            <ng-container matColumnDef="orderNumber"><th mat-header-cell *matHeaderCellDef>N°</th><td mat-cell *matCellDef="let order">{{ order.orderNumber }}</td></ng-container>
+            <ng-container matColumnDef="tableName"><th mat-header-cell *matHeaderCellDef>Mesa</th><td mat-cell *matCellDef="let order">{{ order.tableName || '—' }}</td></ng-container>
+            <ng-container matColumnDef="waiterName"><th mat-header-cell *matHeaderCellDef>Mesero</th><td mat-cell *matCellDef="let order">{{ order.waiterName || '—' }}</td></ng-container>
+            <ng-container matColumnDef="registerDate"><th mat-header-cell *matHeaderCellDef>Hora</th><td mat-cell *matCellDef="let order">{{ order.registerDate | date: 'HH:mm' }}</td></ng-container>
+            <ng-container matColumnDef="amount"><th mat-header-cell *matHeaderCellDef>Monto</th><td mat-cell *matCellDef="let order" class="dashboard__amount">{{ order.amount | number: '1.2-2' }}</td></ng-container>
+            <ng-container matColumnDef="productCount"><th mat-header-cell *matHeaderCellDef>Items</th><td mat-cell *matCellDef="let order">{{ order.productCount }}</td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="recentOrdersColumns"></tr><tr mat-row *matRowDef="let row; columns: recentOrdersColumns"></tr>
+          </table></div>
+        } @else { <p class="dashboard__empty">Aún no hay pedidos registrados hoy.</p> }
+      </article>
+      <div class="dashboard__side-panels">
+        <article class="panel panel--tables">
+          <header class="panel__header"><span class="panel__icon"><mat-icon>table_restaurant</mat-icon></span><div><h2>Mesas activas</h2><p>Clientes atendidos ahora.</p></div><a routerLink="/mesas" class="panel__action">Ver plano <mat-icon>chevron_right</mat-icon></a></header>
+          @if (dashboard.activeTables && dashboard.activeTables.length > 0) { <div class="table-grid">@for (table of dashboard.activeTables; track table.tableCode) { <div class="table-grid__item"><mat-icon>table_restaurant</mat-icon><div><strong>{{ table.tableName || table.tableCode }}</strong><small>{{ table.productCount }} items · {{ table.amount | number: '1.2-2' }}</small></div></div> }</div> } @else { <p class="dashboard__empty">No hay mesas activas en este momento.</p> }
+        </article>
+        <article class="panel panel--stock">
+          <header class="panel__header"><span class="panel__icon panel__icon--warning"><mat-icon>inventory_2</mat-icon></span><div><h2>Productos con stock bajo</h2><p>Artículos que requieren reposición.</p></div><a routerLink="/almacenes" class="panel__action">Inventario <mat-icon>chevron_right</mat-icon></a></header>
+          @if (dashboard.lowStockProducts && dashboard.lowStockProducts.length > 0) { <div class="panel__table-wrap"><table mat-table [dataSource]="dashboard.lowStockProducts" class="dashboard__table dashboard__table--stock">
+            <ng-container matColumnDef="productName"><th mat-header-cell *matHeaderCellDef>Producto</th><td mat-cell *matCellDef="let product">{{ product.productName }}</td></ng-container>
+            <ng-container matColumnDef="availableQuantity"><th mat-header-cell *matHeaderCellDef>Disponible</th><td mat-cell *matCellDef="let product" [class.dashboard__stock-zero]="product.availableQuantity <= 0">{{ product.availableQuantity | number: '1.0-2' }}</td></ng-container>
+            <ng-container matColumnDef="minimumQuantity"><th mat-header-cell *matHeaderCellDef>Mínimo</th><td mat-cell *matCellDef="let product">{{ product.minimumQuantity | number: '1.0-2' }}</td></ng-container>
+            <tr mat-header-row *matHeaderRowDef="lowStockColumns"></tr><tr mat-row *matRowDef="let row; columns: lowStockColumns"></tr>
+          </table></div> } @else { <p class="dashboard__empty">El inventario está en niveles saludables.</p> }
+        </article>
+      </div>
+    </section>
+  }
+</div>

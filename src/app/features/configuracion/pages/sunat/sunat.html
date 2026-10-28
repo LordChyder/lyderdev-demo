@@ -1,0 +1,182 @@
+<div class="sunat">
+  <header class="sunat__header">
+    <h1>SUNAT</h1>
+    @if (dialogRef) {
+      <button mat-icon-button type="button" aria-label="Cerrar" (click)="close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </header>
+
+  <div class="sunat__body">
+    <mat-form-field appearance="outline">
+      <mat-label>RUC de la empresa</mat-label>
+      <input
+        matInput
+        [formControl]="rucControl"
+        inputmode="numeric"
+        maxlength="11"
+        autocomplete="off"
+      />
+      @if (loading()) {
+        <mat-spinner matSuffix diameter="20" class="sunat__ruc-spinner" />
+      }
+      <mat-hint>Al completar los 11 dígitos se cargan las credenciales guardadas.</mat-hint>
+      @if (rucControl.touched && rucControl.invalid) {
+        <mat-error>Ingresa un RUC de 11 dígitos.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (error()) {
+      <div class="sunat__state sunat__state--error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error() }}</span>
+      </div>
+    } @else if (ruc() && !loading()) {
+      <div class="sunat__status">
+        @if (!isConfigured) {
+          <span class="sunat__chip">
+            <mat-icon>info</mat-icon>
+            Este RUC aún no tiene credenciales configuradas
+          </span>
+        } @else {
+          <span class="sunat__chip" [class.sunat__chip--on]="info()!.hasSolCredentials">
+            <mat-icon>{{ info()!.hasSolCredentials ? 'check_circle' : 'cancel' }}</mat-icon>
+            Clave SOL
+          </span>
+          <span class="sunat__chip" [class.sunat__chip--on]="info()!.hasOAuthCredentials">
+            <mat-icon>{{ info()!.hasOAuthCredentials ? 'check_circle' : 'cancel' }}</mat-icon>
+            API (OAuth)
+          </span>
+          <span class="sunat__chip" [class.sunat__chip--on]="info()!.hasCertificate">
+            <mat-icon>{{ info()!.hasCertificate ? 'check_circle' : 'cancel' }}</mat-icon>
+            Certificado digital
+          </span>
+        }
+      </div>
+    }
+
+    <section class="sunat__section">
+      <h2>Clave SOL</h2>
+      <form [formGroup]="form" class="sunat__fields" novalidate (ngSubmit)="submit()">
+        <div class="sunat__row">
+          <mat-form-field appearance="outline">
+            <mat-label>Usuario SOL</mat-label>
+            <input matInput formControlName="solUsername" autocomplete="off" />
+            @if (form.controls.solUsername.touched && form.controls.solUsername.invalid) {
+              <mat-error>Ingresa el usuario SOL.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Clave SOL</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="solPassword"
+              autocomplete="new-password"
+            />
+            @if (isConfigured) {
+              <mat-hint>Déjala vacía para conservar la actual.</mat-hint>
+            }
+            @if (form.controls.solPassword.touched && form.controls.solPassword.invalid) {
+              <mat-error>Ingresa la clave SOL.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <h2>API SUNAT (OAuth)</h2>
+        <p class="sunat__help">Opcional. Necesario para emitir guías de remisión electrónicas.</p>
+        <div class="sunat__row">
+          <mat-form-field appearance="outline">
+            <mat-label>Client ID</mat-label>
+            <input matInput formControlName="clientId" autocomplete="off" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Client secret</mat-label>
+            <input
+              matInput
+              type="password"
+              formControlName="clientSecret"
+              autocomplete="new-password"
+            />
+            @if (isConfigured && info()!.hasOAuthCredentials) {
+              <mat-hint>Déjalo vacío para conservar el actual.</mat-hint>
+            }
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Scope</mat-label>
+          <input matInput formControlName="scope" autocomplete="off" />
+        </mat-form-field>
+
+        <div class="sunat__actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving() || loading()">
+            {{
+              saving()
+                ? 'Guardando...'
+                : isConfigured
+                  ? 'Actualizar credenciales'
+                  : 'Guardar credenciales'
+            }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="sunat__section">
+      <h2>Certificado digital</h2>
+      @if (!isConfigured) {
+        <p class="sunat__help">Guarda primero las credenciales para poder cargar el certificado.</p>
+      } @else {
+        <p class="sunat__help">Archivo .pfx o .p12 emitido para el RUC {{ ruc() }}.</p>
+        <div class="sunat__row sunat__row--center">
+          <input
+            #certificateInput
+            type="file"
+            accept=".pfx,.p12"
+            hidden
+            (change)="onCertificateSelected($event)"
+          />
+          <button mat-stroked-button type="button" (click)="certificateInput.click()">
+            <mat-icon>upload_file</mat-icon>
+            {{ certificateFile()?.name ?? 'Seleccionar archivo' }}
+          </button>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>Contraseña del certificado</mat-label>
+            <input
+              matInput
+              type="password"
+              [formControl]="certificatePasswordControl"
+              autocomplete="new-password"
+            />
+            @if (certificatePasswordControl.touched && certificatePasswordControl.invalid) {
+              <mat-error>Ingresa la contraseña.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="sunat__actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="!certificateFile() || uploading()"
+            (click)="uploadCertificate()"
+          >
+            {{
+              uploading()
+                ? 'Subiendo...'
+                : info()!.hasCertificate
+                  ? 'Reemplazar certificado'
+                  : 'Subir certificado'
+            }}
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</div>

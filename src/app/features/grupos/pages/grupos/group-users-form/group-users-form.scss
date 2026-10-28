@@ -1,0 +1,58 @@
+@use 'dialog';
+
+.group-users-form {
+  @include dialog.content;
+  max-height: 60vh;
+
+  &__state {
+    @include dialog.state-box;
+  }
+
+  &__empty {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  &__search {
+    width: 100%;
+    margin-bottom: -0.25rem;
+
+    mat-icon[matIconPrefix] {
+      margin-right: 0.25rem;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__list {
+    @include dialog.list-box;
+  }
+
+  &__error {
+    @include dialog.error-text;
+  }
+}
+
+.group-users-form__title {
+  @include dialog.title;
+}
+
+.group-users-form__actions {
+  @include dialog.actions;
+}
+
+:host ::ng-deep {
+  .group-users-form__search {
+    @include dialog.field-tokens;
+  }
+}
+
+@media (max-width: 30rem) {
+  .group-users-form {
+    @include dialog.narrow-screen-padding;
+  }
+
+  .group-users-form__title,
+  .group-users-form__actions {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+}

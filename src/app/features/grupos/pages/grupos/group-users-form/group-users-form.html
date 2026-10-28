@@ -1,0 +1,59 @@
+<h2 mat-dialog-title class="group-users-form__title">
+  {{ data.groupName ? 'Usuarios — ' + data.groupName : 'Usuarios del grupo' }}
+</h2>
+
+<mat-dialog-content class="group-users-form">
+  @if (loading()) {
+    <div class="group-users-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (options().length === 0) {
+    <p class="group-users-form__empty">No hay usuarios disponibles en este establecimiento.</p>
+  } @else {
+    <mat-form-field appearance="outline" class="group-users-form__search">
+      <mat-icon matIconPrefix>search</mat-icon>
+      <input
+        matInput
+        placeholder="Buscar usuario..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+      @if (search()) {
+        <button matIconSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="search.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    @if (filteredOptions().length === 0) {
+      <p class="group-users-form__empty">Ningún usuario coincide con "{{ search() }}".</p>
+    } @else {
+      <ul class="group-users-form__list">
+        @for (option of filteredOptions(); track option.userEstablishmentId) {
+          <li>
+            <mat-checkbox [checked]="option.selected" (change)="toggle(option, $event.checked)">
+              {{ option.label }}
+            </mat-checkbox>
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  @if (error()) {
+    <p class="group-users-form__error">{{ error() }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="group-users-form__actions">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loading() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

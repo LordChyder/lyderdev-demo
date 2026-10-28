@@ -1,0 +1,24 @@
+.combo-item-form {
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__error {
+    margin: 0.25rem 0 0;
+    color: var(--mat-sys-error);
+    font-size: 0.875rem;
+  }
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+}

@@ -1,0 +1,33 @@
+@if (visible()) {
+  <div class="license-notice-banner" [class]="statusClass()" [attr.role]="role()">
+    <mat-icon class="license-notice-banner__icon">{{ icon() }}</mat-icon>
+
+    <div class="license-notice-banner__body">
+      <p class="license-notice-banner__message">
+        {{ notice()!.message }}
+        @if (unpaidText()) {
+          <span class="license-notice-banner__unpaid">{{ unpaidText() }}</span>
+        }
+      </p>
+      <p class="license-notice-banner__footer">
+        Para regularizar su pago comuníquese con Lyder Technology.
+      </p>
+    </div>
+
+    @if (graceText()) {
+      <span class="license-notice-banner__grace">{{ graceText() }}</span>
+    }
+
+    @if (dismissible()) {
+      <button
+        mat-icon-button
+        type="button"
+        class="license-notice-banner__close"
+        aria-label="Cerrar aviso"
+        (click)="dismiss()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </div>
+}

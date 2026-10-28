@@ -1,0 +1,92 @@
+<h2 mat-dialog-title class="price-list-item-form__title">
+  {{ isEdit ? 'Editar producto' : 'Añadir producto' }}
+  <span>{{ isEdit ? 'Actualiza las condiciones de venta.' : 'Define cómo se venderá este producto.' }}</span>
+</h2>
+
+<mat-dialog-content class="price-list-item-form">
+  @if (loadingOptions()) {
+    <div class="price-list-item-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else {
+    <form [formGroup]="form" class="price-list-item-form__fields" novalidate>
+      <section class="price-list-item-form__bento price-list-item-form__bento--product">
+        <p class="price-list-item-form__section-label">Producto</p>
+        <mat-form-field appearance="outline">
+          <mat-label>Producto</mat-label>
+          <input matInput formControlName="productSearch" [matAutocomplete]="productOptionsAutocomplete" [matAutocompleteDisabled]="isEdit" autocomplete="off" />
+          <mat-autocomplete #productOptionsAutocomplete="matAutocomplete" [displayWith]="displayProduct" autoActiveFirstOption (optionSelected)="selectProduct($event)">
+            @for (option of filteredProductOptions(); track option.productEstablishmentId) {
+              <mat-option [value]="option">
+                {{ option.productName }}
+                @if (option.complementaryName) {
+                  ({{ option.complementaryName }})
+                }
+              </mat-option>
+            }
+          </mat-autocomplete>
+          @if (
+            form.controls.productSearch.touched &&
+            form.controls.productSearch.invalid
+          ) {
+            <mat-error>Selecciona un producto.</mat-error>
+          }
+          @if (productOptions().length === 0) {
+            <mat-hint>No hay productos disponibles para vincular.</mat-hint>
+          }
+        </mat-form-field>
+      </section>
+
+      <section class="price-list-item-form__bento price-list-item-form__bento--conditions">
+        <div class="price-list-item-form__switch">
+          <div>
+            <p class="price-list-item-form__section-label">Condición de venta</p>
+            <span>Sin cobro para este producto</span>
+          </div>
+          <mat-checkbox formControlName="isFree">Producto gratis</mat-checkbox>
+        </div>
+
+        <div class="price-list-item-form__price-grid">
+          <mat-form-field
+            appearance="outline"
+            class="price-list-item-form__field"
+            [class.price-list-item-form__field--disabled]="isFree()"
+          >
+            <mat-label>Precio</mat-label>
+            <input matInput type="number" step="0.01" formControlName="price" />
+            @if (isFree()) {
+              <mat-hint></mat-hint>
+            } @else if (form.controls.price.touched && form.controls.price.invalid) {
+              <mat-error>Ingresa un precio válido.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="price-list-item-form__field">
+            <mat-label>Descuento máximo</mat-label>
+            <input matInput type="number" step="0.01" formControlName="maximumDiscount" />
+            @if (form.controls.maximumDiscount.touched && form.controls.maximumDiscount.invalid) {
+              <mat-error>Ingresa un descuento máximo válido.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </section>
+
+      @if (error()) {
+        <p class="price-list-item-form__error">{{ error() }}</p>
+      }
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loadingOptions() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

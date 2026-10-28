@@ -1,0 +1,100 @@
+<div class="productos">
+  <header class="productos__header">
+    <h1>Productos</h1>
+    <form class="productos__search" [formGroup]="searchForm" role="search" (submit)="$event.preventDefault()">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        placeholder="Buscar productos"
+        aria-label="Buscar productos"
+        formControlName="term"
+      />
+    </form>
+    <button mat-fab extended color="primary" type="button" class="productos__fab" (click)="openCreate()">
+      <mat-icon>add</mat-icon>
+      Nuevo producto
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="productos__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="productos__state productos__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (products().length === 0) {
+    <div class="productos__state">
+      <span>No hay productos registrados en este establecimiento.</span>
+    </div>
+  } @else {
+    <div class="productos__table-wrapper">
+      <table mat-table [dataSource]="products()" class="productos__table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let product">
+            {{ product.productName }}
+            @if (product.complementaryName) {
+              <span class="productos__complementary">({{ product.complementaryName }})</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Categoría</th>
+          <td mat-cell *matCellDef="let product">{{ product.categoryName || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="measureUnit">
+          <th mat-header-cell *matHeaderCellDef>Unidad de medida</th>
+          <td mat-cell *matCellDef="let product">{{ product.measureUnitName || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="hasInventory">
+          <th mat-header-cell *matHeaderCellDef>Con inventario</th>
+          <td mat-cell *matCellDef="let product">
+            <span class="productos__status" [class.productos__status--inactive]="!product.hasInventory">
+              <mat-icon>{{ product.hasInventory ? 'check' : 'remove' }}</mat-icon>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let product">
+            <span class="productos__status" [class.productos__status--inactive]="!product.isActive">
+              <mat-icon>{{ product.isActive ? 'check' : 'remove' }}</mat-icon>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let product">
+            <button
+              mat-icon-button
+              type="button"
+              aria-label="Editar producto"
+              (click)="openEdit(product)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

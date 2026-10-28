@@ -1,0 +1,36 @@
+<h2 mat-dialog-title>
+  {{ data.username ? 'Permisos — ' + data.username : 'Permisos' }}
+</h2>
+
+<mat-dialog-content class="permissions-form">
+  @if (loading()) {
+    <div class="permissions-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (options().length === 0) {
+    <p class="permissions-form__empty">No hay permisos disponibles.</p>
+  } @else {
+    <mat-accordion multi class="permissions-form__accordion">
+      @for (node of options(); track node.permissionId) {
+        <app-permission-node [node]="node" (toggle)="toggle($event)" />
+      }
+    </mat-accordion>
+  }
+
+  @if (error()) {
+    <p class="permissions-form__error">{{ error() }}</p>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loading() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

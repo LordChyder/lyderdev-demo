@@ -1,0 +1,116 @@
+﻿<div class="salida-stock">
+  <header class="salida-stock__header">
+    <h1>Salida de Stock</h1>
+    <form class="salida-stock__search" [formGroup]="searchForm" role="search" (submit)="$event.preventDefault()">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        placeholder="Buscar salidas"
+        aria-label="Buscar salidas"
+        formControlName="term"
+      />
+    </form>
+    <app-add-button label="Agregar salida" (pressed)="openCreateOutput()" />
+  </header>
+
+  @if (outputsLoading()) {
+    <div class="salida-stock__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (outputsError()) {
+    <div class="salida-stock__state salida-stock__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ outputsError() }}</span>
+    </div>
+  } @else if (outputs().length === 0) {
+    <div class="salida-stock__state">
+      <span>No hay salidas de stock registradas.</span>
+    </div>
+  } @else {
+    <div class="salida-stock__table-wrapper">
+      <table mat-table [dataSource]="outputs()" class="salida-stock__table">
+        <ng-container matColumnDef="docNumber">
+          <th mat-header-cell *matHeaderCellDef>Documento</th>
+          <td mat-cell *matCellDef="let output">{{ output.docNumber }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="recipient">
+          <th mat-header-cell *matHeaderCellDef>Destinatario</th>
+          <td mat-cell *matCellDef="let output">{{ output.recipient }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dateIssue">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let output">
+            {{ output.dateIssue | date: 'dd/MM/yyyy' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="docTotalValue">
+          <th mat-header-cell *matHeaderCellDef>Total</th>
+          <td mat-cell *matCellDef="let output">
+            {{ output.docTotalValue | number: '1.2-2' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="items">
+          <th mat-header-cell *matHeaderCellDef>Items</th>
+          <td mat-cell *matCellDef="let output">{{ output.items }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let output">{{ output.status }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Acciones</th>
+          <td mat-cell *matCellDef="let output">
+            <div class="salida-stock__actions">
+              @switch (output.status) {
+                @case (0) {
+                  <button mat-icon-button type="button" class="salida-stock__action salida-stock__action--close" aria-label="Cerrar salida" title="Cerrar salida" (click)="closeOutput(output)">
+                    <mat-icon>lock</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" class="salida-stock__action salida-stock__action--add" aria-label="Agregar productos" title="Agregar productos" (click)="addProducts(output)">
+                    <mat-icon>playlist_add</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" class="salida-stock__action salida-stock__action--delete" aria-label="Eliminar salida" title="Eliminar salida" (click)="deleteOutput(output)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+                @case (1) {
+                  <button mat-icon-button type="button" class="salida-stock__action salida-stock__action--execute" aria-label="Ejecutar salida" title="Ejecutar salida" (click)="executeOutput(output)">
+                    <mat-icon>play_circle</mat-icon>
+                  </button>
+                  <button mat-icon-button type="button" class="salida-stock__action salida-stock__action--delete" aria-label="Eliminar salida" title="Eliminar salida" (click)="deleteOutput(output)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+                @case (2) {
+                  <button mat-icon-button type="button" class="salida-stock__action salida-stock__action--cancel" aria-label="Cancelar salida" title="Cancelar salida" (click)="cancelOutput(output)">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                }
+                @default {
+                  <span>-</span>
+                }
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="outputColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: outputColumns"></tr>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="outputsTotalRows()"
+      [pageIndex]="outputsPageIndex()"
+      [pageSize]="outputsPageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onOutputsPage($event)"
+    />
+  }
+</div>

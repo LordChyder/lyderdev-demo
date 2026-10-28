@@ -1,0 +1,305 @@
+@use 'status';
+
+.mesas {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1rem;
+
+  &__header {
+    margin-bottom: 1rem;
+
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h1 {
+      margin: 0;
+      color: #0f1765;
+      font:
+        700 2.25rem/1.15 Roboto,
+        sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0.35rem 0 0;
+      color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  &__notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+
+    &--error {
+      background: var(--app-status-critical-bg);
+      color: var(--app-status-critical-fg);
+    }
+
+    &--warning {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+    }
+  }
+
+  &__notice-icon {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 8px;
+    background: color-mix(in srgb, currentcolor 12%, transparent);
+
+    mat-icon {
+      width: 1.35rem;
+      height: 1.35rem;
+      font-size: 1.35rem;
+    }
+  }
+
+  &__state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.5rem 1rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 1.25rem 1rem;
+    background: var(--mat-sys-surface-container-high);
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+    color: inherit;
+    font: inherit;
+    text-align: center;
+    cursor: default;
+    transition:
+      transform 0.1s ease,
+      box-shadow 0.1s ease;
+
+    &--clickable {
+      cursor: pointer;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgb(0 0 0 / 10%);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--mat-sys-primary);
+        outline-offset: 3px;
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.66;
+      }
+    }
+
+    // Modo Claro: Mesa Disponible (fondo verde suave)
+    &--available {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+
+      &.mesas__card--clickable:hover:not(:disabled) {
+        border-color: #86efac;
+      }
+    }
+
+    // Modo Claro: Mesa Ocupada (fondo rojo suave)
+    &--occupied {
+      background: #fef2f2;
+      border-color: #fecaca;
+
+      &.mesas__card--clickable:hover:not(:disabled) {
+        border-color: #f87171;
+      }
+    }
+
+    &--cashier-closed {
+      filter: grayscale(0.35);
+      opacity: 0.48;
+    }
+  }
+
+  &__card-icon {
+    width: 4rem;
+    height: 4rem;
+    font-size: 4rem;
+    color: #ff7400;
+  }
+
+  &__card-name {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  &__card-order {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.125rem 0.5rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.8125rem;
+
+    dt {
+      color: var(--mat-sys-on-surface-variant);
+      text-align: right;
+    }
+
+    dd {
+      margin: 0;
+      text-align: left;
+    }
+  }
+
+  &__status {
+    @include status.chip-base;
+    margin-top: 0.125rem;
+
+    &--available {
+      background: var(--app-status-good-bg);
+      color: var(--app-status-good-fg);
+    }
+
+    &--occupied {
+      background: var(--app-status-critical-bg);
+      color: var(--app-status-critical-fg);
+    }
+
+    &--reserved {
+      background: var(--app-status-warning-bg);
+      color: var(--app-status-warning-fg);
+    }
+
+    &--inactive {
+      background: var(--app-status-neutral-bg);
+      color: var(--app-status-neutral-fg);
+    }
+  }
+}
+
+@media (max-width: 599px) {
+  .mesas {
+    &__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    &__card {
+      min-height: 142px;
+      padding: 0.875rem 0.5rem;
+    }
+
+    &__card-icon {
+      width: 3.25rem;
+      height: 3.25rem;
+      font-size: 3.25rem;
+    }
+
+    &__card-name {
+      font-size: 0.9375rem;
+    }
+  }
+}
+
+// Paleta oscura compartida con Grupos y Ajustes de caja.
+:host-context(.dark-theme) {
+  .mesas {
+    &__header {
+      h1 {
+        color: #f0f6ff;
+      }
+
+      p {
+        color: #b7c8dd;
+      }
+    }
+
+    &__card {
+      border-color: #2d557d;
+      background: #102744;
+      color: #d8e8ff;
+      box-shadow: none;
+
+      &--clickable:hover:not(:disabled) {
+        border-color: #41698f;
+        background: #173a63;
+        box-shadow: none;
+      }
+
+      // Modo Oscuro: Mesa Disponible (fondo verde sutil con borde verde)
+      &--available {
+        border-color: #1b5e3a;
+        background: #0d281e;
+        box-shadow: 0 0 10px rgb(34 197 94 / 12%);
+
+        &.mesas__card--clickable:hover:not(:disabled) {
+          border-color: #22c55e;
+          background: #113427;
+        }
+      }
+
+      // Modo Oscuro: Mesa Ocupada (fondo rojizo sutil con borde rojo)
+      &--occupied {
+        border-color: #5c1d24;
+        background: #2a1114;
+        box-shadow: 0 0 10px rgb(239 68 68 / 12%);
+
+        &.mesas__card--clickable:hover:not(:disabled) {
+          border-color: #ef4444;
+          background: #361519;
+        }
+      }
+
+      &--cashier-closed {
+        opacity: 0.62;
+      }
+    }
+
+    &__card-name {
+      color: #e7f1ff;
+    }
+
+    &__status {
+      &--available {
+        background: rgba(34, 197, 94, 0.12);
+        color: #4ade80;
+        border: 1px solid rgba(74, 222, 128, 0.28);
+      }
+
+      &--occupied {
+        background: rgba(239, 68, 68, 0.14);
+        color: #f87171;
+        border: 1px solid rgba(248, 113, 113, 0.32);
+      }
+    }
+
+    &__notice-icon {
+      background: rgb(255 179 92 / 14%);
+    }
+  }
+}

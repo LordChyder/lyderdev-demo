@@ -1,0 +1,251 @@
+<div class="lista-precios">
+  <header class="lista-precios__header">
+    <div class="lista-precios__title-group">
+      <h1>Lista de precios</h1>
+    </div>
+
+    <label class="lista-precios__search">
+      <mat-icon>search</mat-icon>
+      <input
+        type="search"
+        placeholder="Buscar lista de precios..."
+        aria-label="Buscar lista de precios"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+      @if (search()) {
+        <button
+          mat-icon-button
+          type="button"
+          class="lista-precios__search-clear"
+          aria-label="Limpiar búsqueda"
+          (click)="clearSearch()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </label>
+
+    <button
+      mat-fab
+      extended
+      color="primary"
+      type="button"
+      class="lista-precios__fab"
+      (click)="openCreate()"
+    >
+      <mat-icon>add</mat-icon>
+      Nueva lista
+    </button>
+  </header>
+
+  @if (loading()) {
+    <div class="lista-precios__state">
+      <mat-spinner diameter="32" />
+      <span>Cargando listas de precios...</span>
+    </div>
+  } @else if (error()) {
+    <div class="lista-precios__state lista-precios__state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (priceLists().length === 0) {
+    <div class="lista-precios__state">
+      <mat-icon>playlist_remove</mat-icon>
+      @if (search().trim()) {
+        <span>No se encontraron listas de precios para "{{ search() }}".</span>
+      } @else {
+        <span>No hay listas de precios registradas.</span>
+      }
+    </div>
+  } @else {
+    <!-- Vista de escritorio / tablet: Tabla -->
+    <div class="lista-precios__table-wrapper">
+      <table mat-table [dataSource]="priceLists()" class="lista-precios__table">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let priceList">{{ priceList.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="periodStart">
+          <th mat-header-cell *matHeaderCellDef>Desde</th>
+          <td mat-cell *matCellDef="let priceList">
+            {{ priceList.periodStart | date: 'dd/MM/yyyy' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="periodEnd">
+          <th mat-header-cell *matHeaderCellDef>Hasta</th>
+          <td mat-cell *matCellDef="let priceList">
+            {{ priceList.periodEnd | date: 'dd/MM/yyyy' }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="items">
+          <th mat-header-cell *matHeaderCellDef>Items</th>
+          <td mat-cell *matCellDef="let priceList">{{ priceList.items }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Activo</th>
+          <td mat-cell *matCellDef="let priceList">
+            <span
+              class="lista-precios__status"
+              [class.lista-precios__status--inactive]="!priceList.isActive"
+            >
+              <mat-icon>{{ priceList.isActive ? 'check' : 'remove' }}</mat-icon>
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let priceList">
+            <button
+              mat-icon-button
+              type="button"
+              class="lista-precios__action lista-precios__action--edit"
+              (click)="openEdit(priceList)"
+              aria-label="Editar lista de precios"
+              matTooltip="Editar"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            @if (priceList.isActive) {
+              <button
+                mat-icon-button
+                type="button"
+                class="lista-precios__action lista-precios__action--state"
+                (click)="inactivate(priceList)"
+                aria-label="Inactivar lista de precios"
+                matTooltip="Inactivar"
+              >
+                <mat-icon>block</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                class="lista-precios__action lista-precios__action--state"
+                (click)="activate(priceList)"
+                aria-label="Activar lista de precios"
+                matTooltip="Activar"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              type="button"
+              class="lista-precios__action lista-precios__action--products"
+              (click)="viewProducts(priceList)"
+              aria-label="Ver productos de la lista de precios"
+              matTooltip="Ver productos"
+            >
+              <mat-icon>inventory_2</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <!-- Vista móvil: Cards -->
+    <div class="lista-precios__cards">
+      @for (priceList of priceLists(); track priceList.id) {
+        <div class="lista-precios__card">
+          <div class="lista-precios__card-header">
+            <div class="lista-precios__card-avatar">
+              <mat-icon>request_quote</mat-icon>
+            </div>
+            <div class="lista-precios__card-info">
+              <span class="lista-precios__card-title">{{ priceList.name }}</span>
+              <span class="lista-precios__card-items">
+                <mat-icon>inventory_2</mat-icon>
+                {{ priceList.items }} {{ priceList.items === 1 ? 'producto' : 'productos' }}
+              </span>
+            </div>
+            <div class="lista-precios__card-badge">
+              <span
+                class="lista-precios__badge"
+                [class.lista-precios__badge--active]="priceList.isActive"
+                [class.lista-precios__badge--inactive]="!priceList.isActive"
+              >
+                {{ priceList.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="lista-precios__card-body">
+            <div class="lista-precios__card-row">
+              <mat-icon class="lista-precios__card-icon">event</mat-icon>
+              <div class="lista-precios__card-dates">
+                <span class="lista-precios__card-date-label">Desde:</span>
+                <span class="lista-precios__card-date-val">{{ priceList.periodStart | date: 'dd/MM/yyyy' }}</span>
+                <span class="lista-precios__card-date-sep">—</span>
+                <span class="lista-precios__card-date-label">Hasta:</span>
+                <span class="lista-precios__card-date-val">{{ priceList.periodEnd | date: 'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="lista-precios__card-actions">
+            <button
+              mat-icon-button
+              type="button"
+              class="lista-precios__action lista-precios__action--products"
+              (click)="viewProducts(priceList)"
+              aria-label="Ver productos de la lista de precios"
+              matTooltip="Ver productos"
+            >
+              <mat-icon>inventory_2</mat-icon>
+            </button>
+            @if (priceList.isActive) {
+              <button
+                mat-icon-button
+                type="button"
+                class="lista-precios__action lista-precios__action--state"
+                (click)="inactivate(priceList)"
+                aria-label="Inactivar lista de precios"
+                matTooltip="Inactivar"
+              >
+                <mat-icon>block</mat-icon>
+              </button>
+            } @else {
+              <button
+                mat-icon-button
+                type="button"
+                class="lista-precios__action lista-precios__action--state"
+                (click)="activate(priceList)"
+                aria-label="Activar lista de precios"
+                matTooltip="Activar"
+              >
+                <mat-icon>check_circle</mat-icon>
+              </button>
+            }
+            <button
+              mat-icon-button
+              type="button"
+              class="lista-precios__action lista-precios__action--edit"
+              (click)="openEdit(priceList)"
+              aria-label="Editar lista de precios"
+              matTooltip="Editar"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <mat-paginator
+      [length]="totalRows()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPage($event)"
+    />
+  }
+</div>

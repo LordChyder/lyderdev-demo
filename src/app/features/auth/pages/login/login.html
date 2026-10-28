@@ -1,0 +1,157 @@
+<div class="login">
+  <section class="login__panel">
+    <div class="login__decor login__decor--left" aria-hidden="true">
+      <img class="login__decor-img" src="/robot.png" alt="" />
+    </div>
+
+    <form class="login__card" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="login__brand" aria-label="LyderRestaurant">
+        <svg class="login__brand-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M15 31c-5.5 0-10-4.5-10-10s4.5-10 10-10c3 0 5.7 1.3 7.5 3.4C25.1 9.5 28.5 7 33 7c5.4 0 10.1 3.6 11.6 8.5A10 10 0 0 1 51 13c5.5 0 10 4.5 10 10s-4.5 10-10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M18 31v13c0 3.3 2.7 6 6 6h18c3.3 0 6-2.7 6-6V31" fill="white" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M27 38v5m6-5v5m6-5v5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" />
+        </svg>
+        <div>
+          <strong>Lyder<span>Restaurant</span></strong>
+          <small>Sistema de gestión para restaurantes</small>
+        </div>
+      </div>
+      <h1>Iniciar sesión</h1>
+      <p class="login__subtitle">Ingresa tus credenciales para continuar</p>
+
+      <label class="field">
+        <span>Usuario</span>
+        <div class="field__control">
+          <svg class="field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M4.5 20c0-3.6 3.4-6.5 7.5-6.5s7.5 2.9 7.5 6.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          <input
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            placeholder="tu.usuario"
+          />
+        </div>
+      </label>
+
+      <label class="field">
+        <span>Contraseña</span>
+        <div class="field__control">
+          <svg class="field__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5" />
+            <path
+              d="M8 10V7a4 4 0 0 1 8 0v3"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
+          </svg>
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            class="field__toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            @if (showPassword()) {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M3 3l18 18 M10.6 10.6a3 3 0 0 0 4.24 4.24 M6.6 6.6C4.6 8 3.2 10 2 12c2 4 6 8 10 8 1.6 0 3.1-.4 4.5-1.1 M9.9 4.2A10.5 10.5 0 0 1 12 4c4 0 8 4 10 8-.6 1.2-1.4 2.4-2.3 3.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M2 12c2-4 6-8 10-8s8 4 10 8c-2 4-6 8-10 8s-8-4-10-8Z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" />
+              </svg>
+            }
+          </button>
+        </div>
+      </label>
+
+      <p class="login__error" [class.login__error--active]="!!errorMessage()">{{ errorMessage() }}</p>
+
+      <button type="submit" [disabled]="isLoading()">
+        {{ isLoading() ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+
+      <p class="login__footer">LyderDev · Sistema de gestión</p>
+    </form>
+
+    <div class="login__decor login__decor--right login__promo">
+      <h2 class="login__promo-title">
+        Tu restaurante,<br />
+        <span>en buenas manos</span>
+      </h2>
+      <p class="login__promo-subtitle">
+        Controla tus pedidos, ventas, cocina, mesas y delivery desde un solo lugar.
+      </p>
+
+      <div class="login__promo-grid">
+        <div class="login__promo-item">
+          <span class="login__promo-icon login__promo-icon--orange">
+            <mat-icon>shopping_cart</mat-icon>
+          </span>
+          <span>Pedidos</span>
+        </div>
+
+        <div class="login__promo-item">
+          <span class="login__promo-icon login__promo-icon--orange">
+            <mat-icon>bar_chart</mat-icon>
+          </span>
+          <span>Ventas</span>
+        </div>
+
+        <div class="login__promo-item">
+          <span class="login__promo-icon login__promo-icon--orange">
+            <mat-icon>restaurant</mat-icon>
+          </span>
+          <span>Cocina</span>
+        </div>
+
+        <div class="login__promo-item">
+          <span class="login__promo-icon login__promo-icon--blue">
+            <mat-icon>table_restaurant</mat-icon>
+          </span>
+          <span>Mesas</span>
+        </div>
+
+        <div class="login__promo-item">
+          <span class="login__promo-icon login__promo-icon--blue">
+            <mat-icon>local_shipping</mat-icon>
+          </span>
+          <span>Delivery</span>
+        </div>
+
+        <div class="login__promo-item">
+          <span class="login__promo-icon login__promo-icon--blue">
+            <mat-icon>settings</mat-icon>
+          </span>
+          <span>Más control</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>Registrar pago — Cuota #{{ data.number }}</h2>
+
+<mat-dialog-content class="establishment-contract-payment-form">
+  <form [formGroup]="form" class="establishment-contract-payment-form__fields" novalidate>
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha de pago</mat-label>
+      <input matInput [matDatepicker]="paidDatePicker" formControlName="paidDate" />
+      <mat-datepicker-toggle matIconSuffix [for]="paidDatePicker" />
+      <mat-datepicker #paidDatePicker />
+      @if (form.controls.paidDate.touched && form.controls.paidDate.invalid) {
+        <mat-error>Ingresa la fecha de pago.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="establishment-contract-payment-form__error">{{ error() }}</p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button mat-flat-button color="primary" type="button" [disabled]="saving()" (click)="submit()">
+    {{ saving() ? 'Guardando...' : 'Registrar pago' }}
+  </button>
+</mat-dialog-actions>

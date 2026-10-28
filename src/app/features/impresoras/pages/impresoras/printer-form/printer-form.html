@@ -1,0 +1,102 @@
+<div class="printer-form__header">
+  <div class="printer-form__icon-wrap">
+    <mat-icon>print</mat-icon>
+  </div>
+  <div>
+    <h2 mat-dialog-title class="printer-form__title">
+      {{ isEdit ? 'Editar impresora' : 'Nueva impresora' }}
+    </h2>
+    <p class="printer-form__subtitle">
+      {{ isEdit ? 'Modifica los datos de la impresora' : 'Completa los datos para registrar una impresora' }}
+    </p>
+  </div>
+</div>
+
+<mat-dialog-content class="printer-form">
+  <form [formGroup]="form" class="printer-form__fields" novalidate>
+
+    <div class="printer-form__row">
+      <mat-form-field appearance="outline" class="printer-form__field">
+        <mat-label>Clave</mat-label>
+        <mat-icon matPrefix>vpn_key</mat-icon>
+        <input matInput formControlName="key" autocomplete="off" placeholder="COCINA-01" />
+        @if (form.controls.key.touched && form.controls.key.invalid) {
+          <mat-error>Ingresa la clave.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="printer-form__field">
+        <mat-label>Nombre</mat-label>
+        <mat-icon matPrefix>badge</mat-icon>
+        <input matInput formControlName="name" autocomplete="off" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <mat-error>Ingresa el nombre.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="printer-form__row">
+      <mat-form-field appearance="outline" class="printer-form__field">
+        <mat-label>Dirección IP</mat-label>
+        <mat-icon matPrefix>lan</mat-icon>
+        <input matInput formControlName="ipAddress" autocomplete="off" placeholder="192.168.1.100" />
+        @if (form.controls.ipAddress.touched && form.controls.ipAddress.invalid) {
+          <mat-error>Ingresa la dirección IP.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="printer-form__field">
+        <mat-label>Puerto</mat-label>
+        <mat-icon matPrefix>settings_ethernet</mat-icon>
+        <input matInput type="number" formControlName="port" autocomplete="off" />
+        @if (form.controls.port.touched && form.controls.port.invalid) {
+          <mat-error>Ingresa un puerto válido.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="printer-form__field printer-form__field--full">
+      <mat-label>Almacén</mat-label>
+      <mat-icon matPrefix>warehouse</mat-icon>
+      <mat-select formControlName="stockId">
+        <mat-option [value]="null">Sin almacén</mat-option>
+        @for (stock of stocks(); track stock.id) {
+          <mat-option [value]="stock.id">{{ stock.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="printer-form__field printer-form__field--full">
+      <mat-label>ID de agente</mat-label>
+      <mat-icon matPrefix>smart_toy</mat-icon>
+      <input matInput formControlName="agentId" autocomplete="off" />
+      @if (form.controls.agentId.touched && form.controls.agentId.invalid) {
+        <mat-error>Ingresa el ID de agente.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="printer-form__error">
+        <mat-icon>error_outline</mat-icon>
+        {{ error() }}
+      </p>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="printer-form__actions">
+  <button mat-button type="button" class="printer-form__cancel" (click)="cancel()">
+    Cancelar
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    class="printer-form__submit"
+    [disabled]="saving()"
+    (click)="submit()"
+  >
+    <mat-icon>{{ saving() ? 'hourglass_empty' : 'save' }}</mat-icon>
+    <span>{{ saving() ? 'Guardando…' : 'Guardar' }}</span>
+  </button>
+</mat-dialog-actions>

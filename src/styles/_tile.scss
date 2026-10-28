@@ -1,0 +1,19 @@
+// Tile Bento compartido por shell (navbar/sidebar) y las páginas que arman
+// su propio mosaico (dashboard, reporte...). Todos comparten el mismo radio
+// y sombra para que se sientan parte del mismo sistema visual.
+$radius: 20px;
+$shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.05);
+
+@mixin surface {
+  background: var(--mat-sys-surface-container);
+  border-radius: $radius;
+  box-shadow: $shadow;
+}
+
+/// Tabla de Material dentro de un tile: por defecto pinta su propio fondo
+/// (--mat-sys-surface), distinto al del tile (--mat-sys-surface-container),
+/// lo que se ve como una caja blanca metida dentro de la caja gris. La
+/// dejamos transparente para que se funda con el tile que la contiene.
+@mixin table-on-tile {
+  --mat-table-background-color: transparent;
+}
