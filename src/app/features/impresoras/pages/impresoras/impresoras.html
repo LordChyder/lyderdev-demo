@@ -22,11 +22,11 @@
   } @else {
     <div class="impresoras__grid">
       @for (printer of printers(); track printer.id) {
-        <article class="impresoras__card" [class.impresoras__card--inactive]="!printer.active">
+        <article class="impresoras__card" [class.impresoras__card--inactive]="!printer.isActive">
           <!-- Indicador de estado -->
-          <span class="impresoras__badge" [class.impresoras__badge--inactive]="!printer.active">
-            <mat-icon>{{ printer.active ? 'check_circle' : 'cancel' }}</mat-icon>
-            {{ printer.active ? 'Activo' : 'Inactivo' }}
+          <span class="impresoras__badge" [class.impresoras__badge--inactive]="!printer.isActive">
+            <mat-icon>{{ printer.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+            {{ printer.isActive ? 'Activo' : 'Inactivo' }}
           </span>
 
           <!-- Icono principal -->
@@ -61,7 +61,7 @@
             >
               <mat-icon>edit</mat-icon>
             </button>
-            @if (printer.active) {
+            @if (printer.isActive) {
               <button
                 mat-icon-button
                 type="button"

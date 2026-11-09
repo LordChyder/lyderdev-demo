@@ -11,6 +11,7 @@ export interface SearchRestaurantTableDto {
   code: string | null;
   name: string | null;
   capacity: number;
+  order: number;
   establishmentId: number;
   status: RestaurantTableStatus;
   currentOrderId: string | null;
@@ -20,6 +21,7 @@ export interface SaveRestaurantTableDto {
   code: string;
   name: string;
   capacity: number;
+  order: number;
 }
 
 export interface UpdateRestaurantTableDto {
@@ -27,4 +29,5 @@ export interface UpdateRestaurantTableDto {
   code: string;
   name: string;
   capacity: number;
+  order: number;
 }

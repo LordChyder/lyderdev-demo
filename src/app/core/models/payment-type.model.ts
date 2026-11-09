@@ -10,6 +10,8 @@ export interface PaymentTypeDto {
   isCardNumberOptional: boolean;
   isCreditConditionOperation: boolean;
   isChangeAllowed: boolean;
+  /** Indica si este tipo de pago es efectivo — se usa para cuadrar la caja. */
+  isCash: boolean;
   isActive: boolean;
 }
 
@@ -29,6 +31,7 @@ export interface SavePaymentTypeDto {
   isCardNumberOptional: boolean;
   isCreditConditionOperation: boolean;
   isChangeAllowed: boolean;
+  isCash: boolean;
 }
 
 export interface UpdatePaymentTypeDto extends SavePaymentTypeDto {

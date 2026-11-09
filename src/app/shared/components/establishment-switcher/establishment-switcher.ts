@@ -85,12 +85,24 @@ export class EstablishmentSwitcher implements OnInit, OnDestroy {
     return String(item.id) === this.tokenService.establishmentId();
   }
 
+  /**
+   * No todas las pantallas escuchan `tokenService.establishmentId()` para
+   * volver a pedir sus datos (muchas solo cargan una vez en `ngOnInit`) — en
+   * vez de exigirle ese efecto a cada módulo, forzamos acá el mismo resultado
+   * que un F5 manual: recargar la app entera para que todo vuelva a pedirse
+   * ya con el nuevo `EstablishmentId`. No aplica a la primera selección (no
+   * unselected -> algo), porque ahí todavía no se cargó nada con el anterior.
+   */
   select(item: AuthEstablishmentDto): void {
-    this.tokenService.setEstablishmentId(
-      String(item.id),
-      item.name ?? undefined,
-      item.userEstablishmentId,
-    );
+    const previousId = this.tokenService.establishmentId();
+    const wasUnselected = this.isUnselected();
+    const nextId = String(item.id);
+
+    this.tokenService.setEstablishmentId(nextId, item.name ?? undefined, item.userEstablishmentId);
+
+    if (!wasUnselected && nextId !== previousId) {
+      window.location.reload();
+    }
   }
 
   logout(): void {

@@ -1,4 +1,5 @@
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subject, debounceTime, distinctUntilChanged, filter, finalize, takeUntil } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,6 +27,7 @@ const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
     MatProgressSpinnerModule,
     MatTableModule,
     MatTooltipModule,
+    NgTemplateOutlet,
   ],
   selector: 'app-almacenes-page',
   styleUrl: './almacenes.scss',
@@ -41,7 +43,7 @@ export class AlmacenesPage implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
   private readonly searchSubject$ = new Subject<string>();
 
-  readonly displayedColumns = ['name', 'address', 'products', 'active', 'actions'];
+  readonly displayedColumns = ['name', 'address', 'products', 'actions'];
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
   readonly stocks = signal<SearchStockDto[]>([]);
@@ -51,6 +53,11 @@ export class AlmacenesPage implements OnDestroy {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly search = signal('');
+  /** Colapsado por defecto: los almacenes inactivos no son el foco principal de la vista. */
+  readonly inactiveExpanded = signal(false);
+
+  readonly activeStocks = computed(() => this.stocks().filter((stock) => stock.isActive));
+  readonly inactiveStocks = computed(() => this.stocks().filter((stock) => !stock.isActive));
 
   constructor() {
     this.searchSubject$

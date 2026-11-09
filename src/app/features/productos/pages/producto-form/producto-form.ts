@@ -1,7 +1,17 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, Subject, finalize, forkJoin, of, takeUntil } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  catchError,
+  finalize,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,6 +27,13 @@ import { ProductDestinationDto } from '../../../../core/models/product-establish
 import { ProductEstablishmentService } from '../../../../core/services/product-establishment.service';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { ProductService } from '../../../../core/services/product.service';
+import { CreateProductWithEstablishmentResultDto } from '../../../../core/models/product.model';
+
+const MAX_IMAGE_SIZE_BYTES = 3 * 1024 * 1024;
+const VALID_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+/** Estado pendiente de la imagen: no se aplica hasta guardar el formulario. */
+type PendingImageAction = 'none' | 'upload' | 'delete';
 
 /**
  * Único valor que expone hoy el enum `ProductType` del backend.
@@ -93,6 +110,26 @@ export class ProductoForm implements OnInit, OnDestroy {
   readonly destinationOptions = signal<ProductDestinationDto[]>([]);
   readonly categoryOptions = signal<SearchCategoryDto[]>([]);
 
+  readonly canEditImage = this.permissionService.has('Product_SaveOrUpdate');
+
+  readonly hasImage = signal(false);
+  readonly imageUpdatedAt = signal<string | null>(null);
+  readonly imageLoadError = signal(false);
+  readonly imageError = signal<string | null>(null);
+  readonly pendingImageAction = signal<PendingImageAction>('none');
+  readonly imagePreviewUrl = signal<string | null>(null);
+  private pendingImageFile: File | null = null;
+
+  readonly serverImageUrl = computed(() =>
+    this.productId ? this.productService.getImageUrl(this.productId, this.imageUpdatedAt()) : null,
+  );
+  /** Si hay algo que mostrar en la vista previa (local o del servidor), no el placeholder. */
+  readonly showingImage = computed(() => {
+    if (this.pendingImageAction() === 'upload') return true;
+    if (this.pendingImageAction() === 'delete') return false;
+    return this.hasImage() && !this.imageLoadError();
+  });
+
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
     barcode: [''],
@@ -127,6 +164,8 @@ export class ProductoForm implements OnInit, OnDestroy {
           if (product) {
             this.originalProductType = product.productType;
             this.originalImageName = product.imageName;
+            this.hasImage.set(product.hasImage);
+            this.imageUpdatedAt.set(product.imageUpdatedAt);
             this.form.patchValue({
               name: product.name ?? '',
               barcode: product.barcode ?? '',
@@ -150,12 +189,53 @@ export class ProductoForm implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.revokePreview();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   cancel(): void {
     this.router.navigateByUrl('/productos');
+  }
+
+  onImageFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    if (!file) return;
+
+    if (!VALID_IMAGE_TYPES.includes(file.type)) {
+      this.imageError.set('Formato no válido. Usa una imagen PNG, JPG o WEBP.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      this.imageError.set('La imagen supera el tamaño máximo de 3 MB.');
+      return;
+    }
+
+    this.imageError.set(null);
+    this.revokePreview();
+    this.pendingImageFile = file;
+    this.pendingImageAction.set('upload');
+    this.imageLoadError.set(false);
+    this.imagePreviewUrl.set(URL.createObjectURL(file));
+  }
+
+  removeImage(): void {
+    this.revokePreview();
+    this.pendingImageFile = null;
+    this.pendingImageAction.set(this.hasImage() ? 'delete' : 'none');
+    this.imageError.set(null);
+  }
+
+  onImageLoadError(): void {
+    this.imageLoadError.set(true);
+  }
+
+  private revokePreview(): void {
+    const current = this.imagePreviewUrl();
+    if (current) URL.revokeObjectURL(current);
+    this.imagePreviewUrl.set(null);
   }
 
   submit(): void {
@@ -193,13 +273,50 @@ export class ProductoForm implements OnInit, OnDestroy {
         )
       : this.productService.createWithEstablishment(payload);
 
+    const hadImageBeforeSave = this.hasImage();
+    const pendingAction = this.pendingImageAction();
+    const pendingFile = this.pendingImageFile;
+
     request$
       .pipe(
+        switchMap((result) => {
+          const productId = this.isEdit
+            ? this.productId!
+            : (result as CreateProductWithEstablishmentResultDto).productId;
+          const productEstablishmentId = this.isEdit
+            ? this.productEstablishmentId!
+            : (result as CreateProductWithEstablishmentResultDto).productEstablishmentId;
+
+          let imageRequest$: Observable<unknown> = of(null);
+          if (pendingAction === 'upload' && pendingFile) {
+            imageRequest$ = hadImageBeforeSave
+              ? this.productService.updateImage(productId, pendingFile)
+              : this.productService.saveImage(productId, pendingFile);
+          } else if (pendingAction === 'delete') {
+            imageRequest$ = this.productService.deleteImage(productId);
+          }
+
+          return imageRequest$.pipe(
+            map(() => ({ productId, productEstablishmentId, imageFailed: false })),
+            catchError(() => of({ productId, productEstablishmentId, imageFailed: true })),
+          );
+        }),
         finalize(() => this.saving.set(false)),
         takeUntil(this.destroy$),
       )
       .subscribe({
-        next: () => this.router.navigateByUrl('/productos'),
+        next: ({ productId, productEstablishmentId, imageFailed }) => {
+          if (imageFailed) {
+            // El producto se guardó pero la imagen falló: el toast del
+            // errorInterceptor ya informó el motivo. En "crear" se navega a
+            // editar para poder reintentar; en "editar" se queda en la página.
+            if (!this.isEdit) {
+              this.router.navigateByUrl(`/productos/editar/${productId}/${productEstablishmentId}`);
+            }
+            return;
+          }
+          this.router.navigateByUrl('/productos');
+        },
         // Los errores HTTP (ej. de validación) ya se muestran en un toast vía errorInterceptor.
         error: () => {},
       });

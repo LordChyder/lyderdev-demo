@@ -8,7 +8,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
-import { ExpenseCategoryDto } from '../../../../../core/models/expense.model';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ExpenseCashierDto, ExpenseCategoryDto } from '../../../../../core/models/expense.model';
 import { ExpenseService } from '../../../../../core/services/expense.service';
 
 export interface ExpenseFormData {
@@ -28,6 +29,7 @@ export interface ExpenseFormData {
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    MatSlideToggleModule,
   ],
   selector: 'app-expense-form',
   styleUrl: './expense-form.scss',
@@ -48,14 +50,45 @@ export class ExpenseForm implements OnDestroy {
   readonly error = signal<string | null>(null);
   readonly categories = this.data.categories;
 
+  /** Cajas del establecimiento, para elegir cuál financia un gasto de caja. */
+  readonly cashiers = signal<ExpenseCashierDto[]>([]);
+  readonly loadingCashiers = signal(true);
+  /** Refleja `isCashierExpense` como signal para controlar el template sin leer el form directo. */
+  readonly isCashierExpense = signal(false);
+
   readonly form = this.fb.nonNullable.group({
     category: [null as number | null, [Validators.required]],
     expenseDate: [new Date(), [Validators.required]],
     description: ['', [Validators.required, Validators.maxLength(200)]],
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    isCashierExpense: [false],
+    cashierId: [null as number | null],
   });
 
   constructor() {
+    this.expenseService
+      .getCashiers()
+      .pipe(
+        finalize(() => this.loadingCashiers.set(false)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((cashiers) => this.cashiers.set(cashiers ?? []));
+
+    // La caja solo es obligatoria cuando el gasto es de caja; al desactivar el switch se limpia.
+    this.form.controls.isCashierExpense.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((isCashierExpense) => {
+        this.isCashierExpense.set(isCashierExpense);
+        const cashierIdControl = this.form.controls.cashierId;
+        if (isCashierExpense) {
+          cashierIdControl.addValidators(Validators.required);
+        } else {
+          cashierIdControl.clearValidators();
+          cashierIdControl.setValue(null);
+        }
+        cashierIdControl.updateValueAndValidity();
+      });
+
     if (this.data.expenseId === null) return;
 
     this.expenseService
@@ -71,6 +104,8 @@ export class ExpenseForm implements OnDestroy {
             expenseDate: new Date(expense.expenseDate),
             description: expense.description ?? '',
             amount: expense.amount,
+            isCashierExpense: expense.isCashierExpense,
+            cashierId: expense.cashierId,
           }),
         error: () => this.error.set('No se pudo cargar el gasto.'),
       });
@@ -95,6 +130,8 @@ export class ExpenseForm implements OnDestroy {
       expenseDate: toDateOnlyString(value.expenseDate),
       description: value.description,
       amount: value.amount!,
+      isCashierExpense: value.isCashierExpense,
+      cashierId: value.isCashierExpense ? value.cashierId : null,
     };
 
     const request = this.isEdit

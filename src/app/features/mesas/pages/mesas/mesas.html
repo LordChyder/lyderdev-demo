@@ -53,6 +53,7 @@
           } @else {
             <mat-icon class="mesas__card-icon">table_restaurant</mat-icon>
           }
+          <span class="mesas__card-code">{{ table.tableCode }}</span>
           <span class="mesas__card-name">{{ table.tableName }}</span>
           <span class="mesas__status" [class]="statusClass(table.tableStatus)">
             {{ statusLabel(table.tableStatus) }}

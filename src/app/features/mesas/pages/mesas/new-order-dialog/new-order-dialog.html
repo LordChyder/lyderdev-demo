@@ -66,7 +66,7 @@
           <mat-label>Lista de precios</mat-label>
           <mat-select
             [value]="selectedPriceListId()"
-            (selectionChange)="selectedPriceListId.set($event.value)"
+            (selectionChange)="choosePriceList($event.value)"
           >
             @for (list of priceLists(); track list.priceListId) {
               <mat-option [value]="list.priceListId">{{ list.priceListName }}</mat-option>
@@ -79,37 +79,95 @@
         <p class="new-order-dialog__error">{{ addItemError() }}</p>
       }
 
-      <div class="new-order-dialog__products">
-        @for (product of selectedPriceList?.products ?? []; track product.productEstablishmentId) {
-          <div class="new-order-dialog__product">
-            <div class="new-order-dialog__product-info">
-              <span class="new-order-dialog__product-name">{{ product.productName }}</span>
-              <span class="new-order-dialog__product-price">{{ product.price | number: '1.2-2' }}</span>
-            </div>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              class="new-order-dialog__product-qty"
-              [value]="quantityFor(product.productEstablishmentId)"
-              (change)="setQuantity(product.productEstablishmentId, $any($event.target).value)"
-            />
+      @if (selectedPriceList?.isGrouped) {
+        <div class="new-order-dialog__categories" role="tablist" aria-label="Categorías de productos">
+          @for (category of selectedPriceList?.categories ?? []; track categoryKey(category)) {
             <button
-              mat-icon-button
               type="button"
-              color="primary"
-              aria-label="Agregar producto"
-              [disabled]="addingProductId() === product.productEstablishmentId"
-              (click)="addProduct(product)"
+              role="tab"
+              class="new-order-dialog__category"
+              [class.new-order-dialog__category--active]="categoryKey(category) === categoryKey(selectedCategory!)"
+              [attr.aria-selected]="categoryKey(category) === categoryKey(selectedCategory!)"
+              (click)="selectCategory(categoryKey(category))"
             >
-              @if (addingProductId() === product.productEstablishmentId) {
-                <mat-spinner diameter="20" />
-              } @else {
-                <mat-icon>add_circle</mat-icon>
-              }
+              {{ category.categoryName }}
             </button>
-          </div>
-        } @empty {
+          }
+        </div>
+      }
+
+      <div class="new-order-dialog__products">
+        @if (selectedCategory && !selectedCategory.isCombo) {
+          @for (product of selectedCategory.products; track product.productEstablishmentId) {
+            <div class="new-order-dialog__product">
+              <div class="new-order-dialog__product-info">
+                <span class="new-order-dialog__product-name">{{ product.productName }}</span>
+                <span class="new-order-dialog__product-price">{{ product.price | number: '1.2-2' }}</span>
+              </div>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                class="new-order-dialog__product-qty"
+                [value]="quantityFor(product.productEstablishmentId)"
+                (change)="setQuantity(product.productEstablishmentId, $any($event.target).value)"
+              />
+              <button
+                mat-icon-button
+                type="button"
+                color="primary"
+                aria-label="Agregar producto"
+                [disabled]="addingProductId() === product.productEstablishmentId"
+                (click)="addProduct(product)"
+              >
+                @if (addingProductId() === product.productEstablishmentId) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  <mat-icon>add_circle</mat-icon>
+                }
+              </button>
+            </div>
+          }
+        } @else if (selectedCategory?.isCombo) {
+          @for (combo of selectedCategory!.combos; track combo.comboId) {
+            <div class="new-order-dialog__product">
+              <div class="new-order-dialog__product-info">
+                <span class="new-order-dialog__product-name">{{ combo.comboName }}</span>
+                <span class="new-order-dialog__product-price">
+                  {{ combo.isFree ? 'Gratis' : (combo.price | number: '1.2-2') }}
+                </span>
+                <span class="new-order-dialog__combo-contents">
+                  @for (component of combo.components; track component.productEstablishmentId; let last = $last) {
+                    {{ component.quantity }} {{ component.productName }}{{ last ? '' : ' · ' }}
+                  }
+                </span>
+              </div>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                class="new-order-dialog__product-qty"
+                [value]="quantityForCombo(combo.comboId)"
+                (change)="setComboQuantity(combo.comboId, $any($event.target).value)"
+              />
+              <button
+                mat-icon-button
+                type="button"
+                color="primary"
+                aria-label="Agregar combo"
+                [disabled]="addingComboId() === combo.comboId"
+                (click)="addCombo(combo)"
+              >
+                @if (addingComboId() === combo.comboId) {
+                  <mat-spinner diameter="20" />
+                } @else {
+                  <mat-icon>add_circle</mat-icon>
+                }
+              </button>
+            </div>
+          }
+        }
+        @if (!selectedCategory || (selectedCategory.products.length === 0 && selectedCategory.combos.length === 0)) {
           <p class="new-order-dialog__hint">Esta lista de precios no tiene productos.</p>
         }
       </div>
@@ -124,7 +182,16 @@
           <div class="new-order-dialog__summary-list">
             @for (item of order.items; track item.id) {
               <div class="new-order-dialog__summary-item">
-                <span class="new-order-dialog__summary-name">{{ item.productName }}</span>
+                <div class="new-order-dialog__summary-name-group">
+                  <span class="new-order-dialog__summary-name">{{ item.productName }}</span>
+                  @if (item.comboId) {
+                    <span class="new-order-dialog__combo-contents">
+                      @for (component of item.components; track component.id; let last = $last) {
+                        {{ component.quantityPerCombo }} {{ component.productName }}{{ last ? '' : ' · ' }}
+                      }
+                    </span>
+                  }
+                </div>
 
                 <div class="new-order-dialog__summary-qty">
                   <button

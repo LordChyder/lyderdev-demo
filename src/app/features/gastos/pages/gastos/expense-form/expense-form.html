@@ -45,6 +45,26 @@
       }
     </mat-form-field>
 
+    <mat-slide-toggle formControlName="isCashierExpense" class="expense-form__cashier-toggle">
+      Gasto de caja
+    </mat-slide-toggle>
+
+    @if (isCashierExpense()) {
+      <mat-form-field appearance="outline">
+        <mat-label>Caja</mat-label>
+        <mat-select formControlName="cashierId">
+          @for (cashier of cashiers(); track cashier.cashierId) {
+            <mat-option [value]="cashier.cashierId" [disabled]="!cashier.hasActiveOpening">
+              {{ cashier.name }}{{ cashier.hasActiveOpening ? '' : ' (Sin apertura habilitada)' }}
+            </mat-option>
+          }
+        </mat-select>
+        @if (form.controls.cashierId.touched && form.controls.cashierId.invalid) {
+          <mat-error>Selecciona la caja.</mat-error>
+        }
+      </mat-form-field>
+    }
+
     @if (error()) {
       <p class="expense-form__error">{{ error() }}</p>
     }

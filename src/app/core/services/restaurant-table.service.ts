@@ -18,6 +18,10 @@ export class RestaurantTableService {
     return this.http.get<SearchRestaurantTableDto[]>(this.baseUrl);
   }
 
+  getForEdit(tableId: number): Observable<SearchRestaurantTableDto> {
+    return this.http.get<SearchRestaurantTableDto>(`${this.baseUrl}/${tableId}/get-for-edit`);
+  }
+
   create(payload: SaveRestaurantTableDto): Observable<unknown> {
     return this.http.post(this.baseUrl, payload);
   }

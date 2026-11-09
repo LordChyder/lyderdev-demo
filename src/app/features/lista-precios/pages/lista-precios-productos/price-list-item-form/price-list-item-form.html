@@ -1,6 +1,8 @@
 <h2 mat-dialog-title class="price-list-item-form__title">
-  {{ isEdit ? 'Editar producto' : 'Añadir producto' }}
-  <span>{{ isEdit ? 'Actualiza las condiciones de venta.' : 'Define cómo se venderá este producto.' }}</span>
+  {{ isEdit
+    ? (itemKind() === 'COMBO' ? 'Editar combo' : 'Editar producto')
+    : (itemKind() === 'COMBO' ? 'Añadir combo' : 'Añadir producto') }}
+  <span>{{ isEdit ? 'Actualiza las condiciones de venta.' : 'Define cómo se venderá este ítem.' }}</span>
 </h2>
 
 <mat-dialog-content class="price-list-item-form">
@@ -10,40 +12,76 @@
     </div>
   } @else {
     <form [formGroup]="form" class="price-list-item-form__fields" novalidate>
-      <section class="price-list-item-form__bento price-list-item-form__bento--product">
-        <p class="price-list-item-form__section-label">Producto</p>
-        <mat-form-field appearance="outline">
-          <mat-label>Producto</mat-label>
-          <input matInput formControlName="productSearch" [matAutocomplete]="productOptionsAutocomplete" [matAutocompleteDisabled]="isEdit" autocomplete="off" />
-          <mat-autocomplete #productOptionsAutocomplete="matAutocomplete" [displayWith]="displayProduct" autoActiveFirstOption (optionSelected)="selectProduct($event)">
-            @for (option of filteredProductOptions(); track option.productEstablishmentId) {
-              <mat-option [value]="option">
-                {{ option.productName }}
-                @if (option.complementaryName) {
-                  ({{ option.complementaryName }})
-                }
-              </mat-option>
+      <mat-button-toggle-group
+        class="price-list-item-form__kind"
+        [value]="itemKind()"
+        [disabled]="isEdit"
+        (change)="selectKind($event.value)"
+      >
+        <mat-button-toggle value="PRODUCT">Producto</mat-button-toggle>
+        <mat-button-toggle value="COMBO">Combo</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      @if (itemKind() === 'PRODUCT') {
+        <section class="price-list-item-form__bento price-list-item-form__bento--product">
+          <p class="price-list-item-form__section-label">Producto</p>
+          <mat-form-field appearance="outline">
+            <mat-label>Producto</mat-label>
+            <input matInput formControlName="productSearch" [matAutocomplete]="productOptionsAutocomplete" [matAutocompleteDisabled]="isEdit" autocomplete="off" />
+            <mat-autocomplete #productOptionsAutocomplete="matAutocomplete" [displayWith]="displayProduct" autoActiveFirstOption (optionSelected)="selectProduct($event)">
+              @for (option of filteredProductOptions(); track option.productEstablishmentId) {
+                <mat-option [value]="option">
+                  {{ option.productName }}
+                  @if (option.complementaryName) {
+                    ({{ option.complementaryName }})
+                  }
+                </mat-option>
+              }
+            </mat-autocomplete>
+            @if (
+              form.controls.productSearch.touched &&
+              form.controls.productEstablishmentId.invalid
+            ) {
+              <mat-error>Selecciona un producto.</mat-error>
             }
-          </mat-autocomplete>
-          @if (
-            form.controls.productSearch.touched &&
-            form.controls.productSearch.invalid
-          ) {
-            <mat-error>Selecciona un producto.</mat-error>
-          }
-          @if (productOptions().length === 0) {
-            <mat-hint>No hay productos disponibles para vincular.</mat-hint>
-          }
-        </mat-form-field>
-      </section>
+            @if (productOptions().length === 0) {
+              <mat-hint>No hay productos disponibles para vincular.</mat-hint>
+            }
+          </mat-form-field>
+        </section>
+      } @else {
+        <section class="price-list-item-form__bento price-list-item-form__bento--product">
+          <p class="price-list-item-form__section-label">Combo</p>
+          <mat-form-field appearance="outline">
+            <mat-label>Combo</mat-label>
+            <input matInput formControlName="comboSearch" [matAutocomplete]="comboOptionsAutocomplete" [matAutocompleteDisabled]="isEdit" autocomplete="off" />
+            <mat-autocomplete #comboOptionsAutocomplete="matAutocomplete" [displayWith]="displayCombo" autoActiveFirstOption (optionSelected)="selectCombo($event)">
+              @for (option of filteredComboOptions(); track option.id) {
+                <mat-option [value]="option">
+                  {{ option.name }} ({{ option.items }} productos)
+                </mat-option>
+              }
+            </mat-autocomplete>
+            @if (
+              form.controls.comboSearch.touched &&
+              form.controls.comboId.invalid
+            ) {
+              <mat-error>Selecciona un combo.</mat-error>
+            }
+            @if (!loadingCombos() && comboOptions().length === 0) {
+              <mat-hint>No hay combos disponibles para vincular.</mat-hint>
+            }
+          </mat-form-field>
+        </section>
+      }
 
       <section class="price-list-item-form__bento price-list-item-form__bento--conditions">
         <div class="price-list-item-form__switch">
           <div>
             <p class="price-list-item-form__section-label">Condición de venta</p>
-            <span>Sin cobro para este producto</span>
+            <span>Sin cobro para este ítem</span>
           </div>
-          <mat-checkbox formControlName="isFree">Producto gratis</mat-checkbox>
+          <mat-checkbox formControlName="isFree">{{ itemKind() === 'COMBO' ? 'Combo gratis' : 'Producto gratis' }}</mat-checkbox>
         </div>
 
         <div class="price-list-item-form__price-grid">

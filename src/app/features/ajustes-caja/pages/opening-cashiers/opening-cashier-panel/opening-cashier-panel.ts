@@ -118,15 +118,16 @@ export class OpeningCashierPanel implements OnChanges {
       });
   }
 
-  /** Ventas que realmente deben estar en la gaveta. */
+  /** Ventas en efectivo (tipos de pago marcados como efectivo en el backend). */
   cashPaymentAmount(summary: OpeningCashierPaymentsSummaryDto): number {
     return (summary.paymentTypes ?? [])
-      .filter((payment) => this.isCashPayment(payment.paymentTypeName))
+      .filter((payment) => payment.isCash)
       .reduce((total, payment) => total + payment.amount, 0);
   }
 
-  expectedCash(detail: OpeningCashierDetailDto, summary: OpeningCashierPaymentsSummaryDto): number {
-    return detail.openingValue + this.cashPaymentAmount(summary);
+  /** Efectivo esperado en la gaveta: viene calculado (fondo + ventas en efectivo − gastos). */
+  expectedCash(summary: OpeningCashierPaymentsSummaryDto): number {
+    return summary.expectedCashAmount;
   }
 
   printClosingReport(): void {
@@ -181,7 +182,4 @@ export class OpeningCashierPanel implements OnChanges {
     });
   }
 
-  private isCashPayment(paymentTypeName: string | null): boolean {
-    return /\befectivo\b|\bcash\b/i.test(paymentTypeName ?? '');
-  }
 }

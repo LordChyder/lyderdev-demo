@@ -11,26 +11,45 @@ import { catchError, forkJoin, map, of } from 'rxjs';
 import {
   CreateDeliveryOrderCommand,
   CreateDeliveryOrderItemDto,
+  OrderItemComboStockDto,
+  PriceListComboDto,
   PriceListProductDto,
-  PriceListWithProductsDto,
+  WaiterPriceListCategoryDto,
+  WaiterPriceListDto,
 } from '../../../../../core/models/order.model';
 import { OrderService } from '../../../../../core/services/order.service';
 import { StockProductService } from '../../../../../core/services/stock-product.service';
 import { TokenService } from '../../../../../core/services/token.service';
+import { categoryKey, firstCategoryKey, flattenCombos, flattenProducts } from '../../../../../core/utils/price-list-menu';
+import {
+  StockDraftLine,
+  availableComboStockFor,
+  availableFor,
+  canAddCombo,
+  canAddProduct,
+  comboHasInventory,
+} from '../../../../../core/utils/stock-availability.util';
 
 export interface NewDeliveryDialogData {
   openingCashierId: number;
 }
 
-/** Línea local del carrito, antes de mandarse como `CreateDeliveryOrderItemDto`. */
+/**
+ * Línea local del carrito, antes de mandarse como `CreateDeliveryOrderItemDto`.
+ * Un producto (`productEstablishmentId`) o un combo (`comboId`), nunca ambos.
+ */
 interface DeliveryCartItem {
   key: string;
-  productEstablishmentId: number;
+  productEstablishmentId: number | null;
   priceListId: number;
   stockProductId: number | null;
   productName: string;
   unitPrice: number;
   quantity: number;
+  comboId: number | null;
+  comboStocks: OrderItemComboStockDto[] | null;
+  /** Resumen de los productos del combo para mostrarlo bajo su nombre (ej. "1 Pollo a la brasa · 2 Gaseosa 500ml"). */
+  comboComponentsSummary: string | null;
 }
 
 /**
@@ -76,8 +95,10 @@ export class NewDeliveryDialog {
 
   readonly loadingCatalog = signal(true);
   readonly catalogError = signal<string | null>(null);
-  readonly priceLists = signal<PriceListWithProductsDto[]>([]);
+  readonly priceLists = signal<WaiterPriceListDto[]>([]);
   readonly selectedPriceListId = signal<number | null>(null);
+  /** Categoría activa (GENERAL, una categoría de producto, o COMBOS) dentro de la lista de precios seleccionada. */
+  readonly selectedCategoryKey = signal<string | null>(null);
   readonly stockAvailability = signal<Record<number, number | null>>({});
 
   readonly cart = signal<DeliveryCartItem[]>([]);
@@ -89,32 +110,97 @@ export class NewDeliveryDialog {
     this.loadCatalog();
   }
 
-  get selectedPriceList(): PriceListWithProductsDto | null {
+  get selectedPriceList(): WaiterPriceListDto | null {
     return (
       this.priceLists().find((list) => list.priceListId === this.selectedPriceListId()) ?? null
     );
+  }
+
+  /** Categoría activa dentro de la lista de precios seleccionada (GENERAL, una categoría, o COMBOS). */
+  get selectedCategory(): WaiterPriceListCategoryDto | null {
+    const list = this.selectedPriceList;
+    if (!list?.categories.length) return null;
+    return (
+      list.categories.find((category) => categoryKey(category) === this.selectedCategoryKey()) ??
+      list.categories[0]
+    );
+  }
+
+  /** Catálogo completo de productos de TODAS las listas (para resolver una línea del carrito). */
+  private get catalogProducts(): PriceListProductDto[] {
+    return flattenProducts(this.priceLists());
+  }
+
+  /** Catálogo completo de combos de TODAS las listas (para resolver el combo de una línea del carrito). */
+  private get catalogCombos(): PriceListComboDto[] {
+    return flattenCombos(this.priceLists());
   }
 
   get cartTotal(): number {
     return this.cart().reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }
 
+  categoryKey(category: WaiterPriceListCategoryDto): string {
+    return categoryKey(category);
+  }
+
+  selectPriceList(priceListId: number): void {
+    this.selectedPriceListId.set(priceListId);
+    const list = this.priceLists().find((l) => l.priceListId === priceListId) ?? null;
+    this.selectedCategoryKey.set(firstCategoryKey(list));
+  }
+
+  selectCategory(key: string): void {
+    this.selectedCategoryKey.set(key);
+  }
+
+  /** `cart()` normalizado para el cálculo de disponibilidad compartido (siempre crea un pedido nuevo, nada reservado todavía). */
+  private get draftLines(): StockDraftLine[] {
+    return this.cart().map((item) => ({
+      productEstablishmentId: item.productEstablishmentId,
+      comboId: item.comboId,
+      quantity: item.quantity,
+      originalQuantity: 0,
+    }));
+  }
+
+  /** Disponible real del producto considerando el carrito actual (puede ser negativo si ya pide de más). */
   availableStockFor(product: PriceListProductDto): number | null {
     if (!product.hasInventory) return null;
-
-    const available = this.stockAvailability()[product.productEstablishmentId];
-    if (available === undefined || available === null) return null;
-
-    const inCart = this.cart().find(
-      (item) => item.productEstablishmentId === product.productEstablishmentId,
-    )?.quantity ?? 0;
-    return Math.max(0, available - inCart);
+    return availableFor(this.stockAvailability(), this.draftLines, product.productEstablishmentId, this.catalogCombos);
   }
 
   canAddProduct(product: PriceListProductDto, quantity = 1): boolean {
-    if (!product.hasInventory) return true;
-    const available = this.availableStockFor(product);
-    return available !== null && available >= quantity;
+    return canAddProduct(this.stockAvailability(), this.draftLines, product, this.catalogCombos, quantity);
+  }
+
+  /** true si algún producto del combo controla inventario. */
+  comboHasInventory(combo: PriceListComboDto): boolean {
+    return comboHasInventory(combo);
+  }
+
+  /**
+   * Disponibilidad del combo: por cada producto con inventario, cuántos combos alcanzan según su
+   * disponible restante (ya descontando el carrito actual); el mínimo de esos valores es lo que
+   * limita. Los productos sin inventario no limitan. `null` si no controla inventario, o si
+   * todavía no se confirmó el stock.
+   */
+  availableComboStockFor(combo: PriceListComboDto): number | null {
+    return availableComboStockFor(this.stockAvailability(), this.draftLines, combo, this.catalogCombos);
+  }
+
+  canAddCombo(combo: PriceListComboDto, quantity = 1): boolean {
+    return canAddCombo(this.stockAvailability(), this.draftLines, combo, this.catalogCombos, quantity);
+  }
+
+  /** Contenido del combo para mostrar bajo su nombre, ej. "1 Pollo a la brasa · 2 Gaseosa 500ml". */
+  summarizeCombo(combo: PriceListComboDto): string {
+    return NewDeliveryDialog.summarizeComponents(
+      combo.components.map((component) => ({
+        quantity: component.quantity,
+        productName: component.productName,
+      })),
+    );
   }
 
   /** Si el producto ya está en el carrito, suma la cantidad sobre esa línea en vez de duplicarla. */
@@ -132,7 +218,7 @@ export class NewDeliveryDialog {
 
     this.cart.update((items) => {
       const index = items.findIndex(
-        (item) => item.productEstablishmentId === product.productEstablishmentId,
+        (item) => !item.comboId && item.productEstablishmentId === product.productEstablishmentId,
       );
       if (index !== -1) {
         const next = [...items];
@@ -140,22 +226,71 @@ export class NewDeliveryDialog {
         return next;
       }
       const item: DeliveryCartItem = {
-        key: `${product.productEstablishmentId}`,
+        key: `prod-${product.productEstablishmentId}`,
         productEstablishmentId: product.productEstablishmentId,
         priceListId,
         stockProductId: product.stockProducts?.[0]?.stockProductId ?? null,
         productName: product.productName ?? '',
         unitPrice: product.price ?? 0,
         quantity: quantityToAdd,
+        comboId: null,
+        comboStocks: null,
+        comboComponentsSummary: null,
+      };
+      return [...items, item];
+    });
+  }
+
+  /** Igual que `addProduct`, pero para un combo: la línea se identifica por `comboId` en vez de `productEstablishmentId`. */
+  addCombo(combo: PriceListComboDto): void {
+    const priceListId = this.selectedPriceListId();
+    if (!priceListId) return;
+
+    if (!this.canAddCombo(combo)) {
+      this.createError.set('No hay stock disponible para este combo.');
+      return;
+    }
+
+    const quantityToAdd = 1;
+    this.createError.set(null);
+
+    this.cart.update((items) => {
+      const index = items.findIndex((item) => item.comboId === combo.comboId);
+      if (index !== -1) {
+        const next = [...items];
+        next[index] = { ...next[index], quantity: next[index].quantity + quantityToAdd };
+        return next;
+      }
+      const item: DeliveryCartItem = {
+        key: `combo-${combo.comboId}`,
+        productEstablishmentId: null,
+        priceListId,
+        stockProductId: null,
+        productName: combo.comboName,
+        unitPrice: combo.isFree ? 0 : combo.price ?? 0,
+        quantity: quantityToAdd,
+        comboId: combo.comboId,
+        comboStocks: NewDeliveryDialog.buildComboStocks(combo),
+        comboComponentsSummary: this.summarizeCombo(combo),
       };
       return [...items, item];
     });
   }
 
   increaseItem(item: DeliveryCartItem): void {
-    const product = this.priceLists()
-      .flatMap((list) => list.products ?? [])
-      .find((catalogProduct) => catalogProduct.productEstablishmentId === item.productEstablishmentId);
+    if (item.comboId) {
+      const combo = this.catalogCombos.find((catalogCombo) => catalogCombo.comboId === item.comboId);
+      if (combo && !this.canAddCombo(combo)) {
+        this.createError.set('No hay stock disponible para este combo.');
+        return;
+      }
+      this.setCartQuantity(item.key, item.quantity + 1);
+      return;
+    }
+
+    const product = this.catalogProducts.find(
+      (catalogProduct) => catalogProduct.productEstablishmentId === item.productEstablishmentId,
+    );
     if (product && !this.canAddProduct(product)) {
       this.createError.set('No hay stock disponible para este producto.');
       return;
@@ -215,12 +350,14 @@ export class NewDeliveryDialog {
 
   private toCommandItem(item: DeliveryCartItem): CreateDeliveryOrderItemDto {
     return {
-      productEstablishmentId: item.productEstablishmentId,
+      productEstablishmentId: item.comboId ? null : item.productEstablishmentId,
       priceListId: item.priceListId,
       stockProductId: item.stockProductId,
       quantity: item.quantity,
       discount: 0,
       isTakeAway: false,
+      comboId: item.comboId,
+      comboStocks: item.comboStocks,
     };
   }
 
@@ -235,9 +372,9 @@ export class NewDeliveryDialog {
     this.orderService.getPriceLists(this.data.openingCashierId).subscribe({
       next: (priceLists) => {
         this.priceLists.set(priceLists ?? []);
-        if (priceLists?.length) {
-          this.selectedPriceListId.set(priceLists[0].priceListId);
-        }
+        const firstList = priceLists?.[0] ?? null;
+        this.selectedPriceListId.set(firstList?.priceListId ?? null);
+        this.selectedCategoryKey.set(firstCategoryKey(firstList));
         this.loadStockAvailability(priceLists ?? []);
         this.loadingCatalog.set(false);
       },
@@ -248,34 +385,58 @@ export class NewDeliveryDialog {
     });
   }
 
-  private loadStockAvailability(lists: PriceListWithProductsDto[]): void {
-    const products = [...new Map(
-      lists
-        .flatMap((list) => list.products ?? [])
-        .filter((product) => product.hasInventory)
-        .map((product) => [product.productEstablishmentId, product]),
-    ).values()];
+  /** Carga el stock del almacén que se usará al agregar cada producto del catálogo (suelto o dentro de un combo). */
+  private loadStockAvailability(lists: WaiterPriceListDto[]): void {
+    const products = flattenProducts(lists).filter((product) => product.hasInventory);
+    const comboComponents = flattenCombos(lists)
+      .flatMap((combo) => combo.components)
+      .filter((component) => component.hasInventory);
+
+    const entries = [
+      ...new Map(
+        [...products, ...comboComponents].map((entry) => [entry.productEstablishmentId, entry]),
+      ).values(),
+    ];
 
     this.stockAvailability.set(
-      Object.fromEntries(products.map((product) => [product.productEstablishmentId, null])),
+      Object.fromEntries(entries.map((entry) => [entry.productEstablishmentId, null])),
     );
-    if (!products.length) return;
+    if (!entries.length) return;
 
     forkJoin(
-      products.map((product) =>
+      entries.map((entry) =>
         this.stockProductService
-          .getAvailabilityByProductEstablishment(product.productEstablishmentId)
+          .getAvailabilityByProductEstablishment(entry.productEstablishmentId)
           .pipe(
             map((availability) => {
-              const stockProductId = product.stockProducts?.[0]?.stockProductId;
+              const stockProductId = entry.stockProducts?.[0]?.stockProductId;
               const available = availability?.find(
                 (stock) => stock.stockProductId === stockProductId,
               )?.availableQuantity;
-              return [product.productEstablishmentId, available ?? 0] as const;
+              return [entry.productEstablishmentId, available ?? 0] as const;
             }),
-            catchError(() => of([product.productEstablishmentId, null] as const)),
+            catchError(() => of([entry.productEstablishmentId, null] as const)),
           ),
       ),
     ).subscribe((availability) => this.stockAvailability.set(Object.fromEntries(availability)));
+  }
+
+  /** Texto del contenido de un combo, ej. "1 Pollo a la brasa · 2 Gaseosa 500ml". */
+  private static summarizeComponents(
+    components: { quantity: number; productName: string | null }[],
+  ): string {
+    return components
+      .map((component) => `${component.quantity} ${component.productName ?? ''}`.trim())
+      .join(' · ');
+  }
+
+  /** Almacén de cada producto del combo que controla inventario (el primero disponible). */
+  private static buildComboStocks(combo: PriceListComboDto): OrderItemComboStockDto[] {
+    return combo.components
+      .filter((component) => component.hasInventory && component.stockProducts[0])
+      .map((component) => ({
+        productEstablishmentId: component.productEstablishmentId,
+        stockProductId: component.stockProducts[0].stockProductId,
+      }));
   }
 }

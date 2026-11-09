@@ -25,13 +25,13 @@ import {
   OrderDetailDto,
   OrderDocumentsDto,
   PaymentTypeDto,
-  PriceListWithProductsDto,
   ReopenOrderCommand,
   RestaurantTableRealtimeDto,
   SyncOrderItemsCommand,
   SyncOrderItemsResultDto,
   UpdateOrderAdditionalInformationCommand,
   UpdateOrderItemQuantityCommand,
+  WaiterPriceListDto,
 } from '../models/order.model';
 
 @Injectable({ providedIn: 'root' })
@@ -89,9 +89,24 @@ export class OrderService {
     return this.http.put(`${this.baseUrl}/${orderId}/delivery`, command);
   }
 
-  /** Listas de precio habilitadas para el mesero en una caja, con sus productos y precios ya resueltos. */
-  getPriceLists(openingCashierId: number): Observable<PriceListWithProductsDto[]> {
-    return this.http.get<PriceListWithProductsDto[]>(
+  /**
+   * Listas de precio habilitadas para el cajero en una caja, agrupadas por categoría
+   * (GENERAL → categorías del producto → COMBOS). Mismo formato que `getWaiterPriceLists`
+   * (mozo): todo viene dentro de `categories`, incluyendo los combos.
+   */
+  getPriceLists(openingCashierId: number): Observable<WaiterPriceListDto[]> {
+    return this.http.get<WaiterPriceListDto[]>(
+      `${this.baseUrl}/order-cashier/${openingCashierId}/price-lists`,
+    );
+  }
+
+  /**
+   * Listas de precio habilitadas para el mozo en una caja, agrupadas por categoría
+   * (GENERAL → categorías del producto → COMBOS). Mismo formato que `getPriceLists`
+   * (cajero): acá todo viene dentro de `categories`, incluyendo los combos.
+   */
+  getWaiterPriceLists(openingCashierId: number): Observable<WaiterPriceListDto[]> {
+    return this.http.get<WaiterPriceListDto[]>(
       `${this.baseUrl}/order-cashier/${openingCashierId}/waiter-price-lists`,
     );
   }

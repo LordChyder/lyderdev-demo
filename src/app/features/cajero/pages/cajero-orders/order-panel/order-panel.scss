@@ -346,6 +346,39 @@
     }
   }
 
+  &__catalog-tabs {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  &__catalog-tab {
+    flex: 1 1 auto;
+    min-height: 1.875rem;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid #e1ebf9;
+    border-radius: 8px;
+    background: #fff;
+    color: #44536b;
+    font: 600 0.75rem/1.2 Roboto, sans-serif;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease;
+
+    &:hover {
+      border-color: #ff7400;
+      background: #fff3e8;
+    }
+
+    &--selected {
+      border-color: #ff7400;
+      background: #ff7400;
+      color: #fff;
+    }
+  }
+
   &__products {
     display: flex;
     flex-direction: column;
@@ -385,6 +418,15 @@
   &__product-price {
     font-size: 0.8125rem;
     color: #536b94;
+  }
+
+  &__stock {
+    color: #197245;
+    font-size: 0.75rem;
+    font-weight: 700;
+
+    &--empty { color: #b42318; }
+    &--loading { color: #64748b; font-weight: 600; }
   }
 
   &__product-qty {
@@ -499,6 +541,13 @@
       padding-inline: 0.25rem;
       border-radius: 8px;
       background: #f0f8ff;
+    }
+
+    &--short {
+      margin-inline: -0.25rem;
+      padding-inline: 0.25rem;
+      border-radius: 8px;
+      background: #fff5f5;
     }
   }
 

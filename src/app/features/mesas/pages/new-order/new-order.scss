@@ -131,6 +131,63 @@
       color: var(--mat-sys-on-primary);
     }
   }
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 999px;
+    color: var(--mat-sys-on-surface-variant);
+
+    input {
+      flex: 1 1 auto;
+      min-width: 0;
+      border: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      outline: none;
+    }
+    button { margin: -0.25rem; }
+  }
+  &__subcategories {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: 2.25rem;
+    gap: 0.4rem;
+    margin: 0 0 0.75rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 0.125rem 0.125rem 0.375rem;
+    scrollbar-width: none;
+    touch-action: pan-x;
+    &::-webkit-scrollbar { display: none; }
+  }
+  &__subcategory {
+    box-sizing: border-box;
+    min-height: 2rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--mat-sys-outline-variant);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--mat-sys-on-surface-variant);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    cursor: pointer;
+    &:hover { background: var(--mat-sys-secondary-container); }
+    &:focus-visible { outline: 3px solid var(--mat-sys-primary); outline-offset: 2px; }
+    &--active {
+      border-color: var(--mat-sys-primary);
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+    }
+  }
   &__products {
     display: flex;
     flex-direction: column;
@@ -240,6 +297,13 @@
     &--empty { color: #b42318; }
     &--loading { color: #5c6170; font-weight: 600; }
   }
+  &__combo-contents {
+    display: block;
+    margin-top: 0.2rem;
+    color: #5c6170;
+    font-size: 0.8125rem;
+  }
+  &__review-item &__combo-contents { margin-top: 0; }
   &__empty { margin: 1rem 0; color: var(--mat-sys-on-surface-variant); }
 
   &__product-editor,
@@ -547,6 +611,33 @@
         background: #0284c7;
         color: #fff;
       }
+    }
+
+    &__search {
+      border-color: #244569;
+      color: #829cb8;
+
+      input::placeholder { color: #647d9e; }
+    }
+
+    &__subcategory {
+      border-color: #244569;
+      color: #bad2eb;
+
+      &:hover {
+        background: #153254;
+        color: #e7f1ff;
+      }
+
+      &--active {
+        border-color: #0284c7;
+        background: #153254;
+        color: #e7f1ff;
+      }
+    }
+
+    &__combo-contents {
+      color: #9bb1cb;
     }
   }
 }

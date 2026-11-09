@@ -40,6 +40,11 @@
   } @else {
     <div class="ajuste-mesas__table-wrapper">
       <table mat-table [dataSource]="filteredTables()" class="ajuste-mesas__table">
+        <ng-container matColumnDef="order">
+          <th mat-header-cell *matHeaderCellDef>Orden</th>
+          <td mat-cell *matCellDef="let table">{{ table.order }}</td>
+        </ng-container>
+
         <ng-container matColumnDef="code">
           <th mat-header-cell *matHeaderCellDef>Código</th>
           <td mat-cell *matCellDef="let table">{{ table.code }}</td>
@@ -158,6 +163,10 @@
             <span class="ajuste-mesas__card-capacity">
               <mat-icon>group</mat-icon>
               Capacidad: {{ table.capacity }}
+            </span>
+            <span class="ajuste-mesas__card-capacity">
+              <mat-icon>low_priority</mat-icon>
+              Orden: {{ table.order }}
             </span>
           </div>
 

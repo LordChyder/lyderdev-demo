@@ -53,6 +53,7 @@ export class PaymentTypeForm implements OnInit, OnDestroy {
     isCardNumberOptional: [false],
     isCreditConditionOperation: [false],
     isChangeAllowed: [false],
+    isCash: [false],
   });
 
   ngOnInit(): void {
@@ -77,6 +78,7 @@ export class PaymentTypeForm implements OnInit, OnDestroy {
             isCardNumberOptional: paymentType.isCardNumberOptional,
             isCreditConditionOperation: paymentType.isCreditConditionOperation,
             isChangeAllowed: paymentType.isChangeAllowed,
+            isCash: paymentType.isCash,
           });
         },
         error: () => {

@@ -77,7 +77,7 @@
                     class="order-panel__price-list-button"
                     [class.order-panel__price-list-button--selected]="list.priceListId === selectedPriceListId()"
                     [attr.aria-pressed]="list.priceListId === selectedPriceListId()"
-                    (click)="selectedPriceListId.set(list.priceListId)"
+                    (click)="selectPriceList(list.priceListId)"
                   >
                     {{ list.priceListName || 'Lista sin nombre' }}
                   </button>
@@ -86,56 +86,159 @@
             </section>
           }
 
+          @if (selectedPriceList?.isGrouped) {
+            <div class="order-panel__catalog-tabs" role="group" aria-label="Categorías">
+              @for (category of selectedPriceList?.categories ?? []; track categoryKey(category)) {
+                <button
+                  type="button"
+                  class="order-panel__catalog-tab"
+                  [class.order-panel__catalog-tab--selected]="categoryKey(category) === selectedCategoryKey()"
+                  [attr.aria-pressed]="categoryKey(category) === selectedCategoryKey()"
+                  (click)="selectCategory(categoryKey(category))"
+                >
+                  {{ category.categoryName }}
+                  ({{ category.isCombo ? category.combos.length : category.products.length }})
+                </button>
+              }
+            </div>
+          }
+
           @if (addItemError()) {
             <p class="order-panel__cancel-error">{{ addItemError() }}</p>
           }
 
-          <div class="order-panel__products">
-            @for (product of selectedPriceList?.products ?? []; track product.productEstablishmentId) {
-              <div class="order-panel__product">
-                <div class="order-panel__product-info">
-                  <span class="order-panel__product-name">{{ product.productName }}</span>
-                  <span class="order-panel__product-price">{{ product.price | number: '1.2-2' }}</span>
-                </div>
-                <button
-                  mat-icon-button
-                  type="button"
-                  color="primary"
-                  class="order-panel__quantity-button"
-                  aria-label="Agregar producto"
-                  [disabled]="updatingOrder()"
-                  (click)="addProduct(product)"
-                >
-                  <mat-icon>add</mat-icon>
-                </button>
-                @if (!detail.isDelivery) {
-                  <label class="order-panel__takeaway-toggle">
-                    <input
-                      type="checkbox"
-                      [checked]="isTakeawayEnabled(product)"
-                      [disabled]="updatingOrder()"
-                      (change)="toggleTakeaway(product, $any($event.target).checked)"
-                    />
-                    <span>Para llevar</span>
-                  </label>
-                  @if (isTakeawayEnabled(product)) {
-                    <button
-                      mat-icon-button
-                      type="button"
-                      class="order-panel__quantity-button order-panel__quantity-button--takeaway"
-                      aria-label="Agregar una unidad para llevar"
-                      [disabled]="updatingOrder()"
-                      (click)="addProduct(product, true)"
-                    >
-                      <mat-icon>add</mat-icon>
-                    </button>
+          @if (!selectedCategory?.isCombo) {
+            <div class="order-panel__products">
+              @for (product of selectedCategory?.products ?? []; track product.productEstablishmentId) {
+                @let availableStock = availableStockFor(product);
+                <div class="order-panel__product">
+                  <div class="order-panel__product-info">
+                    <span class="order-panel__product-name">{{ product.productName }}</span>
+                    <span class="order-panel__product-price">{{ product.price | number: '1.2-2' }}</span>
+                    @if (product.hasInventory) {
+                      <span
+                        class="order-panel__stock"
+                        [class.order-panel__stock--empty]="availableStock !== null && availableStock <= 0"
+                        [class.order-panel__stock--loading]="availableStock === null"
+                      >
+                        @if (availableStock === null) {
+                          Verificando stock…
+                        } @else if (availableStock <= 0) {
+                          No hay stock
+                        } @else {
+                          Stock: {{ availableStock }} {{ product.measureUnitAcronym || 'und.' }}
+                        }
+                      </span>
+                    }
+                  </div>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="primary"
+                    class="order-panel__quantity-button"
+                    aria-label="Agregar producto"
+                    [disabled]="updatingOrder() || !canAddProduct(product)"
+                    (click)="addProduct(product)"
+                  >
+                    <mat-icon>add</mat-icon>
+                  </button>
+                  @if (!detail.isDelivery) {
+                    <label class="order-panel__takeaway-toggle">
+                      <input
+                        type="checkbox"
+                        [checked]="isTakeawayEnabled(product)"
+                        [disabled]="updatingOrder()"
+                        (change)="toggleTakeaway(product, $any($event.target).checked)"
+                      />
+                      <span>Para llevar</span>
+                    </label>
+                    @if (isTakeawayEnabled(product)) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="order-panel__quantity-button order-panel__quantity-button--takeaway"
+                        aria-label="Agregar una unidad para llevar"
+                        [disabled]="updatingOrder() || !canAddProduct(product)"
+                        (click)="addProduct(product, true)"
+                      >
+                        <mat-icon>add</mat-icon>
+                      </button>
+                    }
                   }
-                }
-              </div>
-            } @empty {
-              <p class="order-panel__hint">Esta lista de precios no tiene productos.</p>
-            }
-          </div>
+                </div>
+              } @empty {
+                <p class="order-panel__hint">Esta lista de precios no tiene productos.</p>
+              }
+            </div>
+          } @else {
+            <div class="order-panel__products">
+              @for (combo of selectedCategory?.combos ?? []; track combo.comboId) {
+                @let availableCombos = availableComboStockFor(combo);
+                <div class="order-panel__product">
+                  <div class="order-panel__product-info">
+                    <span class="order-panel__product-name">{{ combo.comboName }}</span>
+                    <span class="order-panel__product-price">
+                      {{ combo.isFree ? 'Gratis' : (combo.price | number: '1.2-2') }}
+                    </span>
+                    <span class="order-panel__hint">
+                      {{ summarizeCombo(combo) }}
+                    </span>
+                    @if (comboHasInventory(combo)) {
+                      <span
+                        class="order-panel__stock"
+                        [class.order-panel__stock--empty]="availableCombos !== null && availableCombos <= 0"
+                        [class.order-panel__stock--loading]="availableCombos === null"
+                      >
+                        @if (availableCombos === null) {
+                          Verificando stock…
+                        } @else if (availableCombos <= 0) {
+                          No hay stock
+                        } @else {
+                          Stock: {{ availableCombos }}
+                        }
+                      </span>
+                    }
+                  </div>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    color="primary"
+                    class="order-panel__quantity-button"
+                    aria-label="Agregar combo"
+                    [disabled]="updatingOrder() || !canAddCombo(combo)"
+                    (click)="addCombo(combo)"
+                  >
+                    <mat-icon>add</mat-icon>
+                  </button>
+                  @if (!detail.isDelivery) {
+                    <label class="order-panel__takeaway-toggle">
+                      <input
+                        type="checkbox"
+                        [checked]="isComboTakeawayEnabled(combo)"
+                        [disabled]="updatingOrder()"
+                        (change)="toggleComboTakeaway(combo, $any($event.target).checked)"
+                      />
+                      <span>Para llevar</span>
+                    </label>
+                    @if (isComboTakeawayEnabled(combo)) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="order-panel__quantity-button order-panel__quantity-button--takeaway"
+                        aria-label="Agregar una unidad para llevar"
+                        [disabled]="updatingOrder() || !canAddCombo(combo)"
+                        (click)="addCombo(combo, true)"
+                      >
+                        <mat-icon>add</mat-icon>
+                      </button>
+                    }
+                  }
+                </div>
+              } @empty {
+                <p class="order-panel__hint">Esta lista de precios no tiene combos.</p>
+              }
+            </div>
+          }
 
           @if (editItems().length) {
             <div class="order-panel__edit-items">
@@ -144,13 +247,20 @@
                   class="order-panel__edit-item"
                   [class.order-panel__edit-item--removed]="item.quantity === 0"
                   [class.order-panel__edit-item--takeaway]="item.takeaway && !detail.isDelivery"
+                  [class.order-panel__edit-item--short]="draftHasShortfall(item)"
                 >
                   <div class="order-panel__edit-item-details">
                     <span class="order-panel__edit-item-name">{{ item.productName }}</span>
+                    @if (item.comboComponentsSummary) {
+                      <span class="order-panel__hint">{{ item.comboComponentsSummary }}</span>
+                    }
                     @if (item.takeaway && !detail.isDelivery) {
                       <span class="order-panel__takeaway-badge">
                         <mat-icon inline>takeout_dining</mat-icon>Para llevar
                       </span>
+                    }
+                    @if (draftHasShortfall(item)) {
+                      <span class="order-panel__stock order-panel__stock--empty">Sin stock suficiente</span>
                     }
                   </div>
 
@@ -173,7 +283,7 @@
                       type="button"
                       class="order-panel__quantity-button"
                       aria-label="Sumar cantidad"
-                      [disabled]="updatingOrder()"
+                      [disabled]="updatingOrder() || !canIncreaseDraft(item)"
                       (click)="increaseItem(item)"
                     >
                       <mat-icon>add</mat-icon>
@@ -204,6 +314,9 @@
               </span>
               <span class="order-panel__item-amount">{{ item.amountToPay | number: '1.2-2' }}</span>
             </div>
+            @if (item.components?.length) {
+              <span class="order-panel__item-observation">{{ summarizeOrderItemComponents(item) }}</span>
+            }
             @if (item.observation) {
               <span class="order-panel__item-observation">{{ item.observation }}</span>
             }
@@ -316,7 +429,9 @@
     </dl>
 
     @if (editing()) {
-      @if (updateOrderError()) {
+      @if (stockShortfallMessage) {
+        <p class="order-panel__cancel-error">{{ stockShortfallMessage }}</p>
+      } @else if (updateOrderError()) {
         <p class="order-panel__cancel-error">{{ updateOrderError() }}</p>
       }
       <button
@@ -324,7 +439,7 @@
         color="primary"
         type="button"
         class="order-panel__pay"
-        [disabled]="updatingOrder()"
+        [disabled]="updatingOrder() || !!stockShortfallMessage"
         (click)="updateOrder()"
       >
         @if (updatingOrder()) {
@@ -476,6 +591,12 @@
                   @if (item.unitPrice) {
                     <span class="order-panel__precuenta-unit-price">
                       ({{ item.unitPrice | number: '1.2-2' }} c/u)
+                    </span>
+                  }
+                  @if (item.components?.length) {
+                    <br />
+                    <span class="order-panel__precuenta-unit-price">
+                      {{ summarizeOrderItemComponents(item) }}
                     </span>
                   }
                 </td>

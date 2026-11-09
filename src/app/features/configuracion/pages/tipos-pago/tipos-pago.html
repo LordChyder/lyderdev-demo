@@ -34,6 +34,15 @@
           <td mat-cell *matCellDef="let paymentType">{{ paymentType.fiscalCode }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="isCash">
+          <th mat-header-cell *matHeaderCellDef>Efectivo</th>
+          <td mat-cell *matCellDef="let paymentType">
+            @if (paymentType.isCash) {
+              <span class="tipos-pago__cash-badge">Efectivo</span>
+            }
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="isActive">
           <th mat-header-cell *matHeaderCellDef>Activo</th>
           <td mat-cell *matCellDef="let paymentType">
@@ -65,7 +74,12 @@
           <article class="tipos-pago__mobile-card">
             <div>
               <span>Código fiscal</span>
-              <h2>{{ paymentType.name }}</h2>
+              <h2>
+                {{ paymentType.name }}
+                @if (paymentType.isCash) {
+                  <span class="tipos-pago__cash-badge">Efectivo</span>
+                }
+              </h2>
               <strong>{{ paymentType.fiscalCode || 'Sin código' }}</strong>
             </div>
             <footer>

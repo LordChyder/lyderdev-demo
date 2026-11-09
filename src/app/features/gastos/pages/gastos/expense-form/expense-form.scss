@@ -9,6 +9,10 @@
     gap: 0.25rem;
   }
 
+  &__cashier-toggle {
+    margin: 0.25rem 0 0.5rem;
+  }
+
   &__error {
     margin: 0.25rem 0 0;
     color: var(--mat-sys-error);

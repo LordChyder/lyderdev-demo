@@ -16,7 +16,10 @@ export interface SaveStockProductDto {
 export interface StockInventoryProductDto {
   stockProductId: number;
   productEstablishmentId: number;
+  productId: number;
   productName: string | null;
+  complementaryName: string | null;
+  barcode: string | null;
   measureUnitAcronym: string | null;
   currentQuantity: number;
   reservedQuantity: number;
@@ -27,7 +30,7 @@ export interface StockInventoryProductDto {
   isActive: boolean;
 }
 
-/** Respuesta de GET /api/v1/stock-product/inventory-summary?stockId=. */
+/** Respuesta de GET /api/v1/stock-product/inventory-summary?stockId=&filter=. */
 export interface StockInventorySummaryDto {
   stockId: number;
   establishmentId: number;
@@ -36,7 +39,31 @@ export interface StockInventorySummaryDto {
   totalCurrentQuantity: number;
   totalReservedQuantity: number;
   totalAvailableQuantity: number;
+  /** Cantidad de productos que coinciden con `filter`; igual a `totalProducts` sin filtro. */
+  filteredProducts: number;
   products: StockInventoryProductDto[];
+}
+
+/** Respuesta de GET /api/v1/stock-product/{stockProductId}/get-for-edit. */
+export interface StockProductForEditDto {
+  id: number;
+  stockId: number;
+  productEstablishmentId: number;
+  productId: number;
+  productName: string | null;
+  complementaryName: string | null;
+  currentQuantity: number;
+  quantityMin: number | null;
+  quantityMax: number | null;
+  location: string | null;
+  isActive: boolean;
+}
+
+/** Body de PUT /api/v1/stock-product/{stockProductId}. */
+export interface UpdateStockProductDto {
+  quantityMax: number | null;
+  quantityMin: number | null;
+  location: string;
 }
 
 export interface StockListDto {

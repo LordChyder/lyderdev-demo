@@ -7,6 +7,8 @@ import {
   StockInventorySummaryDto,
   StockListDto,
   StockProductAvailabilityDto,
+  StockProductForEditDto,
+  UpdateStockProductDto,
 } from '../models/stock-product.model';
 
 @Injectable({ providedIn: 'root' })
@@ -40,13 +42,25 @@ export class StockProductService {
    * Resumen de inventario de un almacén: totales + el detalle de cada
    * producto vinculado (con cantidad reservada/disponible, que la lista
    * plana de /stock-product no trae). No pagina — devuelve todos los
-   * productos del almacén de una.
+   * productos del almacén de una. `filter` busca por Id (exacto), nombre,
+   * nombre complementario o código de barras; los totales del almacén no
+   * cambian con el filtro, solo `filteredProducts` y `products`.
    */
-  getInventorySummary(stockId: number): Observable<StockInventorySummaryDto> {
-    const params = new HttpParams().set('stockId', stockId);
+  getInventorySummary(stockId: number, filter?: string): Observable<StockInventorySummaryDto> {
+    let params = new HttpParams().set('stockId', stockId);
+    if (filter?.trim()) params = params.set('filter', filter.trim());
+
     return this.http.get<StockInventorySummaryDto>(`${this.baseUrl}/inventory-summary`, {
       params,
     });
+  }
+
+  getForEdit(stockProductId: number): Observable<StockProductForEditDto> {
+    return this.http.get<StockProductForEditDto>(`${this.baseUrl}/${stockProductId}/get-for-edit`);
+  }
+
+  update(stockProductId: number, dto: UpdateStockProductDto): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${stockProductId}`, dto);
   }
 
   getStocksByProductEstablishment(productEstablishmentId: number): Observable<StockListDto[]> {

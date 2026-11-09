@@ -52,7 +52,7 @@ export class GastosPage implements OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
 
-  readonly displayedColumns = ['expenseDate', 'category', 'description', 'amount', 'actions'];
+  readonly displayedColumns = ['expenseDate', 'category', 'cashierName', 'description', 'amount', 'actions'];
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
   readonly searchForm = new FormGroup({

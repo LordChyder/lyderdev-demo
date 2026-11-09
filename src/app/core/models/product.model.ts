@@ -59,4 +59,6 @@ export interface GetProductForEditDto {
   name: string | null;
   measureUnitId: number;
   imageName: string | null;
+  hasImage: boolean;
+  imageUpdatedAt: string | null;
 }

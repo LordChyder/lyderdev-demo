@@ -12,6 +12,7 @@ import { OpeningCashierActiveDto } from '../../../../core/models/opening-cashier
 import {
   InvoiceDocumentType,
   OrderDetailDto,
+  OrderItemDto,
   OrderStatus,
   PaymentTypeDto,
 } from '../../../../core/models/order.model';
@@ -385,6 +386,13 @@ export class CobrarPedidoPage implements OnInit {
 
   inputValue(event: Event): string {
     return (event.target as HTMLInputElement).value;
+  }
+
+  /** Contenido de una línea de combo para mostrarlo bajo su nombre, ej. "1 Pollo a la brasa · 2 Gaseosa 500ml". */
+  summarizeOrderItemComponents(item: OrderItemDto): string {
+    return (item.components ?? [])
+      .map((component) => `${component.quantity} ${component.productName ?? ''}`.trim())
+      .join(' · ');
   }
 
   iconFor(paymentType: PaymentTypeDto): string {

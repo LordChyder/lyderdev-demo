@@ -71,6 +71,21 @@
       &::placeholder {
         color: #8da4c4;
       }
+
+      // El input usa un botón de limpiar propio; se oculta el nativo del
+      // navegador para no mostrar dos "x" superpuestas.
+      &::-webkit-search-cancel-button,
+      &::-webkit-search-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      &::-ms-clear,
+      &::-ms-reveal {
+        display: none;
+        width: 0;
+        height: 0;
+      }
     }
 
     &-clear {

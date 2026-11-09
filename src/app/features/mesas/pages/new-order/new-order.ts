@@ -10,23 +10,37 @@ import { OpeningCashierActiveDto } from '../../../../core/models/opening-cashier
 import {
   OrderDetailDto,
   OrderItemDto,
+  OrderItemComboStockDto,
+  OrderItemType,
+  PriceListComboDto,
   PriceListProductDto,
-  PriceListWithProductsDto,
   SyncOrderItemAddDto,
   SyncOrderItemErrorDto,
   SyncOrderItemUpdateDto,
   SyncOrderItemsCommand,
   SyncOrderItemsResultDto,
+  WaiterPriceListCategoryDto,
+  WaiterPriceListDto,
 } from '../../../../core/models/order.model';
 import { OpeningCashierService } from '../../../../core/services/opening-cashier.service';
 import { OrderService } from '../../../../core/services/order.service';
 import { StockProductService } from '../../../../core/services/stock-product.service';
 import { TokenService } from '../../../../core/services/token.service';
+import { categoryKey, firstCategoryKey, flattenCombos, flattenProducts } from '../../../../core/utils/price-list-menu';
+import {
+  StockDraftLine,
+  availableComboStockFor,
+  availableFor,
+  canAddCombo,
+  canAddProduct,
+  comboHasInventory,
+} from '../../../../core/utils/stock-availability.util';
 
 /**
  * Línea del pedido en edición, local hasta que se presiona "Enviar a cocina".
- * `orderItemId` es null para un producto agregado desde el catálogo que
+ * `orderItemId` es null para un producto o combo agregado desde el catálogo que
  * todavía no existe en el pedido — recién se manda a crear al guardar.
+ * Un producto (`productEstablishmentId`) o un combo (`comboId`), nunca ambos.
  */
 interface EditItemDraft {
   key: string;
@@ -41,6 +55,10 @@ interface EditItemDraft {
   priceListId: number | null;
   stockProductId: number | null;
   takeaway: boolean;
+  comboId: number | null;
+  comboStocks: OrderItemComboStockDto[] | null;
+  /** Resumen de los productos del combo para mostrar en el resumen del pedido (ej. "1 Pollo a la brasa · 2 Gaseosa 500ml"). */
+  comboComponentsSummary: string | null;
 }
 
 /** Pantalla de toma de pedido, abierta una vez creada la orden desde una mesa. */
@@ -68,16 +86,23 @@ export class NewOrderPage {
   readonly selectedCashierOpeningId = signal<number | null>(null);
   readonly loadingCatalog = signal(false);
   readonly catalogError = signal<string | null>(null);
-  readonly priceLists = signal<PriceListWithProductsDto[]>([]);
+  readonly priceLists = signal<WaiterPriceListDto[]>([]);
   readonly selectedPriceListId = signal<number | null>(null);
+  /** Categoría activa (GENERAL, una categoría de producto, o COMBOS) dentro de la lista de precios seleccionada. */
+  readonly selectedCategoryKey = signal<string | null>(null);
+  /** Texto del buscador: con contenido, se muestran resultados planos en vez de la categoría activa. */
+  readonly search = signal('');
   /** Stock disponible inicial por producto. `null` significa que no pudo confirmarse. */
   readonly stockAvailability = signal<Record<number, number | null>>({});
   readonly selectedProduct = signal<PriceListProductDto | null>(null);
+  readonly selectedCombo = signal<PriceListComboDto | null>(null);
   readonly editingItem = signal<EditItemDraft | null>(null);
   readonly selectedProductQuantity = signal(1);
   readonly productIsDelivery = signal(false);
   /** Productos cuyo control adicional de delivery está habilitado en el catálogo. */
   readonly deliveryProducts = signal<ReadonlySet<number>>(new Set());
+  /** Combos cuyo control adicional de delivery está habilitado en el catálogo. */
+  readonly deliveryCombos = signal<ReadonlySet<number>>(new Set());
   readonly showingOrderReview = signal(false);
   readonly orderNote = signal('');
   readonly actionError = signal<string | null>(null);
@@ -87,10 +112,70 @@ export class NewOrderPage {
     this.loadInitialData();
   }
 
-  get selectedPriceList(): PriceListWithProductsDto | null {
+  get selectedPriceList(): WaiterPriceListDto | null {
     return (
       this.priceLists().find((list) => list.priceListId === this.selectedPriceListId()) ?? null
     );
+  }
+
+  /** Categoría activa dentro de la lista de precios seleccionada (GENERAL, una categoría, o COMBOS). */
+  get selectedCategory(): WaiterPriceListCategoryDto | null {
+    const list = this.selectedPriceList;
+    if (!list?.categories?.length) return null;
+    return (
+      list.categories.find((category) => this.categoryKey(category) === this.selectedCategoryKey()) ??
+      list.categories[0]
+    );
+  }
+
+  /** Todos los productos de la lista de precios seleccionada (buscador). */
+  get allProducts(): PriceListProductDto[] {
+    const list = this.selectedPriceList;
+    return list ? flattenProducts([list]) : [];
+  }
+
+  /** Todos los combos de la lista de precios seleccionada (buscador). */
+  get allCombos(): PriceListComboDto[] {
+    const list = this.selectedPriceList;
+    return list ? flattenCombos([list]) : [];
+  }
+
+  /** Catálogo completo de TODAS las listas (para resolver líneas de un pedido existente). */
+  get catalogProducts(): PriceListProductDto[] {
+    return flattenProducts(this.priceLists());
+  }
+
+  get catalogCombos(): PriceListComboDto[] {
+    return flattenCombos(this.priceLists());
+  }
+
+  /** Resultados del buscador: productos y combos de la lista cuyo nombre coincide. */
+  get searchResults(): { products: PriceListProductDto[]; combos: PriceListComboDto[] } {
+    const term = this.search().trim().toLowerCase();
+    if (!term) return { products: [], combos: [] };
+
+    return {
+      products: this.allProducts.filter(
+        (product) =>
+          (product.productName ?? '').toLowerCase().includes(term) ||
+          (product.complementaryName ?? '').toLowerCase().includes(term),
+      ),
+      combos: this.allCombos.filter((combo) => combo.comboName.toLowerCase().includes(term)),
+    };
+  }
+
+  /** Productos a mostrar: resultados del buscador si hay texto, si no los de la categoría activa. */
+  get displayedProducts(): PriceListProductDto[] {
+    if (this.search()) return this.searchResults.products;
+    const category = this.selectedCategory;
+    return category && !category.isCombo ? category.products : [];
+  }
+
+  /** Combos a mostrar: resultados del buscador si hay texto, si no los de la categoría activa. */
+  get displayedCombos(): PriceListComboDto[] {
+    if (this.search()) return this.searchResults.combos;
+    const category = this.selectedCategory;
+    return category?.isCombo ? category.combos : [];
   }
 
   /** Líneas con cantidad > 0: las que quedaron en 0 (eliminadas) no se muestran. */
@@ -105,8 +190,20 @@ export class NewOrderPage {
     );
   }
 
+  /** Identifica una categoría: "GENERAL", "COMBOS", o el id de la categoría del producto. */
+  categoryKey(category: WaiterPriceListCategoryDto): string {
+    return categoryKey(category);
+  }
+
   chooseCategory(priceListId: number): void {
     this.selectedPriceListId.set(priceListId);
+    this.search.set('');
+    const list = this.priceLists().find((l) => l.priceListId === priceListId) ?? null;
+    this.selectFirstCategory(list);
+  }
+
+  selectCategory(key: string): void {
+    this.selectedCategoryKey.set(key);
   }
 
   loadCatalog(): void {
@@ -115,10 +212,12 @@ export class NewOrderPage {
 
     this.loadingCatalog.set(true);
     this.catalogError.set(null);
-    this.orderService.getPriceLists(cashierOpeningId).subscribe({
+    this.orderService.getWaiterPriceLists(cashierOpeningId).subscribe({
       next: (lists) => {
         this.priceLists.set(lists ?? []);
-        this.selectedPriceListId.set(lists?.[0]?.priceListId ?? null);
+        const firstList = lists?.[0] ?? null;
+        this.selectedPriceListId.set(firstList?.priceListId ?? null);
+        this.selectFirstCategory(firstList);
         this.linkExistingItemsToCatalog(lists ?? []);
         this.loadStockAvailability(lists ?? []);
         this.loadingCatalog.set(false);
@@ -144,8 +243,17 @@ export class NewOrderPage {
     );
   }
 
+  /** Igual que `quantityFor`, pero para un combo (identificado por `comboId`). */
+  quantityForCombo(comboId: number, takeaway = false): number {
+    return (
+      this.editItems().find((item) => item.comboId === comboId && item.takeaway === takeaway)
+        ?.quantity ?? 0
+    );
+  }
+
   openProductEditor(product: PriceListProductDto): void {
     this.editingItem.set(null);
+    this.selectedCombo.set(null);
     this.selectedProduct.set(product);
     this.selectedProductQuantity.set(1);
     this.productIsDelivery.set(false);
@@ -167,25 +275,59 @@ export class NewOrderPage {
     this.setDraftQuantity(draft.key, Math.max(0, draft.quantity - 1));
   }
 
-  /** Stock restante, considerando las unidades normales y delivery del borrador actual. */
+  addOneCombo(combo: PriceListComboDto, takeaway = false): void {
+    if (!this.canAddCombo(combo)) {
+      this.actionError.set('No hay stock disponible para este combo.');
+      return;
+    }
+    this.addCombo(combo, 1, takeaway);
+  }
+
+  removeOneCombo(combo: PriceListComboDto, takeaway = false): void {
+    const draft = this.editItems().find(
+      (item) => item.comboId === combo.comboId && item.takeaway === takeaway,
+    );
+    if (!draft) return;
+    this.setDraftQuantity(draft.key, Math.max(0, draft.quantity - 1));
+  }
+
+  /** Disponible real del producto considerando el borrador actual (puede ser negativo si ya pide de más). */
   availableStockFor(product: PriceListProductDto): number | null {
     if (!product.hasInventory) return null;
-
-    const available = this.stockAvailability()[product.productEstablishmentId];
-    if (available === undefined || available === null) return null;
-
-    // El endpoint ya descuenta las unidades reservadas de líneas existentes.
-    // Solo restamos el incremento local todavía no enviado a cocina.
-    const addedInDraft = this.editItems()
-      .filter((item) => item.productEstablishmentId === product.productEstablishmentId)
-      .reduce((total, item) => total + Math.max(0, item.quantity - item.originalQuantity), 0);
-    return Math.max(0, available - addedInDraft);
+    return availableFor(this.stockAvailability(), this.draftLines, product.productEstablishmentId, this.catalogCombos);
   }
 
   canAddProduct(product: PriceListProductDto, quantity = 1): boolean {
-    if (!product.hasInventory) return true;
-    const available = this.availableStockFor(product);
-    return available !== null && available >= quantity;
+    return canAddProduct(this.stockAvailability(), this.draftLines, product, this.catalogCombos, quantity);
+  }
+
+  /** true si algún producto del combo controla inventario. */
+  comboHasInventory(combo: PriceListComboDto): boolean {
+    return comboHasInventory(combo);
+  }
+
+  /**
+   * Disponibilidad del combo: por cada producto con inventario, cuántos combos alcanzan según su
+   * disponible restante (ya descontando el borrador actual); el mínimo de esos valores es lo que
+   * limita. Los productos sin inventario no limitan. `null` si no controla inventario, o si
+   * todavía no se confirmó el stock.
+   */
+  availableComboStockFor(combo: PriceListComboDto): number | null {
+    return availableComboStockFor(this.stockAvailability(), this.draftLines, combo, this.catalogCombos);
+  }
+
+  canAddCombo(combo: PriceListComboDto, quantity = 1): boolean {
+    return canAddCombo(this.stockAvailability(), this.draftLines, combo, this.catalogCombos, quantity);
+  }
+
+  /** `editItems()` normalizado para el cálculo de disponibilidad compartido. */
+  private get draftLines(): StockDraftLine[] {
+    return this.editItems().map((item) => ({
+      productEstablishmentId: item.productEstablishmentId,
+      comboId: item.comboId,
+      quantity: item.quantity,
+      originalQuantity: item.originalQuantity,
+    }));
   }
 
   isDeliveryEnabled(productEstablishmentId: number): boolean {
@@ -193,6 +335,10 @@ export class NewOrderPage {
       this.deliveryProducts().has(productEstablishmentId) ||
       this.quantityFor(productEstablishmentId, true) > 0
     );
+  }
+
+  isComboDeliveryEnabled(comboId: number): boolean {
+    return this.deliveryCombos().has(comboId) || this.quantityForCombo(comboId, true) > 0;
   }
 
   toggleProductDelivery(product: PriceListProductDto, enabled: boolean): void {
@@ -214,19 +360,43 @@ export class NewOrderPage {
     }
   }
 
+  toggleComboDelivery(combo: PriceListComboDto, enabled: boolean): void {
+    this.deliveryCombos.update((current) => {
+      const next = new Set(current);
+      if (enabled) next.add(combo.comboId);
+      else next.delete(combo.comboId);
+      return next;
+    });
+
+    if (!enabled) {
+      this.editItems.update((items) =>
+        items.map((item) =>
+          item.comboId === combo.comboId && item.takeaway ? { ...item, quantity: 0 } : item,
+        ),
+      );
+    }
+  }
+
   closeProductEditor(): void {
     this.selectedProduct.set(null);
+    this.selectedCombo.set(null);
   }
 
   confirmProduct(): void {
-    const product = this.selectedProduct();
-    if (!product) return;
-
     const itemBeingEdited = this.editingItem();
     if (itemBeingEdited) {
       this.updateEditedItem(itemBeingEdited);
       return;
     }
+
+    const combo = this.selectedCombo();
+    if (combo) {
+      this.addCombo(combo, this.selectedProductQuantity(), this.productIsDelivery());
+      return;
+    }
+
+    const product = this.selectedProduct();
+    if (!product) return;
 
     this.addProduct(product, this.selectedProductQuantity(), this.productIsDelivery());
   }
@@ -243,13 +413,30 @@ export class NewOrderPage {
     this.showingOrderReview.set(true);
   }
 
-  /** Reabre el editor de producto sobre una línea del borrador para cambiar su cantidad. */
+  /** Reabre el editor de cantidad sobre una línea del borrador (producto o combo) para cambiarla. */
   editOrderItem(draft: EditItemDraft): void {
-    const catalogProduct = this.priceLists()
-      .flatMap((priceList) => priceList.products ?? [])
-      .find((product) => product.productId === draft.productId);
-
     this.editingItem.set(draft);
+    this.selectedProductQuantity.set(draft.quantity);
+    this.productIsDelivery.set(false);
+    this.showingOrderReview.set(false);
+
+    if (draft.comboId) {
+      this.selectedProduct.set(null);
+      const catalogCombo = this.catalogCombos.find((combo) => combo.comboId === draft.comboId);
+      this.selectedCombo.set(
+        catalogCombo ?? {
+          comboId: draft.comboId,
+          comboName: draft.productName,
+          isFree: false,
+          price: draft.unitPrice,
+          components: [],
+        },
+      );
+      return;
+    }
+
+    this.selectedCombo.set(null);
+    const catalogProduct = this.catalogProducts.find((product) => product.productId === draft.productId);
     this.selectedProduct.set(
       catalogProduct ?? {
         productId: draft.productId,
@@ -262,11 +449,10 @@ export class NewOrderPage {
         isFree: false,
         hasInventory: false,
         stockProducts: null,
+        categoryId: null,
+        categoryName: null,
       },
     );
-    this.selectedProductQuantity.set(draft.quantity);
-    this.productIsDelivery.set(false);
-    this.showingOrderReview.set(false);
   }
 
   /** Marca la línea en 0: se manda a eliminar recién al guardar. */
@@ -312,7 +498,7 @@ export class NewOrderPage {
         return next;
       }
       const draft: EditItemDraft = {
-        key: `new-${product.productEstablishmentId}-${takeaway ? 'takeaway' : 'normal'}`,
+        key: `prod-${product.productEstablishmentId}-${takeaway ? 'takeaway' : 'normal'}`,
         orderItemId: null,
         productId: product.productId,
         productEstablishmentId: product.productEstablishmentId,
@@ -324,6 +510,58 @@ export class NewOrderPage {
         priceListId,
         stockProductId: product.stockProducts?.[0]?.stockProductId ?? null,
         takeaway,
+        comboId: null,
+        comboStocks: null,
+        comboComponentsSummary: null,
+      };
+      return [...items, draft];
+    });
+
+    this.closeProductEditor();
+  }
+
+  /** Igual que `addProduct`, pero para un combo: la línea se identifica por `comboId` en vez de `productId`. */
+  addCombo(combo: PriceListComboDto, quantity = 1, takeaway = false): void {
+    const priceListId = this.selectedPriceListId();
+    if (!priceListId) return;
+
+    if (!this.canAddCombo(combo, quantity)) {
+      this.actionError.set('No hay stock disponible para este combo.');
+      return;
+    }
+
+    this.actionError.set(null);
+
+    this.editItems.update((items) => {
+      const index = items.findIndex(
+        (draft) => draft.comboId === combo.comboId && draft.takeaway === takeaway,
+      );
+      if (index !== -1) {
+        const next = [...items];
+        next[index] = { ...next[index], quantity: next[index].quantity + quantity };
+        return next;
+      }
+      const draft: EditItemDraft = {
+        key: `combo-${combo.comboId}-${takeaway ? 'takeaway' : 'normal'}`,
+        orderItemId: null,
+        productId: 0,
+        productEstablishmentId: null,
+        productName: combo.comboName,
+        unitPrice: combo.isFree ? 0 : combo.price ?? 0,
+        discount: 0,
+        quantity,
+        originalQuantity: 0,
+        priceListId,
+        stockProductId: null,
+        takeaway,
+        comboId: combo.comboId,
+        comboStocks: NewOrderPage.buildComboStocks(combo),
+        comboComponentsSummary: NewOrderPage.summarizeComponents(
+          combo.components.map((component) => ({
+            quantity: component.quantity,
+            productName: component.productName,
+          })),
+        ),
       };
       return [...items, draft];
     });
@@ -386,6 +624,25 @@ export class NewOrderPage {
     void this.router.navigate(['/mesas']);
   }
 
+  /** Texto del contenido de un combo, ej. "1 Pollo a la brasa · 2 Gaseosa 500ml". */
+  private static summarizeComponents(
+    components: { quantity: number; productName: string | null }[],
+  ): string {
+    return components
+      .map((component) => `${component.quantity} ${component.productName ?? ''}`.trim())
+      .join(' · ');
+  }
+
+  /** Almacén de cada producto del combo que controla inventario (el primero disponible). */
+  private static buildComboStocks(combo: PriceListComboDto): OrderItemComboStockDto[] {
+    return combo.components
+      .filter((component) => component.hasInventory && component.stockProducts[0])
+      .map((component) => ({
+        productEstablishmentId: component.productEstablishmentId,
+        stockProductId: component.stockProducts[0].stockProductId,
+      }));
+  }
+
   private loadInitialData(): void {
     if (!this.orderId) {
       this.error.set('No se encontró el pedido solicitado.');
@@ -409,20 +666,42 @@ export class NewOrderPage {
   /** Copia `items` a `editItems` como punto de partida para detectar cambios al guardar. */
   private initEditItems(items: OrderItemDto[] | null): void {
     this.editItems.set(
-      (items ?? []).map((item) => ({
-        key: item.id,
-        orderItemId: item.id,
-        productId: item.productId,
-        productEstablishmentId: null,
-        productName: item.productName ?? '',
-        unitPrice: item.unitPrice,
-        discount: item.discount,
-        quantity: item.quantity,
-        originalQuantity: item.quantity,
-        priceListId: null,
-        stockProductId: null,
-        takeaway: item.isTakeAway ?? false,
-      })),
+      (items ?? []).map((item) => {
+        const isCombo = item.itemType === OrderItemType.Combo;
+        const comboStocks: OrderItemComboStockDto[] | null = isCombo
+          ? (item.components ?? [])
+              .filter((component) => component.hasInventory && component.stockProductId !== null)
+              .map((component) => ({
+                productEstablishmentId: component.productEstablishmentId,
+                stockProductId: component.stockProductId!,
+              }))
+          : null;
+
+        return {
+          key: item.id,
+          orderItemId: item.id,
+          productId: item.productId,
+          productEstablishmentId: null,
+          productName: item.productName ?? '',
+          unitPrice: item.unitPrice,
+          discount: item.discount,
+          quantity: item.quantity,
+          originalQuantity: item.quantity,
+          priceListId: null,
+          stockProductId: null,
+          takeaway: item.isTakeAway ?? false,
+          comboId: isCombo ? item.comboId ?? null : null,
+          comboStocks,
+          comboComponentsSummary: isCombo
+            ? NewOrderPage.summarizeComponents(
+                (item.components ?? []).map((component) => ({
+                  quantity: component.quantityPerCombo,
+                  productName: component.productName,
+                })),
+              )
+            : null,
+        };
+      }),
     );
   }
 
@@ -430,13 +709,14 @@ export class NewOrderPage {
    * El detalle de orden expone `productId`, mientras que el catálogo trabaja
    * con `productEstablishmentId`. Una vez disponible el catálogo se completa
    * esa relación para que los contadores +/- actualicen la línea existente.
+   * Los combos no necesitan este enlace: ya traen su `comboId` directo.
    */
-  private linkExistingItemsToCatalog(lists: PriceListWithProductsDto[]): void {
-    const catalogProducts = lists.flatMap((list) => list.products ?? []);
+  private linkExistingItemsToCatalog(lists: WaiterPriceListDto[]): void {
+    const catalogProducts = flattenProducts(lists);
 
     this.editItems.update((items) =>
       items.map((item) => {
-        if (!item.orderItemId || item.productEstablishmentId !== null) return item;
+        if (item.comboId || !item.orderItemId || item.productEstablishmentId !== null) return item;
 
         const catalogProduct = catalogProducts.find(
           (product) => product.productId === item.productId,
@@ -449,33 +729,37 @@ export class NewOrderPage {
     );
   }
 
-  /** Carga el stock del almacén que se usará al agregar cada producto del catálogo. */
-  private loadStockAvailability(lists: PriceListWithProductsDto[]): void {
-    const products = [...new Map(
-      lists
-        .flatMap((list) => list.products ?? [])
-        .filter((product) => product.hasInventory)
-        .map((product) => [product.productEstablishmentId, product]),
-    ).values()];
+  /** Carga el stock del almacén que se usará al agregar cada producto del catálogo (suelto o dentro de un combo). */
+  private loadStockAvailability(lists: WaiterPriceListDto[]): void {
+    const products = flattenProducts(lists).filter((product) => product.hasInventory);
+    const comboComponents = flattenCombos(lists)
+      .flatMap((combo) => combo.components)
+      .filter((component) => component.hasInventory);
+
+    const entries = [
+      ...new Map(
+        [...products, ...comboComponents].map((entry) => [entry.productEstablishmentId, entry]),
+      ).values(),
+    ];
 
     this.stockAvailability.set(
-      Object.fromEntries(products.map((product) => [product.productEstablishmentId, null])),
+      Object.fromEntries(entries.map((entry) => [entry.productEstablishmentId, null])),
     );
-    if (!products.length) return;
+    if (!entries.length) return;
 
     forkJoin(
-      products.map((product) =>
+      entries.map((entry) =>
         this.stockProductService
-          .getAvailabilityByProductEstablishment(product.productEstablishmentId)
+          .getAvailabilityByProductEstablishment(entry.productEstablishmentId)
           .pipe(
             map((availability) => {
-              const stockProductId = product.stockProducts?.[0]?.stockProductId;
+              const stockProductId = entry.stockProducts?.[0]?.stockProductId;
               const available = availability?.find(
                 (stock) => stock.stockProductId === stockProductId,
               )?.availableQuantity;
-              return [product.productEstablishmentId, available ?? 0] as const;
+              return [entry.productEstablishmentId, available ?? 0] as const;
             }),
-            catchError(() => of([product.productEstablishmentId, null] as const)),
+            catchError(() => of([entry.productEstablishmentId, null] as const)),
           ),
       ),
     ).subscribe((availability) => this.stockAvailability.set(Object.fromEntries(availability)));
@@ -521,12 +805,14 @@ export class NewOrderPage {
         // Línea nueva: solo se manda a crear si le quedó cantidad.
         if (draft.quantity > 0) {
           added.push({
-            productEstablishmentId: draft.productEstablishmentId!,
+            productEstablishmentId: draft.comboId ? null : draft.productEstablishmentId!,
             priceListId: draft.priceListId!,
             stockProductId: draft.stockProductId,
             quantity: draft.quantity,
             discount: draft.discount,
             isTakeAway: draft.takeaway,
+            comboId: draft.comboId,
+            comboStocks: draft.comboStocks,
           });
         }
         continue;
@@ -554,7 +840,11 @@ export class NewOrderPage {
       if (error.operation === 'Add') {
         // Nunca llegó a crearse: no debe quedar en el borrador.
         this.editItems.update((items) =>
-          items.filter((item) => item.productEstablishmentId !== error.productEstablishmentId),
+          items.filter((item) =>
+            error.comboId
+              ? item.comboId !== error.comboId
+              : item.productEstablishmentId !== error.productEstablishmentId,
+          ),
         );
       } else if (error.orderItemId) {
         this.revertDraftQuantity(error.orderItemId);
@@ -569,5 +859,10 @@ export class NewOrderPage {
     this.editItems.update((items) =>
       items.map((item) => (item.key === key ? { ...item, quantity: item.originalQuantity } : item)),
     );
+  }
+
+  /** Selecciona la primera categoría de la lista (normalmente GENERAL), o ninguna si no tiene. */
+  private selectFirstCategory(list: WaiterPriceListDto | null): void {
+    this.selectedCategoryKey.set(firstCategoryKey(list));
   }
 }

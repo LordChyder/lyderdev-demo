@@ -3,14 +3,14 @@
     <div class="comprobante-detail__title-wrapper">
       <mat-icon class="comprobante-detail__title-icon">receipt_long</mat-icon>
       <h2>Detalle Comprobante</h2>
-      @if (hasSendingError() && fiscalInvoice()) {
+      @if (fiscalInvoice()) {
         <button
           mat-icon-button
           type="button"
           class="comprobante-detail__btn-error-log"
           [disabled]="loadingLogs()"
-          matTooltip="Ver detalle del error de envío"
-          aria-label="Ver detalle del error de envío"
+          [matTooltip]="hasSendingError() ? 'Ver detalle del error de envío' : 'Ver detalle del envío a SUNAT'"
+          [attr.aria-label]="hasSendingError() ? 'Ver detalle del error de envío' : 'Ver detalle del envío a SUNAT'"
           (click)="loadInvoiceLogs()"
         >
           @if (loadingLogs()) {
@@ -19,6 +19,8 @@
             <mat-icon>error_outline</mat-icon>
           }
         </button>
+      }
+      @if (hasSendingError() && fiscalInvoice()) {
         @if (!retrySubmitted()) {
           <button
             mat-icon-button
@@ -137,6 +139,11 @@
           <dt>Cliente</dt>
           <dd>{{ detail.customerName }}</dd>
         }
+
+        @if (detail.customerDocNumber) {
+          <dt>{{ detail.customerDocTypeAcronym || 'Doc.' }}</dt>
+          <dd>{{ detail.customerDocNumber }}</dd>
+        }
       </dl>
 
       <div class="comprobante-detail__table-wrapper">
@@ -182,11 +189,11 @@
         <dd>{{ detail.balance | number: '1.2-2' }}</dd>
       </dl>
 
-      @if (hasSendingError() && fiscalInvoice() && logsVisible()) {
+      @if (fiscalInvoice() && logsVisible()) {
         <section class="comprobante-detail__sending-error" aria-live="polite">
           <div class="comprobante-detail__sending-error-title">
             <mat-icon>error_outline</mat-icon>
-            <span>Detalle del error de envío</span>
+            <span>{{ hasSendingError() ? 'Detalle del error de envío' : 'Detalle del envío a SUNAT' }}</span>
           </div>
           @if (loadingLogs()) {
             <div class="comprobante-detail__sending-error-state">
@@ -243,7 +250,7 @@
           <p><strong>Mesero:</strong> {{ detail.waiterName || '—' }}</p>
           <p><strong>Cliente:</strong> {{ detail.customerName || 'Cliente varios' }}</p>
           @if (detail.customerDocNumber) {
-            <p><strong>Doc:</strong> {{ detail.customerDocNumber }}</p>
+            <p><strong>{{ detail.customerDocTypeAcronym || 'Doc' }}:</strong> {{ detail.customerDocNumber }}</p>
           }
         </div>
 

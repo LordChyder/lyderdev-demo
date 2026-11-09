@@ -31,12 +31,12 @@
       <table mat-table [dataSource]="outputs()" class="salida-stock__table">
         <ng-container matColumnDef="docNumber">
           <th mat-header-cell *matHeaderCellDef>Documento</th>
-          <td mat-cell *matCellDef="let output">{{ output.docNumber }}</td>
+          <td mat-cell *matCellDef="let output">{{ output.docNumber || '—' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="recipient">
           <th mat-header-cell *matHeaderCellDef>Destinatario</th>
-          <td mat-cell *matCellDef="let output">{{ output.recipient }}</td>
+          <td mat-cell *matCellDef="let output">{{ output.recipient || '—' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="dateIssue">

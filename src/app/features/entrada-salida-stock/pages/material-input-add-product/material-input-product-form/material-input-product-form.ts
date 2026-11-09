@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, finalize, takeUntil } from 'rxjs';
@@ -23,6 +24,7 @@ interface MaterialInputProductFormData {
 
 @Component({
   imports: [
+    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
@@ -58,7 +60,7 @@ export class MaterialInputProductForm implements OnInit, OnDestroy {
     productEstablishmentId: [null as number | null, [Validators.required]],
     stockProductId: [null as number | null, [Validators.required]],
     quantity: [1, [Validators.required, Validators.min(0.01)]],
-    unitCost: [0, [Validators.required, Validators.min(0)]],
+    totalItem: [0, [Validators.required, Validators.min(0)]],
   });
 
   ngOnInit(): void {
@@ -102,7 +104,7 @@ export class MaterialInputProductForm implements OnInit, OnDestroy {
 
     const updatePayload = {
       quantity: value.quantity,
-      unitValue: value.unitCost,
+      totalItem: value.totalItem,
     };
 
     const request =
@@ -178,12 +180,12 @@ export class MaterialInputProductForm implements OnInit, OnDestroy {
   }
 
   private patchFormForEdit(item: SearchMaterialInputItemDto): void {
-    const unitCost = Number(item.unitValue ?? item.unitvalue ?? item.UnitValue ?? item.unitCost ?? 0);
+    const totalItem = Number(item.totalItem ?? item.totalitem ?? item.TotalItem ?? item.total ?? item.amount ?? 0);
     this.form.patchValue(
       {
         productEstablishmentId: item.productEstablishmentId ?? null,
         quantity: Number(item.quantity ?? 1),
-        unitCost: Number.isFinite(unitCost) ? unitCost : 0,
+        totalItem: Number.isFinite(totalItem) ? totalItem : 0,
       },
       { emitEvent: false },
     );

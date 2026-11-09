@@ -50,7 +50,7 @@ export class AjusteMesasPage implements OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   readonly Status = RestaurantTableStatus;
-  readonly displayedColumns = ['code', 'name', 'capacity', 'status', 'actions'];
+  readonly displayedColumns = ['order', 'code', 'name', 'capacity', 'status', 'actions'];
 
   readonly tables = signal<SearchRestaurantTableDto[]>([]);
   readonly searchTerm = signal('');
@@ -90,7 +90,9 @@ export class AjusteMesasPage implements OnDestroy {
   }
 
   openCreate(): void {
-    this.openForm({ table: null });
+    const tables = this.tables();
+    const suggestedOrder = tables.length === 0 ? 0 : Math.max(...tables.map((t) => t.order)) + 1;
+    this.openForm({ table: null, suggestedOrder });
   }
 
   updateSearch(value: string): void {

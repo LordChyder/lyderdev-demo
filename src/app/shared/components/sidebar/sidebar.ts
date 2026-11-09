@@ -49,7 +49,7 @@ export class Sidebar implements OnDestroy {
     { label: 'Comprobantes', path: '/historial', icon: 'receipt_long', requiredClaim: 'History_Module' },
     { label: 'Ajustes de caja', path: '/ajustes-caja', icon: 'display_settings', requiredClaim: 'Cashier_Module' },
     { label: 'Ajuste de mesas', path: '/ajuste-mesas', icon: 'table_bar', requiredClaim: 'RestaurantTable_Module' },
-    { label: 'Comanda', path: '/mesas', icon: 'description', requiredClaim: 'Mesero_Module'},
+    { label: 'Meseros', path: '/mesas', icon: 'room_service', requiredClaim: 'Mesero_Module'},
     { label: 'Productos', path: '/productos', icon: 'inventory_2', requiredClaim: 'Product_Module' },
     { label: 'Almacenes', path: '/almacenes', icon: 'warehouse', requiredClaim: 'Stock_Module' },
     { label: 'Lista de precios', path: '/lista-precios', icon: 'sell', requiredClaim: 'PriceList_Module' },

@@ -69,4 +69,33 @@ export class ProductService {
       payload,
     );
   }
+
+  /**
+   * URL pública (sin token) de la imagen del producto. `imageUpdatedAt` solo
+   * se usa como query param para romper el caché del navegador cuando la
+   * imagen cambia; el backend lo ignora.
+   */
+  getImageUrl(productId: number, imageUpdatedAt: string | null): string {
+    const version = imageUpdatedAt ? Date.parse(imageUpdatedAt) : 0;
+    return `${this.baseUrl}/${productId}/image?v=${version}`;
+  }
+
+  /** Registra la imagen del producto. Falla si ya tiene una (usar updateImage en ese caso). */
+  saveImage(productId: number, image: File): Observable<unknown> {
+    const formData = new FormData();
+    formData.append('image', image);
+    return this.http.post(`${this.baseUrl}/${productId}/image`, formData);
+  }
+
+  /** Reemplaza la imagen del producto. Falla si no tiene una (usar saveImage en ese caso). */
+  updateImage(productId: number, image: File): Observable<unknown> {
+    const formData = new FormData();
+    formData.append('image', image);
+    return this.http.put(`${this.baseUrl}/${productId}/image`, formData);
+  }
+
+  /** Elimina la imagen del producto. */
+  deleteImage(productId: number): Observable<unknown> {
+    return this.http.delete(`${this.baseUrl}/${productId}/image`);
+  }
 }

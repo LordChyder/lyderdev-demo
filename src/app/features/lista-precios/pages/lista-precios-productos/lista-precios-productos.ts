@@ -117,7 +117,7 @@ export class ListaPreciosProductosPage implements OnInit, OnDestroy {
 
   openCreate(): void {
     if (!this.permissionService.validate('PriceListItem_SaveOrUpdate')) return;
-    this.openForm({ priceListId: this.priceListId, item: null });
+    this.openForm({ priceListId: this.priceListId, item: null, existingItems: this.items() });
   }
 
   openEdit(item: SearchPriceListItemDto): void {
@@ -127,7 +127,8 @@ export class ListaPreciosProductosPage implements OnInit, OnDestroy {
       .getForEdit(item.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (itemForEdit) => this.openForm({ priceListId: this.priceListId, item: itemForEdit }),
+        next: (itemForEdit) =>
+          this.openForm({ priceListId: this.priceListId, item: itemForEdit, existingItems: this.items() }),
         error: () => this.error.set('No se pudo cargar el producto.'),
       });
   }

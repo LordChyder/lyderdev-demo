@@ -108,6 +108,33 @@
         } @else {
           <p class="opening-cashier-panel__payments-state">Aún no hay pagos registrados.</p>
         }
+
+        <div class="opening-cashier-panel__section-heading">
+          <mat-icon>receipt</mat-icon>
+          <h3>Gastos de caja</h3>
+        </div>
+
+        @if (summary.expenses?.length) {
+          <ul class="opening-cashier-panel__expenses">
+            @for (expense of summary.expenses; track expense.expenseId) {
+              <li>
+                <span>
+                  {{ expense.description || 'Sin descripción' }}
+                  <small>{{ expense.categoryName }} · {{ expense.expenseDate | date: 'dd/MM/yyyy' }}</small>
+                </span>
+                <strong>- {{ expense.amount | number: '1.2-2' }}</strong>
+              </li>
+            }
+          </ul>
+          <dl class="opening-cashier-panel__payment-totals">
+            <dt>Total gastos ({{ summary.expensesCount }})</dt>
+            <dd>- {{ summary.totalExpenses | number: '1.2-2' }}</dd>
+            <dt>Neto (ventas − gastos)</dt>
+            <dd>{{ summary.netAmount | number: '1.2-2' }}</dd>
+          </dl>
+        } @else {
+          <p class="opening-cashier-panel__payments-state">No hay gastos registrados en esta caja.</p>
+        }
       }
     </section>
 
@@ -127,12 +154,16 @@
 
         <dl class="opening-cashier-panel__closing-totals">
           <dt>Fondo inicial</dt>
-          <dd>{{ detail.openingValue | number: '1.2-2' }}</dd>
+          <dd>{{ summary.openingValue | number: '1.2-2' }}</dd>
           <dt>Ventas en efectivo</dt>
           <dd>{{ cashPaymentAmount(summary) | number: '1.2-2' }}</dd>
+          @if (summary.totalExpenses > 0) {
+            <dt>Gastos de caja</dt>
+            <dd>- {{ summary.totalExpenses | number: '1.2-2' }}</dd>
+          }
           <dt class="opening-cashier-panel__expected-cash-label">Efectivo esperado</dt>
           <dd class="opening-cashier-panel__expected-cash">
-            {{ expectedCash(detail, summary) | number: '1.2-2' }}
+            {{ expectedCash(summary) | number: '1.2-2' }}
           </dd>
         </dl>
 

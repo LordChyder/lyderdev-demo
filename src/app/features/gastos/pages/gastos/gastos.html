@@ -54,6 +54,11 @@
           <td mat-cell *matCellDef="let expense">{{ categoryName(expense.category) }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="cashierName">
+          <th mat-header-cell *matHeaderCellDef>Caja</th>
+          <td mat-cell *matCellDef="let expense">{{ expense.cashierName || '—' }}</td>
+        </ng-container>
+
         <ng-container matColumnDef="description">
           <th mat-header-cell *matHeaderCellDef>Descripción</th>
           <td mat-cell *matCellDef="let expense">{{ expense.description }}</td>
@@ -106,7 +111,12 @@
             <strong>S/ {{ expense.amount | number: '1.2-2' }}</strong>
           </header>
           <footer>
-            <span><mat-icon>calendar_today</mat-icon>{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</span>
+            <div class="gastos__mobile-footer-info">
+              <span><mat-icon>calendar_today</mat-icon>{{ expense.expenseDate | date: 'dd/MM/yyyy' }}</span>
+              @if (expense.cashierName) {
+                <span><mat-icon>point_of_sale</mat-icon>{{ expense.cashierName }}</span>
+              }
+            </div>
             <div>
               <button mat-icon-button type="button" class="gastos__action gastos__action--edit" (click)="openEdit(expense)" aria-label="Editar gasto"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button type="button" class="gastos__action gastos__action--delete" (click)="deleteExpense(expense)" aria-label="Eliminar gasto"><mat-icon>delete</mat-icon></button>

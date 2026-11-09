@@ -8,5 +8,4 @@ export const environment = {
   restaurantUrl: 'https://api-restaurant-dev.lyderdev.com',
   reportUrl: 'https://api-reporte-dev.lyderdev.com',
   personUrl: 'https://api-person-dev.lyderdev.com',
-  
 };

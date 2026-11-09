@@ -55,9 +55,9 @@ export interface UpdateMaterialOutputDto {
 
 export interface SaveAndCloseMaterialOutputItemDto {
   productEstablishmentId: number;
-  stockProductId: number;
+  stockProductId: number | null;
   quantity: number;
-  unitValue: number;
+  totalItem: number;
 }
 
 /** Body de POST /api/v1/material-output/save-and-close: crea la salida junto con sus items. */

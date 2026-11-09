@@ -105,7 +105,7 @@ export class SalidaStockPage implements OnDestroy {
   closeOutput(output: SearchMaterialOutputDto): void {
     this.confirmAndRun({
       title: 'Cerrar salida',
-      message: `¿Cerrar la salida ${output.docNumber || ''}?`,
+      message: `¿Cerrar ${this.outputLabel(output)}?`,
       confirmLabel: 'Cerrar salida',
       request: () => this.materialOutputService.close(output.materialOutputId),
       successMessage: 'Salida cerrada.',
@@ -116,7 +116,7 @@ export class SalidaStockPage implements OnDestroy {
   executeOutput(output: SearchMaterialOutputDto): void {
     this.confirmAndRun({
       title: 'Ejecutar salida',
-      message: `¿Ejecutar la salida ${output.docNumber || ''}?`,
+      message: `¿Ejecutar ${this.outputLabel(output)}?`,
       confirmLabel: 'Ejecutar',
       request: () => this.materialOutputService.effective(output.materialOutputId),
       successMessage: 'Salida ejecutada.',
@@ -127,7 +127,7 @@ export class SalidaStockPage implements OnDestroy {
   cancelOutput(output: SearchMaterialOutputDto): void {
     this.confirmAndRun({
       title: 'Cancelar salida',
-      message: `¿Cancelar la salida ${output.docNumber || ''}?`,
+      message: `¿Cancelar ${this.outputLabel(output)}?`,
       confirmLabel: 'Cancelar salida',
       request: () => this.materialOutputService.cancel(output.materialOutputId),
       successMessage: 'Salida cancelada.',
@@ -138,12 +138,16 @@ export class SalidaStockPage implements OnDestroy {
   deleteOutput(output: SearchMaterialOutputDto): void {
     this.confirmAndRun({
       title: 'Eliminar salida',
-      message: `¿Eliminar la salida ${output.docNumber || ''}?`,
+      message: `¿Eliminar ${this.outputLabel(output)}?`,
       confirmLabel: 'Eliminar',
       request: () => this.materialOutputService.delete(output.materialOutputId),
       successMessage: 'Salida eliminada.',
       errorMessage: 'No se pudo eliminar la salida.',
     });
+  }
+
+  private outputLabel(output: SearchMaterialOutputDto): string {
+    return output.docNumber ? `la salida ${output.docNumber}` : 'esta salida';
   }
 
   private confirmAndRun(options: {

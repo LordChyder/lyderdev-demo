@@ -6,7 +6,7 @@ export interface PrinterDto {
   port: number;
   stockId: number | null;
   agentId: string | null;
-  active: boolean;
+  isActive: boolean;
   establishmentId: number;
 }
 

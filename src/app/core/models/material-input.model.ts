@@ -57,7 +57,7 @@ export interface SaveAndCloseMaterialInputItemDto {
   productEstablishmentId: number;
   stockProductId: number;
   quantity: number;
-  unitValue: number;
+  totalItem: number;
 }
 
 /** Body de POST /api/v1/material-input/save-and-close: crea la entrada junto con sus items. */

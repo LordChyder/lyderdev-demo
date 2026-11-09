@@ -1,0 +1,89 @@
+<h2 mat-dialog-title class="stock-product-edit-form__title">
+  Editar producto del almacén
+  <span>Ajusta los límites de inventario y la ubicación.</span>
+</h2>
+
+<mat-dialog-content class="stock-product-edit-form">
+  @if (loading()) {
+    <div class="stock-product-edit-form__state">
+      <mat-spinner diameter="32" />
+    </div>
+  } @else if (error()) {
+    <div class="stock-product-edit-form__state stock-product-edit-form__state--error">
+      <span>{{ error() }}</span>
+    </div>
+  } @else if (product(); as product) {
+    <form [formGroup]="form" class="stock-product-edit-form__fields" novalidate>
+      <section class="stock-product-edit-form__bento stock-product-edit-form__bento--product">
+        <p class="stock-product-edit-form__section-label">Producto</p>
+        <dl class="stock-product-edit-form__readonly">
+          <dt>Nombre</dt>
+          <dd>
+            {{ product.productName }}
+            @if (product.complementaryName) {
+              <span class="stock-product-edit-form__readonly-secondary">({{ product.complementaryName }})</span>
+            }
+          </dd>
+
+          <dt>Id</dt>
+          <dd>{{ product.productId }}</dd>
+
+          <dt>Cantidad actual</dt>
+          <dd>{{ product.currentQuantity }}</dd>
+        </dl>
+      </section>
+
+      <section class="stock-product-edit-form__bento stock-product-edit-form__bento--inventory">
+        <div class="stock-product-edit-form__section-heading">
+          <p class="stock-product-edit-form__section-label">Control de inventario</p>
+          <span>Los límites son opcionales.</span>
+        </div>
+
+        <div class="stock-product-edit-form__inventory-grid">
+          <mat-form-field appearance="outline" class="stock-product-edit-form__field">
+            <mat-label>Cantidad mínima</mat-label>
+            <input matInput type="number" step="0.01" formControlName="quantityMin" />
+            @if (form.controls.quantityMin.errors?.['min']) {
+              <mat-error>No puede ser negativa.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="stock-product-edit-form__field">
+            <mat-label>Cantidad máxima</mat-label>
+            <input matInput type="number" step="0.01" formControlName="quantityMax" />
+            @if (form.controls.quantityMax.errors?.['min']) {
+              <mat-error>No puede ser negativa.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="stock-product-edit-form__field stock-product-edit-form__field--location">
+            <mat-label>Ubicación</mat-label>
+            <input matInput formControlName="location" />
+            @if (form.controls.location.errors?.['maxlength']) {
+              <mat-error>Máximo 400 caracteres.</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        @if (form.touched && form.errors?.['minGreaterThanMax']) {
+          <p class="stock-product-edit-form__error">
+            La cantidad mínima no puede ser mayor que la máxima.
+          </p>
+        }
+      </section>
+    </form>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    [disabled]="loading() || !!error() || saving()"
+    (click)="submit()"
+  >
+    {{ saving() ? 'Guardando...' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

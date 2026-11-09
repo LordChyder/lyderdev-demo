@@ -65,7 +65,15 @@
 
         <ng-container matColumnDef="itemType">
           <th mat-header-cell *matHeaderCellDef>Tipo</th>
-          <td mat-cell *matCellDef="let item">{{ item.itemType }}</td>
+          <td mat-cell *matCellDef="let item">
+            <span
+              class="lista-precios-productos__badge lista-precios-productos__badge--type"
+              [class.lista-precios-productos__badge--combo]="item.itemType === 'COMBO'"
+            >
+              <mat-icon>{{ item.itemType === 'COMBO' ? 'fastfood' : 'inventory_2' }}</mat-icon>
+              {{ item.itemType === 'COMBO' ? 'Combo' : 'Producto' }}
+            </span>
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="isFree">
@@ -129,8 +137,11 @@
             <div class="lista-precios-productos__card-info">
               <span class="lista-precios-productos__card-title">{{ item.itemName }}</span>
               <div class="lista-precios-productos__card-badges">
-                <span class="lista-precios-productos__badge lista-precios-productos__badge--type">
-                  {{ item.itemType || 'PRODUCT' }}
+                <span
+                  class="lista-precios-productos__badge lista-precios-productos__badge--type"
+                  [class.lista-precios-productos__badge--combo]="item.itemType === 'COMBO'"
+                >
+                  {{ item.itemType === 'COMBO' ? 'Combo' : 'Producto' }}
                 </span>
                 @if (item.isFree) {
                   <span class="lista-precios-productos__badge lista-precios-productos__badge--free">

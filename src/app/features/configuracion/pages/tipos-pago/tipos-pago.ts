@@ -35,7 +35,7 @@ export class TiposPago implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
 
-  readonly displayedColumns = ['name', 'fiscalCode', 'isActive', 'actions'];
+  readonly displayedColumns = ['name', 'fiscalCode', 'isCash', 'isActive', 'actions'];
   readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
   /** El backend no pagina este endpoint: trae todo y se pagina en el cliente. */

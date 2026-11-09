@@ -269,6 +269,37 @@
     }
   }
 
+  &__expenses {
+    display: grid;
+    gap: 0.625rem;
+    margin: 1rem 0 0;
+    padding: 0.875rem 0 0;
+    border-top: 1px solid #d7e6fb;
+    list-style: none;
+
+    li {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      color: #253f8d;
+    }
+
+    small {
+      display: block;
+      margin-top: 0.1rem;
+      color: #8296b8;
+      font-size: 0.75rem;
+      font-weight: 400;
+    }
+
+    strong {
+      flex-shrink: 0;
+      color: var(--mat-sys-error);
+      white-space: nowrap;
+    }
+  }
+
   &__payments-state {
     display: flex;
     align-items: center;
@@ -362,12 +393,18 @@
 
     &__payment-totals,
     &__payment-types,
+    &__expenses,
     &__payments-state {
       color: #8faece;
     }
 
-    &__payment-types {
+    &__payment-types,
+    &__expenses {
       border-color: #1f3c5c;
+    }
+
+    &__expenses li {
+      color: #d8e8ff;
     }
 
     &__print-meta {

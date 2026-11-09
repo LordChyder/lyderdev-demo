@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -66,7 +67,7 @@ export class MaterialInputWorkspacePage implements AfterViewInit, OnDestroy {
     productEstablishmentId: [null as number | null, Validators.required],
     stockProductId: [null as number | null, Validators.required],
     quantity: [1, [Validators.required, Validators.min(0.01)]],
-    unitValue: [0, [Validators.required, Validators.min(0)]],
+    totalItem: [0, [Validators.required, Validators.min(0)]],
   });
 
   constructor() {
@@ -84,7 +85,7 @@ export class MaterialInputWorkspacePage implements AfterViewInit, OnDestroy {
   }
 
   get isSupplierPurchase(): boolean { return this.headerForm.controls.inputType.value === 2; }
-  get documentTotal(): number { return this.lines().reduce((total, line) => total + line.quantity * line.unitValue, 0); }
+  get documentTotal(): number { return this.lines().reduce((total, line) => total + line.totalItem, 0); }
   get selectedProduct(): ProductEstablishmentWithInventoryDto | undefined {
     return this.products().find((product) => product.productEstablishmentId === this.productForm.controls.productEstablishmentId.value);
   }
@@ -108,16 +109,18 @@ export class MaterialInputWorkspacePage implements AfterViewInit, OnDestroy {
     const line: InputLine = {
       key: `${values.productEstablishmentId}-${values.stockProductId}`,
       productEstablishmentId: values.productEstablishmentId!, stockProductId: values.stockProductId,
-      quantity: values.quantity, unitValue: values.unitValue,
+      quantity: values.quantity, totalItem: values.totalItem,
       productName: this.selectedProduct.productName ?? 'Producto', stockName: this.stockName(stock),
       unit: this.selectedProduct.measureUnitAcronym ?? 'UND', currentStock: this.selectedCurrentStock(),
     };
     this.lines.update((items) => {
       const existing = items.findIndex((item) => item.key === line.key);
       if (existing < 0) return [...items, line];
-      const next = [...items]; next[existing] = { ...line, quantity: next[existing].quantity + line.quantity }; return next;
+      const next = [...items];
+      next[existing] = { ...line, quantity: next[existing].quantity + line.quantity, totalItem: next[existing].totalItem + line.totalItem };
+      return next;
     });
-    this.productForm.reset({ productSearch: null, productEstablishmentId: null, stockProductId: null, quantity: 1, unitValue: 0 });
+    this.productForm.reset({ productSearch: null, productEstablishmentId: null, stockProductId: null, quantity: 1, totalItem: 0 });
     this.filterProducts('');
     this.stocks.set([]); this.selectedCurrentStock.set(null);
   }
@@ -135,7 +138,7 @@ export class MaterialInputWorkspacePage implements AfterViewInit, OnDestroy {
       items: this.lines().map(({ key, productName, stockName, unit, currentStock, ...line }) => line),
     }).pipe(finalize(() => this.saving.set(false)), takeUntil(this.destroy$)).subscribe({
       next: () => void this.router.navigate(['/entrada-salida-stock']),
-      error: () => this.error.set('No se pudo registrar la entrada de inventario.'),
+      error: (err: unknown) => this.error.set(MaterialInputWorkspacePage.extractErrorMessage(err)),
     });
   }
 
@@ -150,6 +153,16 @@ export class MaterialInputWorkspacePage implements AfterViewInit, OnDestroy {
       });
   }
   ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
+
+  /** El backend envuelve sus errores en `{ messages: string[] }` (ver error.interceptor.ts). */
+  private static extractErrorMessage(error: unknown): string {
+    const body = error instanceof HttpErrorResponse ? error.error : null;
+    const messages = body && typeof body === 'object' ? (body as { messages?: unknown }).messages : null;
+
+    return Array.isArray(messages) && messages.length > 0 && messages.every((m) => typeof m === 'string')
+      ? (messages as string[]).join(' ')
+      : 'No se pudo registrar la entrada de inventario.';
+  }
 
   private loadInitialData(): void {
     this.inputService.getTypes().pipe(takeUntil(this.destroy$)).subscribe({ next: (types) => this.types.set(types ?? []), error: () => this.error.set('No se pudieron cargar los tipos de entrada.') });

@@ -1,3 +1,4 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, finalize, takeUntil } from 'rxjs';
@@ -14,6 +15,7 @@ import { MaterialOutputItemService } from '../../../../../core/services/material
 import { NotificationService } from '../../../../../core/services/notification.service';
 import { ProductEstablishmentService } from '../../../../../core/services/product-establishment.service';
 import { StockProductService } from '../../../../../core/services/stock-product.service';
+import { backendMessage } from '../../../../../core/utils/http-error.util';
 
 interface MaterialOutputProductFormData {
   materialOutputId: string;
@@ -23,6 +25,7 @@ interface MaterialOutputProductFormData {
 
 @Component({
   imports: [
+    DecimalPipe,
     ReactiveFormsModule,
     MatButtonModule,
     MatDialogModule,
@@ -57,7 +60,7 @@ export class MaterialOutputProductForm implements OnInit, OnDestroy {
     productEstablishmentId: [null as number | null, [Validators.required]],
     stockProductId: [null as number | null, [Validators.required]],
     quantity: [1, [Validators.required, Validators.min(0.01)]],
-    unitValue: [0, [Validators.required, Validators.min(0)]],
+    totalItem: [0, [Validators.required, Validators.min(0)]],
   });
 
   ngOnInit(): void {
@@ -101,7 +104,7 @@ export class MaterialOutputProductForm implements OnInit, OnDestroy {
 
     const updatePayload = {
       quantity: value.quantity,
-      unitValue: value.unitValue,
+      totalItem: value.totalItem,
     };
 
     const request =
@@ -126,11 +129,12 @@ export class MaterialOutputProductForm implements OnInit, OnDestroy {
           );
           this.dialogRef.close(true);
         },
-        error: () =>
+        error: (err) =>
           this.error.set(
-            this.isEdit
-              ? 'No se pudo actualizar el producto.'
-              : 'No se pudo agregar el producto a la salida.',
+            backendMessage(err) ??
+              (this.isEdit
+                ? 'No se pudo actualizar el producto.'
+                : 'No se pudo agregar el producto a la salida.'),
           ),
       });
   }
@@ -177,12 +181,12 @@ export class MaterialOutputProductForm implements OnInit, OnDestroy {
   }
 
   private patchFormForEdit(item: SearchMaterialOutputItemDto): void {
-    const unitValue = Number(item.unitValue ?? 0);
+    const totalItem = Number(item.totalItem ?? 0);
     this.form.patchValue(
       {
         productEstablishmentId: item.productEstablishmentId ?? null,
         quantity: Number(item.quantity ?? 1),
-        unitValue: Number.isFinite(unitValue) ? unitValue : 0,
+        totalItem: Number.isFinite(totalItem) ? totalItem : 0,
       },
       { emitEvent: false },
     );

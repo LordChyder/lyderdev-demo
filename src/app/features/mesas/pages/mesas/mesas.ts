@@ -70,11 +70,21 @@ export class MesasPage implements OnDestroy {
         }
 
         const currentIndex = current.findIndex((table) => table.tableId === changedTable.tableId);
-        if (currentIndex === -1) return [...current, changedTable];
+        if (currentIndex !== -1) {
+          return current.map((table) =>
+            table.tableId === changedTable.tableId ? changedTable : table,
+          );
+        }
 
-        return current.map((table) =>
-          table.tableId === changedTable.tableId ? changedTable : table,
+        // Mesa nueva: se inserta según el orden recibido (tableOrder → tableCode →
+        // tableName) en vez de al final, para no desordenar la grilla.
+        const insertAt = current.findIndex(
+          (table) => this.compareTableOrder(changedTable, table) < 0,
         );
+        const next = [...current];
+        if (insertAt === -1) next.push(changedTable);
+        else next.splice(insertAt, 0, changedTable);
+        return next;
       });
     });
 
@@ -164,6 +174,13 @@ export class MesasPage implements OnDestroy {
         this.load();
       },
     });
+  }
+
+  private compareTableOrder(a: RestaurantTableRealtimeDto, b: RestaurantTableRealtimeDto): number {
+    if (a.tableOrder !== b.tableOrder) return a.tableOrder - b.tableOrder;
+    const codeCompare = (a.tableCode ?? '').localeCompare(b.tableCode ?? '');
+    if (codeCompare !== 0) return codeCompare;
+    return (a.tableName ?? '').localeCompare(b.tableName ?? '');
   }
 
   private load(): void {

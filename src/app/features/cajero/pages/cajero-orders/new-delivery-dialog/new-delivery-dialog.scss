@@ -106,6 +106,29 @@
     }
   }
 
+  &__catalog-tabs {
+    display: flex;
+    gap: 0.375rem;
+    padding: 0.375rem;
+    border-bottom: 1px solid #e5eef9;
+    background: #fbfdff;
+  }
+
+  &__catalog-tab {
+    flex: 1 1 auto;
+    min-height: 2rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid #e1ebf9;
+    border-radius: 8px;
+    background: #fff;
+    color: #44536b;
+    font: 700 0.75rem/1.2 Roboto, sans-serif;
+    cursor: pointer;
+
+    &:hover { border-color: #ff7400; background: #fff3e8; }
+    &--selected { border-color: #ff7400; background: #ff7400; color: #fff; }
+  }
+
   &__products {
     display: flex;
     flex: 1 1 auto;
@@ -212,6 +235,8 @@
     &__price-lists { border-bottom-color: #1f3c5c; background: #0b1a2e; }
     &__products { background: #0b1a2e; }
     &__price-list-button { border-color: #85400d; background: #132e4e; color: #ffae6d; &--selected { border-color: #ff8a2a; background: #ff8a2a; color: #1b0c02; } }
+    &__catalog-tabs { border-bottom-color: #1f3c5c; background: #0b1a2e; }
+    &__catalog-tab { border-color: #1f3c5c; background: #132e4e; color: #9bb1cb; &--selected { border-color: #ff8a2a; background: #ff8a2a; color: #1b0c02; } }
     &__product { border-bottom-color: #1a3048; &--out-of-stock { background: #211417; } }
     &__product-name, &__section-title, &__cart-name, &__cart-qty span, &__cart-amount, &__total { color: #e7f1ff; }
     &__stock { color: #63d497; &--empty { color: #ff8f8f; } &--loading { color: #9bb1cb; } }

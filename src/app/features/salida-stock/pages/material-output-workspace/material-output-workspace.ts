@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { AfterViewInit, Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { finalize, fromEvent, Subject, takeUntil } from 'rxjs';
+import { finalize, fromEvent, startWith, Subject, takeUntil } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -17,6 +17,7 @@ import { StockProductAvailabilityDto } from '../../../../core/models/stock-produ
 import { MaterialOutputService } from '../../../../core/services/material-output.service';
 import { ProductEstablishmentService } from '../../../../core/services/product-establishment.service';
 import { StockProductService } from '../../../../core/services/stock-product.service';
+import { backendMessage } from '../../../../core/utils/http-error.util';
 
 interface OutputLine extends SaveAndCloseMaterialOutputItemDto {
   key: string;
@@ -53,11 +54,12 @@ export class MaterialOutputWorkspacePage implements AfterViewInit, OnDestroy {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly selectedCurrentStock = signal<number | null>(null);
+  readonly isSale = signal(false);
 
   readonly headerForm = this.fb.nonNullable.group({
     outputType: [1, Validators.required],
-    recipient: ['', Validators.required],
-    docNumber: ['', Validators.required],
+    recipient: [''],
+    docNumber: [''],
     dateIssue: [new Date(), Validators.required],
     observation: [''],
   });
@@ -66,11 +68,14 @@ export class MaterialOutputWorkspacePage implements AfterViewInit, OnDestroy {
     productEstablishmentId: [null as number | null, Validators.required],
     stockProductId: [null as number | null, Validators.required],
     quantity: [1, [Validators.required, Validators.min(0.01)]],
-    unitValue: [0, [Validators.required, Validators.min(0)]],
+    totalItem: [0, [Validators.required, Validators.min(0)]],
   });
 
   constructor() {
     this.loadInitialData();
+    this.headerForm.controls.outputType.valueChanges
+      .pipe(startWith(this.headerForm.controls.outputType.value), takeUntil(this.destroy$))
+      .subscribe((outputType) => this.applyOutputTypeRules(outputType));
     this.productForm.controls.productSearch.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       if (typeof value === 'string') {
         this.productForm.controls.productEstablishmentId.setValue(null);
@@ -81,7 +86,7 @@ export class MaterialOutputWorkspacePage implements AfterViewInit, OnDestroy {
     this.productForm.controls.stockProductId.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((id) => this.applySelectedStock(id));
   }
 
-  get documentTotal(): number { return this.lines().reduce((total, line) => total + line.quantity * line.unitValue, 0); }
+  get documentTotal(): number { return this.lines().reduce((total, line) => total + line.totalItem, 0); }
   get selectedProduct(): ProductEstablishmentWithInventoryDto | undefined {
     return this.products().find((product) => product.productEstablishmentId === this.productForm.controls.productEstablishmentId.value);
   }
@@ -105,16 +110,18 @@ export class MaterialOutputWorkspacePage implements AfterViewInit, OnDestroy {
     const line: OutputLine = {
       key: `${values.productEstablishmentId}-${values.stockProductId}`,
       productEstablishmentId: values.productEstablishmentId!, stockProductId: values.stockProductId,
-      quantity: values.quantity, unitValue: values.unitValue,
+      quantity: values.quantity, totalItem: values.totalItem,
       productName: this.selectedProduct.productName ?? 'Producto', stockName: this.stockName(stock),
       unit: this.selectedProduct.measureUnitAcronym ?? 'UND', currentStock: this.selectedCurrentStock(),
     };
     this.lines.update((items) => {
       const existing = items.findIndex((item) => item.key === line.key);
       if (existing < 0) return [...items, line];
-      const next = [...items]; next[existing] = { ...line, quantity: next[existing].quantity + line.quantity }; return next;
+      const next = [...items];
+      next[existing] = { ...line, quantity: next[existing].quantity + line.quantity, totalItem: next[existing].totalItem + line.totalItem };
+      return next;
     });
-    this.productForm.reset({ productSearch: null, productEstablishmentId: null, stockProductId: null, quantity: 1, unitValue: 0 });
+    this.productForm.reset({ productSearch: null, productEstablishmentId: null, stockProductId: null, quantity: 1, totalItem: 0 });
     this.filterProducts('');
     this.stocks.set([]); this.selectedCurrentStock.set(null);
     this.updateQuantityValidators(null);
@@ -128,12 +135,12 @@ export class MaterialOutputWorkspacePage implements AfterViewInit, OnDestroy {
     this.saving.set(true); this.error.set(null);
     const value = this.headerForm.getRawValue();
     this.outputService.saveAndClose({
-      outputType: value.outputType, recipient: value.recipient.trim(), docNumber: value.docNumber.trim(),
+      outputType: value.outputType, recipient: value.recipient.trim() || null, docNumber: value.docNumber.trim() || null,
       dateIssue: value.dateIssue.toISOString(), observation: value.observation.trim() || null,
       items: this.lines().map(({ key, productName, stockName, unit, currentStock, ...line }) => line),
     }).pipe(finalize(() => this.saving.set(false)), takeUntil(this.destroy$)).subscribe({
       next: () => void this.router.navigate(['/salida-stock']),
-      error: () => this.error.set('No se pudo registrar la salida de stock.'),
+      error: (err) => this.error.set(backendMessage(err) ?? 'No se pudo registrar la salida de stock.'),
     });
   }
 
@@ -179,6 +186,17 @@ export class MaterialOutputWorkspacePage implements AfterViewInit, OnDestroy {
     const stock = this.stocks().find((item) => item.stockProductId === stockProductId);
     this.selectedCurrentStock.set(stock?.availableQuantity ?? null);
     this.updateQuantityValidators(stock?.availableQuantity ?? null);
+  }
+  /** Venta (2): N° de documento y destinatario obligatorios. Salida (1): opcionales. */
+  private applyOutputTypeRules(outputType: number): void {
+    const isSale = outputType === 2;
+    this.isSale.set(isSale);
+
+    const { recipient, docNumber } = this.headerForm.controls;
+    recipient.setValidators(isSale ? [Validators.required, Validators.maxLength(400)] : [Validators.maxLength(400)]);
+    docNumber.setValidators(isSale ? [Validators.required, Validators.maxLength(400)] : [Validators.maxLength(400)]);
+    recipient.updateValueAndValidity({ emitEvent: false });
+    docNumber.updateValueAndValidity({ emitEvent: false });
   }
   private updateQuantityValidators(maxAvailable: number | null): void {
     const quantity = this.productForm.controls.quantity;

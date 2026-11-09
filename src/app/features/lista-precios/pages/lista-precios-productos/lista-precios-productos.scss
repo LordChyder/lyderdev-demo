@@ -76,6 +76,21 @@
       &::placeholder {
         color: #8da4c4;
       }
+
+      // El input usa un botón de limpiar propio; se oculta el nativo del
+      // navegador para no mostrar dos "x" superpuestas.
+      &::-webkit-search-cancel-button,
+      &::-webkit-search-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      &::-ms-clear,
+      &::-ms-reveal {
+        display: none;
+        width: 0;
+        height: 0;
+      }
     }
 
     &-clear {
@@ -297,6 +312,7 @@
   &__badge {
     display: inline-flex;
     align-items: center;
+    gap: 0.25rem;
     padding: 0.2rem 0.5rem;
     border-radius: 6px;
     font-size: 0.6875rem;
@@ -304,9 +320,20 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
 
+    mat-icon {
+      font-size: 0.9rem;
+      width: 0.9rem;
+      height: 0.9rem;
+    }
+
     &--type {
       background: #edf4ff;
       color: #0875eb;
+    }
+
+    &--combo {
+      background: #fff1e6;
+      color: #e36b00;
     }
 
     &--free {
@@ -543,6 +570,11 @@
       &--type {
         background: #17375a;
         color: #8ec5fc;
+      }
+
+      &--combo {
+        background: #4a2c0f;
+        color: #ffb86b;
       }
 
       &--free {

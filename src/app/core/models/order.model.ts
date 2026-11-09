@@ -84,6 +84,25 @@ export interface PaymentTypeSummaryDto {
   amount: number;
   receivedAmount: number;
   changeAmount: number;
+  /** Si es efectivo, según el backend — no adivinar por `paymentTypeName`. */
+  isCash: boolean;
+  /** Fondo inicial de la apertura; solo distinto de 0 en la línea de efectivo. */
+  openingValue: number;
+  /** Gastos de caja que descuentan de este medio de pago; solo en la línea de efectivo. */
+  expensesAmount: number;
+  /** = openingValue + amount - expensesAmount (= amount en medios no efectivo). */
+  expectedAmount: number;
+}
+
+/** Gasto de caja registrado en la apertura (viene de Fiscal). */
+export interface OpeningCashierExpenseDto {
+  expenseId: number;
+  category: number;
+  categoryName: string | null;
+  /** 'YYYY-MM-DD' */
+  expenseDate: string;
+  description: string | null;
+  amount: number;
 }
 
 /**
@@ -97,6 +116,42 @@ export interface OpeningCashierPaymentsSummaryDto {
   totalReceived: number;
   totalChange: number;
   paymentTypes: PaymentTypeSummaryDto[] | null;
+  expensesCount: number;
+  totalExpenses: number;
+  /** = totalAmount - totalExpenses. */
+  netAmount: number;
+  expenses: OpeningCashierExpenseDto[] | null;
+  /** Fondo inicial de la apertura (mismo valor que OpeningCashierDetailDto.openingValue). */
+  openingValue: number;
+  /** Efectivo que debe haber en la gaveta: openingValue + ventas en efectivo - totalExpenses. */
+  expectedCashAmount: number;
+}
+
+/** Tipo de línea de un pedido (`OrderItemDto.itemType`). */
+export enum OrderItemType {
+  /** Producto suelto del establecimiento. */
+  Product = 1,
+  /** Combo: línea con precio propio cuyos productos van en `components`. */
+  Combo = 2,
+}
+
+/** Componente de un combo dentro de una línea de pedido (`OrderItemDto.components`). */
+export interface OrderItemComponentDto {
+  id: string;
+  sequence: number;
+  productId: number;
+  productEstablishmentId: number;
+  productName: string | null;
+  productComplementaryName: string | null;
+  productMeasureUnitAcronym: string | null;
+  /** Cantidad del producto en UN combo. */
+  quantityPerCombo: number;
+  /** Cantidad total: quantityPerCombo × cantidad de combos. */
+  quantity: number;
+  hasInventory: boolean;
+  stockProductId: number | null;
+  stockId: number | null;
+  stockName: string | null;
 }
 
 /** Línea de producto dentro de `OrderDetailDto.items` (GET /api/v1/order/{orderId}). */
@@ -119,6 +174,12 @@ export interface OrderItemDto {
   isTakeAway?: boolean;
   /** true si esta línea es el cargo por delivery (agregado por caja vía `AddOrderDeliveryFeeCommand`), no un producto del catálogo. */
   isDeliveryFee?: boolean;
+  /** 1 = Producto, 2 = Combo. En un combo `productId` vale 0 y sus productos van en `components`. */
+  itemType?: OrderItemType;
+  /** Solo en combos. */
+  comboId?: number | null;
+  /** Solo en combos: sus productos, vacío en una línea de producto suelto. */
+  components?: OrderItemComponentDto[] | null;
 }
 
 /**
@@ -129,7 +190,9 @@ export interface OrderItemDto {
 export interface RestaurantTableRealtimeDto {
   establishmentId: number;
   tableId: number;
+  tableCode: string | null;
   tableName: string | null;
+  tableOrder: number;
   tableStatus: RestaurantTableStatus;
   orderId: string | null;
   orderNumber: number | null;
@@ -151,15 +214,20 @@ export interface CreateOrderCommand {
   deliveryPhone?: string | null;
 }
 
-/** Item de `items` en `CreateDeliveryOrderCommand`. */
+/**
+ * Item de `items` en `CreateDeliveryOrderCommand`. Un producto (`productEstablishmentId`) o un
+ * combo (`comboId`), nunca ambos — en un combo `productEstablishmentId` y `stockProductId` van null.
+ */
 export interface CreateDeliveryOrderItemDto {
-  productEstablishmentId: number;
+  productEstablishmentId: number | null;
   priceListId: number;
   stockProductId: number | null;
   quantity: number;
   discount: number;
   observation?: string | null;
   isTakeAway: boolean;
+  comboId?: number | null;
+  comboStocks?: OrderItemComboStockDto[] | null;
 }
 
 /**
@@ -195,7 +263,7 @@ export interface PriceListProductStockDto {
   stockProductId: number;
 }
 
-/** Item de `products` en `PriceListWithProductsDto`. */
+/** Item de `products` en `WaiterPriceListCategoryDto`. `categoryId`/`categoryName` son null si el producto no tiene categoría. */
 export interface PriceListProductDto {
   productId: number;
   productEstablishmentId: number;
@@ -207,29 +275,84 @@ export interface PriceListProductDto {
   isFree: boolean;
   hasInventory: boolean;
   stockProducts: PriceListProductStockDto[] | null;
+  categoryId: number | null;
+  categoryName: string | null;
+}
+
+/** Producto que forma parte de un combo, dentro de `PriceListComboDto.components`. */
+export interface PriceListComboComponentDto {
+  productEstablishmentId: number;
+  productId: number;
+  productName: string | null;
+  complementaryName: string | null;
+  measureUnitAcronym: string | null;
+  /** Cantidad del producto en UN combo. */
+  quantity: number;
+  hasInventory: boolean;
+  stockProducts: PriceListProductStockDto[];
 }
 
 /**
- * Item de GET /api/v1/order/order-cashier/{openingCashierId}/price-lists:
- * una lista de precios habilitada en esa caja, con sus productos y precios ya
- * resueltos.
+ * Combo disponible en una lista de precios, con su precio y sus productos. Para agregarlo a la
+ * orden se envía `comboId` y, por cada componente con `hasInventory`, el almacén elegido
+ * (`comboStocks`) — si el componente tiene un solo almacén en `stockProducts`, se puede omitir.
  */
-export interface PriceListWithProductsDto {
-  priceListId: number;
-  priceListName: string | null;
-  products: PriceListProductDto[] | null;
+export interface PriceListComboDto {
+  comboId: number;
+  comboName: string;
+  isFree: boolean;
+  price: number | null;
+  components: PriceListComboComponentDto[];
 }
 
-/** Body de POST /api/v1/order-item/{orderId} (header EstablishmentId): agrega una línea al pedido. */
+/**
+ * Categoría de `WaiterPriceListDto.categories`. `categoryId` es null en "GENERAL" (productos sin
+ * categoría) y en "COMBOS". `isCombo` es true solo en "COMBOS": sus ítems van en `combos` en vez
+ * de `products`.
+ */
+export interface WaiterPriceListCategoryDto {
+  categoryId: number | null;
+  categoryName: string;
+  isCombo: boolean;
+  products: PriceListProductDto[];
+  combos: PriceListComboDto[];
+}
+
+/**
+ * Item de GET /api/v1/order/order-cashier/{openingCashierId}/waiter-price-lists (mozo): una lista
+ * de precios con todo agrupado en `categories`, en este orden: "GENERAL" (sin categoría) →
+ * categorías de los productos (alfabético) → "COMBOS". Cada categoría solo aparece si tiene
+ * contenido. `isGrouped` es true cuando hay 2 o más categorías (el front muestra chips/pestañas);
+ * con una sola, se muestra su contenido directamente, sin chips.
+ */
+export interface WaiterPriceListDto {
+  priceListId: number;
+  priceListName: string | null;
+  isGrouped: boolean;
+  categories: WaiterPriceListCategoryDto[];
+}
+
+/** Almacén elegido para un producto del combo que controla inventario, dentro de un `AddOrderItemCommand`/`SyncOrderItemAddDto` de combo. */
+export interface OrderItemComboStockDto {
+  productEstablishmentId: number;
+  stockProductId: number;
+}
+
+/**
+ * Body de POST /api/v1/order-item/{orderId} (header EstablishmentId): agrega una línea al pedido.
+ * Un producto (`productEstablishmentId`) o un combo (`comboId`), nunca ambos.
+ */
 export interface AddOrderItemCommand {
   orderId: string;
   priceListId: number;
-  productEstablishmentId: number;
+  productEstablishmentId: number | null;
   quantity: number;
   discount: number;
   stockProductId: number | null;
   observation?: string | null;
   isTakeAway?: boolean;
+  comboId?: number | null;
+  comboStocks?: OrderItemComboStockDto[] | null;
 }
 
 /**
@@ -263,15 +386,17 @@ export interface UpdateOrderItemQuantityCommand {
   discount: number;
 }
 
-/** Línea nueva dentro de `SyncOrderItemsCommand`. */
+/** Línea nueva dentro de `SyncOrderItemsCommand`. Un producto (`productEstablishmentId`) o un combo (`comboId`), nunca ambos. */
 export interface SyncOrderItemAddDto {
-  productEstablishmentId: number;
+  productEstablishmentId: number | null;
   priceListId: number;
   stockProductId: number | null;
   quantity: number;
   discount: number;
   observation?: string | null;
   isTakeAway?: boolean;
+  comboId?: number | null;
+  comboStocks?: OrderItemComboStockDto[] | null;
 }
 
 /** Línea existente cuya cantidad/descuento cambió, dentro de `SyncOrderItemsCommand`. */
@@ -294,13 +419,16 @@ export interface SyncOrderItemsCommand {
 
 /**
  * Una línea de `SyncOrderItemsCommand` que falló. `productEstablishmentId` identifica la línea
- * cuando `operation` es "Add"; `orderItemId` la identifica cuando es "Update" o "Remove".
+ * cuando `operation` es "Add" y es un producto; `comboId` la identifica cuando es "Add" y es un
+ * combo (`productEstablishmentId` viene null); `orderItemId` la identifica cuando es "Update" o
+ * "Remove".
  */
 export interface SyncOrderItemErrorDto {
   operation: 'Add' | 'Update' | 'Remove';
   productEstablishmentId: number | null;
   orderItemId: string | null;
   message: string;
+  comboId: number | null;
 }
 
 /** Respuesta de PUT /api/v1/order-item/{orderId}/sync: las líneas que no aparecen en `errors` se aplicaron correctamente. */
@@ -359,6 +487,8 @@ export interface PaymentTypeDto {
   name: string | null;
   /** Si el método admite vuelto (ej. Efectivo). Falso en tarjeta, transferencia, etc. */
   isChangeAllowed: boolean;
+  /** Si el método de pago es efectivo — se usa para cuadrar la caja. */
+  isCash: boolean;
 }
 
 /** Body de POST /api/v1/order-payment/{orderId}: registra el pago del pedido. */

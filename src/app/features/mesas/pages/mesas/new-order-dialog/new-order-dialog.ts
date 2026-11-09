@@ -12,8 +12,11 @@ import {
   CreateOrderCommand,
   OrderDetailDto,
   OrderItemDto,
+  OrderItemComboStockDto,
+  PriceListComboDto,
   PriceListProductDto,
-  PriceListWithProductsDto,
+  WaiterPriceListCategoryDto,
+  WaiterPriceListDto,
 } from '../../../../../core/models/order.model';
 import { OpeningCashierService } from '../../../../../core/services/opening-cashier.service';
 import { OrderService } from '../../../../../core/services/order.service';
@@ -65,10 +68,14 @@ export class NewOrderDialog {
   // Paso 3: catálogo y armado del pedido.
   readonly loadingCatalog = signal(false);
   readonly catalogError = signal<string | null>(null);
-  readonly priceLists = signal<PriceListWithProductsDto[]>([]);
+  readonly priceLists = signal<WaiterPriceListDto[]>([]);
   readonly selectedPriceListId = signal<number | null>(null);
+  /** Categoría activa (GENERAL, una categoría de producto, o COMBOS) dentro de la lista de precios seleccionada. */
+  readonly selectedCategoryKey = signal<string | null>(null);
   readonly quantities = signal<Record<number, number>>({});
+  readonly comboQuantities = signal<Record<number, number>>({});
   readonly addingProductId = signal<number | null>(null);
+  readonly addingComboId = signal<number | null>(null);
   readonly addItemError = signal<string | null>(null);
   readonly order = signal<OrderDetailDto | null>(null);
   readonly updatingItemId = signal<string | null>(null);
@@ -93,8 +100,33 @@ export class NewOrderDialog {
     });
   }
 
-  get selectedPriceList(): PriceListWithProductsDto | null {
+  get selectedPriceList(): WaiterPriceListDto | null {
     return this.priceLists().find((list) => list.priceListId === this.selectedPriceListId()) ?? null;
+  }
+
+  /** Categoría activa dentro de la lista de precios seleccionada (GENERAL, una categoría, o COMBOS). */
+  get selectedCategory(): WaiterPriceListCategoryDto | null {
+    const list = this.selectedPriceList;
+    if (!list?.categories?.length) return null;
+    return (
+      list.categories.find((category) => this.categoryKey(category) === this.selectedCategoryKey()) ??
+      list.categories[0]
+    );
+  }
+
+  /** Identifica una categoría: "GENERAL", "COMBOS", o el id de la categoría del producto. */
+  categoryKey(category: WaiterPriceListCategoryDto): string {
+    return category.isCombo ? 'COMBOS' : category.categoryId === null ? 'GENERAL' : String(category.categoryId);
+  }
+
+  selectCategory(key: string): void {
+    this.selectedCategoryKey.set(key);
+  }
+
+  choosePriceList(priceListId: number): void {
+    this.selectedPriceListId.set(priceListId);
+    const list = this.priceLists().find((l) => l.priceListId === priceListId) ?? null;
+    this.selectedCategoryKey.set(list?.categories[0] ? this.categoryKey(list.categories[0]) : null);
   }
 
   createOrder(): void {
@@ -132,6 +164,18 @@ export class NewOrderDialog {
     this.quantities.update((current) => ({
       ...current,
       [productEstablishmentId]: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+    }));
+  }
+
+  quantityForCombo(comboId: number): number {
+    return this.comboQuantities()[comboId] ?? 1;
+  }
+
+  setComboQuantity(comboId: number, value: string): void {
+    const quantity = Number(value);
+    this.comboQuantities.update((current) => ({
+      ...current,
+      [comboId]: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
     }));
   }
 
@@ -176,6 +220,60 @@ export class NewOrderDialog {
       error: () => {
         this.addingProductId.set(null);
         this.addItemError.set(`No se pudo agregar "${product.productName}".`);
+      },
+    });
+  }
+
+  /**
+   * Igual que `addProduct`, pero para un combo: se identifica por `comboId` en vez de
+   * `productEstablishmentId`, y se envía el almacén de cada producto del combo que controla
+   * inventario (el primero disponible).
+   */
+  addCombo(combo: PriceListComboDto): void {
+    const orderId = this.orderId();
+    const priceListId = this.selectedPriceListId();
+    if (!orderId || !priceListId) return;
+
+    const quantityToAdd = this.quantityForCombo(combo.comboId);
+    const existingItem =
+      this.order()?.items?.find((item) => item.comboId === combo.comboId) ?? null;
+
+    this.addingComboId.set(combo.comboId);
+    this.addItemError.set(null);
+
+    const comboStocks: OrderItemComboStockDto[] = combo.components
+      .filter((component) => component.hasInventory && component.stockProducts[0])
+      .map((component) => ({
+        productEstablishmentId: component.productEstablishmentId,
+        stockProductId: component.stockProducts[0].stockProductId,
+      }));
+
+    const request$ = existingItem
+      ? this.orderService.updateItemQuantity(orderId, existingItem.id, {
+          orderId,
+          orderItemId: existingItem.id,
+          quantity: existingItem.quantity + quantityToAdd,
+          discount: existingItem.discount,
+        })
+      : this.orderService.addItem(orderId, {
+          orderId,
+          priceListId,
+          productEstablishmentId: null,
+          quantity: quantityToAdd,
+          discount: 0,
+          stockProductId: null,
+          comboId: combo.comboId,
+          comboStocks,
+        });
+
+    request$.subscribe({
+      next: () => {
+        this.addingComboId.set(null);
+        this.refreshOrder();
+      },
+      error: () => {
+        this.addingComboId.set(null);
+        this.addItemError.set(`No se pudo agregar "${combo.comboName}".`);
       },
     });
   }
@@ -274,12 +372,14 @@ export class NewOrderDialog {
     this.loadingCatalog.set(true);
     this.catalogError.set(null);
 
-    this.orderService.getPriceLists(cashierOpeningId).subscribe({
+    this.orderService.getWaiterPriceLists(cashierOpeningId).subscribe({
       next: (priceLists) => {
         this.priceLists.set(priceLists ?? []);
-        if (priceLists?.length) {
-          this.selectedPriceListId.set(priceLists[0].priceListId);
-        }
+        const firstList = priceLists?.[0] ?? null;
+        this.selectedPriceListId.set(firstList?.priceListId ?? null);
+        this.selectedCategoryKey.set(
+          firstList?.categories[0] ? this.categoryKey(firstList.categories[0]) : null,
+        );
         this.loadingCatalog.set(false);
       },
       error: () => {

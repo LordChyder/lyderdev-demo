@@ -26,12 +26,12 @@ export interface SearchMaterialOutputItemsParams {
 export interface SaveMaterialOutputItemDto {
   materialOutputId: string;
   productEstablishmentId: number;
-  stockProductId: number;
+  stockProductId: number | null;
   quantity: number;
-  unitValue: number;
+  totalItem: number;
 }
 
 export interface UpdateMaterialOutputItemDto {
   quantity: number;
-  unitValue: number;
+  totalItem: number;
 }

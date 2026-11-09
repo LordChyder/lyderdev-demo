@@ -1,0 +1,174 @@
+@use '../../../../../../styles/dialog' as dialog;
+
+.stock-product-edit-form__title {
+  @include dialog.title;
+
+  span {
+    display: block;
+    margin-top: 0.35rem;
+    color: #58709b;
+    font: 400 0.875rem/1.35 Roboto, sans-serif;
+    letter-spacing: 0;
+  }
+}
+
+.stock-product-edit-form {
+  @include dialog.content;
+
+  &__fields {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  &__bento {
+    padding: 1rem;
+    border: 1px solid #d7e6fb;
+    border-radius: 12px;
+    background: #f8fbff;
+
+    &--inventory {
+      background: #f3f8ff;
+    }
+  }
+
+  &__section-label {
+    margin: 0;
+    color: #172d59;
+    font: 700 0.8125rem/1.2 Roboto, sans-serif;
+  }
+
+  &__section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+
+    span {
+      color: #58709b;
+      font-size: 0.75rem;
+    }
+  }
+
+  &__readonly {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 0.75rem;
+    margin: 0.5rem 0 0;
+
+    dt {
+      color: #58709b;
+      font-size: 0.8125rem;
+    }
+
+    dd {
+      margin: 0;
+      color: #172d59;
+      font-weight: 600;
+    }
+
+    &-secondary {
+      margin-left: 0.25rem;
+      color: #58709b;
+      font-weight: 400;
+    }
+  }
+
+  &__inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  &__field {
+    @include dialog.field-tokens;
+
+    &--location {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__state {
+    @include dialog.state-box;
+
+    &--error {
+      color: var(--mat-sys-error);
+    }
+  }
+
+  &__error {
+    @include dialog.error-text;
+  }
+}
+
+mat-dialog-actions {
+  @include dialog.actions;
+}
+
+@media (max-width: 599px) {
+  .stock-product-edit-form {
+    @include dialog.narrow-screen-padding;
+
+    &__inventory-grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__field--location {
+      grid-column: auto;
+    }
+
+    &__section-heading {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }
+}
+
+// ── Tema Oscuro ─────────────────────────────────────────────────────────────
+:host-context(.dark-theme) {
+  .stock-product-edit-form__title {
+    color: #f0f6ff;
+
+    span {
+      color: #8faece;
+    }
+  }
+
+  .stock-product-edit-form {
+    &__bento {
+      border-color: #1f3c5c;
+      background: #102744;
+
+      &--inventory {
+        background: #0c2341;
+      }
+    }
+
+    &__section-label {
+      color: #e7f1ff;
+    }
+
+    &__section-heading span {
+      color: #8faece;
+    }
+
+    &__readonly {
+      dt {
+        color: #8faece;
+      }
+
+      dd {
+        color: #e7f1ff;
+      }
+
+      &-secondary {
+        color: #8faece;
+      }
+    }
+
+    &__field {
+      @include dialog.field-tokens-dark;
+    }
+  }
+}

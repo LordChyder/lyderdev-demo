@@ -46,7 +46,7 @@
                 class="new-delivery-dialog__price-list-button"
                 [class.new-delivery-dialog__price-list-button--selected]="list.priceListId === selectedPriceListId()"
                 [attr.aria-pressed]="list.priceListId === selectedPriceListId()"
-                (click)="selectedPriceListId.set(list.priceListId)"
+                (click)="selectPriceList(list.priceListId)"
               >
                 {{ list.priceListName || 'Lista sin nombre' }}
               </button>
@@ -54,47 +54,111 @@
           </div>
         }
 
-        <div class="new-delivery-dialog__products">
-          @for (product of selectedPriceList?.products ?? []; track product.productEstablishmentId) {
-            @let availableStock = availableStockFor(product);
-            <div
-              class="new-delivery-dialog__product"
-              [class.new-delivery-dialog__product--out-of-stock]="product.hasInventory && availableStock === 0"
-            >
-              <div class="new-delivery-dialog__product-info">
-                <span class="new-delivery-dialog__product-name">{{ product.productName }}</span>
-                <span class="new-delivery-dialog__product-price">S/ {{ product.price | number: '1.2-2' }}</span>
-                @if (product.hasInventory) {
-                  <span
-                    class="new-delivery-dialog__stock"
-                    [class.new-delivery-dialog__stock--empty]="availableStock === 0"
-                    [class.new-delivery-dialog__stock--loading]="availableStock === null"
-                  >
-                    @if (availableStock === null) {
-                      Verificando stock…
-                    } @else if (availableStock === 0) {
-                      No hay stock
-                    } @else {
-                      Stock: {{ availableStock }} {{ product.measureUnitAcronym || 'und.' }}
-                    }
-                  </span>
-                }
-              </div>
+        @if (selectedPriceList?.isGrouped) {
+          <div class="new-delivery-dialog__catalog-tabs" role="group" aria-label="Categorías">
+            @for (category of selectedPriceList?.categories ?? []; track categoryKey(category)) {
               <button
-                mat-icon-button
                 type="button"
-                class="new-delivery-dialog__quantity-button"
-                aria-label="Agregar producto"
-                [disabled]="!canAddProduct(product)"
-                (click)="addProduct(product)"
+                class="new-delivery-dialog__catalog-tab"
+                [class.new-delivery-dialog__catalog-tab--selected]="categoryKey(category) === selectedCategoryKey()"
+                [attr.aria-pressed]="categoryKey(category) === selectedCategoryKey()"
+                (click)="selectCategory(categoryKey(category))"
               >
-                <mat-icon>add</mat-icon>
+                {{ category.categoryName }}
+                ({{ category.isCombo ? category.combos.length : category.products.length }})
               </button>
-            </div>
-          } @empty {
-            <p class="new-delivery-dialog__hint">Esta lista de precios no tiene productos.</p>
-          }
-        </div>
+            }
+          </div>
+        }
+
+        @if (!selectedCategory?.isCombo) {
+          <div class="new-delivery-dialog__products">
+            @for (product of selectedCategory?.products ?? []; track product.productEstablishmentId) {
+              @let availableStock = availableStockFor(product);
+              <div
+                class="new-delivery-dialog__product"
+                [class.new-delivery-dialog__product--out-of-stock]="product.hasInventory && availableStock !== null && availableStock <= 0"
+              >
+                <div class="new-delivery-dialog__product-info">
+                  <span class="new-delivery-dialog__product-name">{{ product.productName }}</span>
+                  <span class="new-delivery-dialog__product-price">S/ {{ product.price | number: '1.2-2' }}</span>
+                  @if (product.hasInventory) {
+                    <span
+                      class="new-delivery-dialog__stock"
+                      [class.new-delivery-dialog__stock--empty]="availableStock !== null && availableStock <= 0"
+                      [class.new-delivery-dialog__stock--loading]="availableStock === null"
+                    >
+                      @if (availableStock === null) {
+                        Verificando stock…
+                      } @else if (availableStock <= 0) {
+                        No hay stock
+                      } @else {
+                        Stock: {{ availableStock }} {{ product.measureUnitAcronym || 'und.' }}
+                      }
+                    </span>
+                  }
+                </div>
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="new-delivery-dialog__quantity-button"
+                  aria-label="Agregar producto"
+                  [disabled]="!canAddProduct(product)"
+                  (click)="addProduct(product)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            } @empty {
+              <p class="new-delivery-dialog__hint">Esta lista de precios no tiene productos.</p>
+            }
+          </div>
+        } @else {
+          <div class="new-delivery-dialog__products">
+            @for (combo of selectedCategory?.combos ?? []; track combo.comboId) {
+              @let availableCombos = availableComboStockFor(combo);
+              <div
+                class="new-delivery-dialog__product"
+                [class.new-delivery-dialog__product--out-of-stock]="comboHasInventory(combo) && availableCombos !== null && availableCombos <= 0"
+              >
+                <div class="new-delivery-dialog__product-info">
+                  <span class="new-delivery-dialog__product-name">{{ combo.comboName }}</span>
+                  <span class="new-delivery-dialog__product-price">
+                    {{ combo.isFree ? 'Gratis' : 'S/ ' + (combo.price | number: '1.2-2') }}
+                  </span>
+                  <span class="new-delivery-dialog__hint">{{ summarizeCombo(combo) }}</span>
+                  @if (comboHasInventory(combo)) {
+                    <span
+                      class="new-delivery-dialog__stock"
+                      [class.new-delivery-dialog__stock--empty]="availableCombos !== null && availableCombos <= 0"
+                      [class.new-delivery-dialog__stock--loading]="availableCombos === null"
+                    >
+                      @if (availableCombos === null) {
+                        Verificando stock…
+                      } @else if (availableCombos <= 0) {
+                        No hay stock
+                      } @else {
+                        Stock: {{ availableCombos }} combo(s)
+                      }
+                    </span>
+                  }
+                </div>
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="new-delivery-dialog__quantity-button"
+                  aria-label="Agregar combo"
+                  [disabled]="!canAddCombo(combo)"
+                  (click)="addCombo(combo)"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            } @empty {
+              <p class="new-delivery-dialog__hint">Esta lista de precios no tiene combos.</p>
+            }
+          </div>
+        }
       </section>
     }
 
@@ -109,7 +173,13 @@
         <div class="new-delivery-dialog__cart-list">
           @for (item of cart(); track item.key) {
             <div class="new-delivery-dialog__cart-item">
-              <span class="new-delivery-dialog__cart-name">{{ item.productName }}</span>
+              <span class="new-delivery-dialog__cart-name">
+                {{ item.productName }}
+                @if (item.comboComponentsSummary) {
+                  <br />
+                  <span class="new-delivery-dialog__hint">{{ item.comboComponentsSummary }}</span>
+                }
+              </span>
 
               <div class="new-delivery-dialog__cart-qty">
                 <button

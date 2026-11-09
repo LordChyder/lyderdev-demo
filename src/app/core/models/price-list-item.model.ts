@@ -20,8 +20,7 @@ export interface SearchPriceListItemsParams {
 
 /**
  * Body de POST /api/v1/price-list-item. Solo se completa uno de
- * `productEstablishmentId` / `comboId` — este formulario únicamente
- * vincula productos, así que `comboId` siempre va en null.
+ * `productEstablishmentId` / `comboId` (el otro va en null): nunca ambos.
  */
 export interface SavePriceListItemDto {
   productEstablishmentId: number | null;

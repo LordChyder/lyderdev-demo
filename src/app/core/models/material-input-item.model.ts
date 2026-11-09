@@ -43,12 +43,12 @@ export interface SaveMaterialInputItemDto {
   productEstablishmentId: number;
   stockProductId: number;
   quantity: number;
-  unitValue: number;
+  totalItem: number;
 }
 
 export interface UpdateMaterialInputItemDto {
   quantity: number;
-  unitValue: number;
+  totalItem: number;
 }
 
 export interface MaterialInputItemGetForEditDto {

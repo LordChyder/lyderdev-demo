@@ -110,9 +110,9 @@
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Valor unitario</mat-label>
-                <input matInput type="number" step="0.01" formControlName="unitValue" />
-                @if (item.get('unitValue')?.touched && item.get('unitValue')?.invalid) {
+                <mat-label>Costo total</mat-label>
+                <input matInput type="number" step="0.01" formControlName="totalItem" />
+                @if (item.get('totalItem')?.touched && item.get('totalItem')?.invalid) {
                   <mat-error>Inválido.</mat-error>
                 }
               </mat-form-field>

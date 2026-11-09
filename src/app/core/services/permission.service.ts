@@ -20,15 +20,19 @@ export class PermissionService {
    * false. Los administradores pasan la validación sin revisar claims.
    */
   validate(claim: string): boolean {
+    const allowed = this.has(claim);
+    if (!allowed) this.showDeniedMessage();
+    return allowed;
+  }
+
+  /** Igual que {@link validate} pero sin efectos secundarios: no abre ningún diálogo. */
+  has(claim: string): boolean {
     if (this.tokenService.user()?.isAdmin) return true;
 
     const normalizedClaim = claim.toLowerCase();
-    const allowed = this.authService
+    return this.authService
       .getCachedClaims()
       .some((item) => item.toLowerCase() === normalizedClaim);
-
-    if (!allowed) this.showDeniedMessage();
-    return allowed;
   }
 
   private showDeniedMessage(): void {

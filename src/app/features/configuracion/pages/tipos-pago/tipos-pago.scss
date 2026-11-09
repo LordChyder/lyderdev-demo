@@ -37,6 +37,18 @@
 
   &__mobile-list { display: none; }
 
+  &__cash-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #e3f6ea;
+    color: #197245;
+    font-size: 0.6875rem;
+    font-weight: 700;
+  }
+
   &__fab {
     position: absolute;
     right: 1rem;
@@ -87,6 +99,7 @@
 
     &__header h1 { color: #f0f6ff; }
     &__table-wrapper { border-color: #2d557d; }
+    &__cash-badge { background: #123524; color: #63e6ae; }
 
     @media (max-width: 48rem) {
       &__mobile-card { border-color: #2d557d; background: #0c1c32; }

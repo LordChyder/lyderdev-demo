@@ -11,6 +11,10 @@ export interface ExpenseSearchDto {
   expenseDate: string;
   description: string | null;
   amount: number;
+  isCashierExpense: boolean;
+  cashierId: number | null;
+  cashierName: string | null;
+  openingCashierId: number | null;
 }
 
 export interface SearchExpensesParams {
@@ -25,6 +29,8 @@ export interface SaveExpenseDto {
   expenseDate: string;
   description: string;
   amount: number;
+  isCashierExpense: boolean;
+  cashierId: number | null;
 }
 
 /** Respuesta de GET /api/v1/expense/{expenseId}/get-for-edit. */
@@ -34,6 +40,18 @@ export interface ExpenseForEditDto {
   expenseDate: string;
   description: string | null;
   amount: number;
+  isCashierExpense: boolean;
+  cashierId: number | null;
+  cashierName: string | null;
+  openingCashierId: number | null;
+}
+
+/** Item de GET /api/v1/expense/cashiers: cajas del establecimiento para elegir en un gasto de caja. */
+export interface ExpenseCashierDto {
+  cashierId: number;
+  name: string | null;
+  hasActiveOpening: boolean;
+  openingCashierId: number | null;
 }
 
 /** Item de categories dentro de GET /api/v1/expense/daily-summary. */

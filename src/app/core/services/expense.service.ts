@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ExpenseCashierDto,
   ExpenseCategoryDto,
   ExpenseDailySummaryDto,
   ExpenseForEditDto,
@@ -20,6 +21,11 @@ export class ExpenseService {
   /** Categorías del enum ExpenseCategory, para el select del formulario. */
   getCategories(): Observable<ExpenseCategoryDto[]> {
     return this.http.get<ExpenseCategoryDto[]>(`${this.baseUrl}/expense-category`);
+  }
+
+  /** Cajas del establecimiento activo, para elegir cuál financia un gasto de caja. */
+  getCashiers(): Observable<ExpenseCashierDto[]> {
+    return this.http.get<ExpenseCashierDto[]>(`${this.baseUrl}/cashiers`);
   }
 
   /** Lista los gastos del establecimiento activo (header EstablishmentId). */

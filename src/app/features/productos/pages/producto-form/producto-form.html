@@ -13,6 +13,45 @@
     <form [formGroup]="form" class="producto-form__form" novalidate>
       <section class="producto-form__section">
         <header class="producto-form__section-header">
+          <div><mat-icon>image</mat-icon><h2>Imagen del producto</h2></div>
+          <p>Identifica el producto visualmente en el catálogo.</p>
+        </header>
+        <div class="producto-form__image-body">
+          <div class="producto-form__image-preview">
+            @if (pendingImageAction() === 'upload' && imagePreviewUrl()) {
+              <img [src]="imagePreviewUrl()" alt="Vista previa de la imagen del producto" />
+            } @else if (showingImage()) {
+              <img [src]="serverImageUrl()" (error)="onImageLoadError()" alt="Imagen del producto" />
+            } @else {
+              <mat-icon>image</mat-icon>
+            }
+          </div>
+          <div class="producto-form__image-actions">
+            <input #imageInput type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="onImageFileSelected($event)" />
+            @if (canEditImage) {
+              <div class="producto-form__image-buttons">
+                @if (!showingImage()) {
+                  <button mat-stroked-button type="button" (click)="imageInput.click()">
+                    <mat-icon>upload_file</mat-icon><span>Subir imagen</span>
+                  </button>
+                } @else {
+                  <button mat-stroked-button type="button" (click)="imageInput.click()">
+                    <mat-icon>edit</mat-icon><span>Cambiar</span>
+                  </button>
+                  <button mat-stroked-button type="button" color="warn" (click)="removeImage()">
+                    <mat-icon>delete</mat-icon><span>Quitar</span>
+                  </button>
+                }
+              </div>
+            }
+            <p class="producto-form__image-hint">PNG, JPG o WEBP. Máximo 3 MB. Se recomienda cuadrada.</p>
+            @if (imageError()) { <p class="producto-form__image-error">{{ imageError() }}</p> }
+          </div>
+        </div>
+      </section>
+
+      <section class="producto-form__section">
+        <header class="producto-form__section-header">
           <div><mat-icon>sell</mat-icon><h2>Datos del producto</h2></div>
           <p>Información principal del catálogo.</p>
         </header>

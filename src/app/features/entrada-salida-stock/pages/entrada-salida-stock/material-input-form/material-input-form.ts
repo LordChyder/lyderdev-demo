@@ -133,7 +133,7 @@ export class MaterialInputForm implements OnInit, OnDestroy {
 
   itemTotal(index: number): number {
     const value = this.items.at(index).getRawValue();
-    return (Number(value.quantity) || 0) * (Number(value.unitValue) || 0);
+    return Number(value.totalItem) || 0;
   }
 
   get grandTotal(): number {
@@ -161,7 +161,7 @@ export class MaterialInputForm implements OnInit, OnDestroy {
           productEstablishmentId: item.productEstablishmentId as number,
           stockProductId: item.stockProductId as number,
           quantity: item.quantity,
-          unitValue: item.unitValue,
+          totalItem: item.totalItem,
         })),
       })
       .pipe(
@@ -183,7 +183,7 @@ export class MaterialInputForm implements OnInit, OnDestroy {
       productEstablishmentId: [null as number | null, [Validators.required]],
       stockProductId: [null as number | null, [Validators.required]],
       quantity: [1, [Validators.required, Validators.min(0.01)]],
-      unitValue: [0, [Validators.required, Validators.min(0)]],
+      totalItem: [0, [Validators.required, Validators.min(0)]],
     });
   }
 }

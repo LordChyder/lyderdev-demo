@@ -20,6 +20,10 @@
     gap: 0.75rem;
   }
 
+  &__kind {
+    align-self: flex-start;
+  }
+
   &__bento {
     padding: 1rem;
     border: 1px solid #d7e6fb;

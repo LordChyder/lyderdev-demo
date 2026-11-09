@@ -81,6 +81,9 @@
                     @if (item.productComplementaryName) {
                       <span class="cobrar-pedido__item-sub">{{ item.productComplementaryName }}</span>
                     }
+                    @if (item.components?.length) {
+                      <span class="cobrar-pedido__item-sub">{{ summarizeOrderItemComponents(item) }}</span>
+                    }
                     @if (item.observation) {
                       <span class="cobrar-pedido__item-sub">{{ item.observation }}</span>
                     }
