@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
+  production: true,
   accessControlUrl: 'https://api-accesscontrol-dev.lyderdev.com',
   productUrl: 'https://api-producto-dev.lyderdev.com',
   stockUrl: 'https://api-stock-dev.lyderdev.com',
